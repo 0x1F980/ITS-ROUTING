@@ -15,3 +15,4 @@ pub mod poly;
 pub mod trapdoor;
 pub mod masking;
 pub mod ratchet;
+pub mod otm;
