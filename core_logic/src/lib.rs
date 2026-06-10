@@ -11,3 +11,5 @@
 //! 3. **Memory Safe** (zeroizing sensitive data on drop).
 
 pub mod field_arith;
+pub mod poly;
+pub mod trapdoor;
