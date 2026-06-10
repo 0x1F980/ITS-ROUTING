@@ -17,3 +17,4 @@ pub mod masking;
 pub mod ratchet;
 pub mod otm;
 pub mod tunnel;
+pub mod sel4_compat;
