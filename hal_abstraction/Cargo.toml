@@ -1,0 +1,9 @@
+[package]
+name = "hal_abstraction"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# No external dependencies needed for basic traits, but subtle/zeroize can be useful.
+subtle = { version = "2.5.0", default-features = false }
+zeroize = { version = "1.7.0", default-features = false }
