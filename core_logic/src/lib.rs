@@ -13,3 +13,4 @@
 pub mod field_arith;
 pub mod poly;
 pub mod trapdoor;
+pub mod masking;
