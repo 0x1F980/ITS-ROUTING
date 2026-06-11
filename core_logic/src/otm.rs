@@ -6,7 +6,7 @@ use zeroize::Zeroize;
 
 /// Generates a Wegman-Carter One-Time MAC (OTM) tag for a given value `y`.
 ///
-/// Formula: `T = (K_MAC * y + N) mod 17`
+/// Formula: `T = (K_MAC * y + N) mod 251`
 ///
 /// # Arguments
 /// * `k_mac` - The shared one-time MAC key.
@@ -82,7 +82,7 @@ pub fn derive_forward_secret(
 
 /// Generates a combined Wegman-Carter tag using the SSS forward and backward points.
 ///
-/// Formula: `T = (K_MAC * (y_forward + y_backward) + N) mod 17`
+/// Formula: `T = (K_MAC * (y_forward + y_backward) + N) mod 251`
 #[inline]
 pub fn generate_chained_tag_with_points(
     forward_point: (FieldElement, FieldElement),
@@ -158,9 +158,9 @@ mod tests {
         let y = FieldElement::new(3);
         let nonce = FieldElement::new(10);
 
-        // T = (5 * 3 + 10) = 25 = 8 mod 17
+        // T = (5 * 3 + 10) = 25 modulo 251
         let tag = generate_tag(k_mac, y, nonce);
-        assert_eq!(tag.value(), 8);
+        assert_eq!(tag.value(), 25);
 
         // Verification should succeed
         let is_valid = verify_tag(k_mac, y, nonce, tag);
@@ -179,9 +179,9 @@ mod tests {
     fn test_combine_sss_chains() {
         let forward = FieldElement::new(12);
         let backward = FieldElement::new(7);
-        // (12 + 7) = 19 = 2 mod 17
+        // (12 + 7) = 19 modulo 251
         let combined = combine_sss_chains(forward, backward);
-        assert_eq!(combined.value(), 2);
+        assert_eq!(combined.value(), 19);
     }
 
     #[test]
@@ -191,10 +191,10 @@ mod tests {
         let k_mac = FieldElement::new(5);
         let nonce = FieldElement::new(10);
 
-        // y = 12 + 7 = 19 = 2 mod 17
-        // T = (5 * 2 + 10) = 20 = 3 mod 17
+        // y = 12 + 7 = 19 modulo 251
+        // T = (5 * 19 + 10) = 95 + 10 = 105 modulo 251
         let tag = generate_chained_tag_with_points(forward_point, backward_point, k_mac, nonce);
-        assert_eq!(tag.value(), 3);
+        assert_eq!(tag.value(), 105);
 
         let is_valid = verify_chained_tag_with_points(forward_point, backward_point, k_mac, nonce, tag);
         assert!(bool::from(is_valid));
@@ -202,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_verify_forward_share() {
-        // P(x) = 5 + 3x (modulo 17)
+        // P(x) = 5 + 3x (modulo 251)
         let poly = Polynomial::new([FieldElement::new(5), FieldElement::new(3)]);
         let message = FieldElement::new(2);
         // P(2) = 11
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_verify_backward_share() {
-        // P(x) = 5 + 3x (modulo 17)
+        // P(x) = 5 + 3x (modulo 251)
         // Master-Root: P(0) = 5
         // prev_points: [P(1) = 8]
         // new_point: P(2) = 11

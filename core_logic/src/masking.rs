@@ -55,10 +55,11 @@ pub fn encapsulate_with_trng<R: SecureRandom>(
     rng: &mut R,
     public_point: (FieldElement, FieldElement),
 ) -> Result<((FieldElement, FieldElement), FieldElement), R::Error> {
-    let mut buf = [0u8; 1];
+    let mut buf = [0u8; 2];
     rng.fill_bytes(&mut buf)?;
 
-    let k_pool = FieldElement::new(buf[0]);
+    let val_raw = (buf[0] as u16) | ((buf[1] as u16) << 8);
+    let k_pool = FieldElement::new(val_raw);
     let masked_point = encapsulate(public_point, k_pool);
 
     Ok((masked_point, k_pool))
@@ -76,8 +77,8 @@ mod tests {
         type Error = ();
 
         fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
-            if !dest.is_empty() {
-                dest[0] = self.value;
+            for byte in dest.iter_mut() {
+                *byte = self.value;
             }
             Ok(())
         }
@@ -85,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_encapsulation_roundtrip() {
-        // P(x) = 5 + 3x (modulo 17)
+        // P(x) = 5 + 3x (modulo 65521)
         // Public point: (1, 8)
         // Secret point (trapdoor): (2, 11)
         let public_point = (FieldElement::new(1), FieldElement::new(8));
@@ -99,7 +100,7 @@ mod tests {
         // Alice encapsulates k_pool
         let masked_point = encapsulate(public_point, k_pool);
         assert_eq!(masked_point.0.value(), 1);
-        assert_eq!(masked_point.1.value(), 3); // 8 + 12 = 20 = 3 mod 17
+        assert_eq!(masked_point.1.value(), 20); // 8 + 12 = 20 mod 65521
 
         // Bob decapsulates masked_point
         let recovered_k = decapsulate(&trapdoor, masked_point);
@@ -117,11 +118,12 @@ mod tests {
         let mut rng = MockRng { value: 12 };
         let (masked_point, k_pool) = encapsulate_with_trng(&mut rng, public_point).unwrap();
 
-        assert_eq!(k_pool.value(), 12);
+        // 12 | (12 << 8) = 3084
+        assert_eq!(k_pool.value(), 3084);
         assert_eq!(masked_point.0.value(), 1);
-        assert_eq!(masked_point.1.value(), 3);
+        assert_eq!(masked_point.1.value(), 3092); // 3084 + 8 = 3092 mod 65521
 
         let recovered_k = decapsulate(&trapdoor, masked_point);
-        assert_eq!(recovered_k.value(), 12);
+        assert_eq!(recovered_k.value(), 3084);
     }
 }
