@@ -4,7 +4,7 @@ use crate::otm::{generate_tag, verify_tag, derive_forward_secret, verify_forward
 use crate::poly::Polynomial;
 use crate::trapdoor::{Trapdoor, lagrange_interpolate};
 use hal_abstraction::SecureRandom;
-use subtle::{Choice, ConditionallySelectable};
+use subtle::{ConditionallySelectable, ConstantTimeEq};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// A lightweight error type for bare-metal tunnel operations.
@@ -80,38 +80,37 @@ impl<const K: usize> AliceEndpoint<K> {
         message: FieldElement,
         rng: &mut R,
     ) -> Result<ScpstPacket, TunnelError> {
-        let mut entropy = [0u8; 2];
+        let mut entropy = [0u8; 4];
         rng.fill_bytes(&mut entropy).map_err(|_| TunnelError::HardwareError)?;
 
         // A. Baglæns SSS (Autoritet)
         // We select x_i uniquely based on the step counter to rotate the points.
-        // Z_17 has 17 elements. We avoid x=0 (Master Root) and x=1 (Bob's public point).
-        let x_val = ((self.step_counter % 15) + 2) as u8;
+        // Z_65521 has 65521 elements. We avoid x=0 (Master Root) and x=1 (Bob's public point).
+        let x_val = ((self.step_counter % 65519) + 2) as u16;
         let x_i = FieldElement::new(x_val);
         let y_back = self.poly_backward.evaluate(x_i);
         let backward_point = (x_i, y_back);
 
-        // Nonce is derived deterministically from Q(16)
-        let nonce = self.poly_backward.evaluate(FieldElement::new(16));
+        // Nonce is derived deterministically from Q(65520)
+        let nonce = self.poly_backward.evaluate(FieldElement::new(65520));
 
         // B. Forlæns SSS (Integritet)
         let s_forw = derive_forward_secret(self.prev_back_point, self.prev_msg);
 
         // Fresh random slope b_i from TRNG (must be non-zero)
-        let b_val = entropy[0] % 17;
-        let is_zero = Choice::from((b_val == 0) as u8);
-        let b_i_raw = FieldElement::new(b_val);
+        let b_i_raw = FieldElement::new((entropy[0] as u16) | ((entropy[1] as u16) << 8));
+        let is_zero = b_i_raw.ct_eq(&FieldElement::zero());
         let b_i = FieldElement::conditional_select(&b_i_raw, &FieldElement::one(), is_zero);
 
         let poly_forward = Polynomial::new([s_forw, b_i]);
         let y_forw = poly_forward.evaluate(message);
         let forward_point = (message, y_forw);
 
-        // MAC key is derived from P_i(15)
-        let k_mac = poly_forward.evaluate(FieldElement::new(15));
+        // MAC key is derived from P_i(65519)
+        let k_mac = poly_forward.evaluate(FieldElement::new(65519));
 
         // C. OTP Maskering & Tag-generering
-        let k_pool = FieldElement::new(entropy[1] % 17);
+        let k_pool = FieldElement::new((entropy[2] as u16) | ((entropy[3] as u16) << 8));
         let masked_point = encapsulate(self.public_point, k_pool);
         let tag = generate_tag(k_mac, masked_point.1, nonce);
         let ciphertext = message + k_pool;
@@ -176,7 +175,7 @@ impl<const K: usize> BobEndpoint<K> {
             (FieldElement::zero(), self.master_root),
             packet.backward_point,
         ];
-        let bob_nonce = lagrange_interpolate(&points_back_reconstructed, FieldElement::new(16));
+        let bob_nonce = lagrange_interpolate(&points_back_reconstructed, FieldElement::new(65520));
 
         // B. Dekapsling & Dekryptering
         let bob_k_pool = decapsulate(&self.trapdoor, packet.masked_point);
@@ -191,8 +190,8 @@ impl<const K: usize> BobEndpoint<K> {
             (decrypted_msg, packet.forward_point.1),
         ];
 
-        // Bob udleder den hemmelige MAC-nøgle K_MAC ved at evaluere P_i(15)
-        let bob_k_mac = lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(15));
+        // Bob udleder den hemmelige MAC-nøgle K_MAC ved at evaluere P_i(65519)
+        let bob_k_mac = lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(65519));
 
         // Bob genskaber det forlæns polynomium som en Polynomial struct til verifikation
         let slope_num = packet.forward_point.1 - bob_s_forw;
