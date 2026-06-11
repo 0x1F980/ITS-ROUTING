@@ -1,0 +1,61 @@
+.TH HYDRA-ITS 1 "June 2026" "v0.1.0" "Hydra-ITS Security Reference"
+.SH NAME
+hydra-its \- Information-Theoretic Secrecy (ITS) Onion Routing & Passive Entropy Parasitism CLI
+.SH SYNOPSIS
+.B hydra-its
+[\fB\-c \fIconfig_file\fR] [\fB\-h\fR] [\fB\-v\fR]
+.I COMMAND
+[\fIARGS...\fR]
+.SH DESCRIPTION
+.B hydra-its
+is a bare-metal, high-performance, and mathematically impregnable shadow network tool designed for Information-Theoretic Secrecy (ITS) routing.
+Unlike traditional networks (Tor, Nym) which rely on computationally hard problems (RSA, ECC, AES),
+.B hydra-its
+guarantees perfect secrecy (unbreakable even with infinite computational power) by utilizing Shamir's Secret Sharing (SSS) chained over a finite field modulus of Z_251.
+.PP
+The application supports Morphic Network Coding (MNC), Homomorphic Path Attestation, Onion-chaff routing, and Passive Entropy Parasitism (PEP).
+.SH OPTIONS
+.TP
+.BI \-c ", " \-\-config " config_file"
+Specify the path to the TOML configuration file. Defaults to /etc/hydra-its/config.toml if present.
+.TP
+.B \-h ", " \-\-help
+Show the standard help menu and exit.
+.TP
+.B \-v ", " \-\-version
+Print the software version and exit.
+.SH COMMANDS
+.TP
+.B start\-node
+Initialize and run an active, bare-metal VPS routing node. This node processes packets stateless-ly using Morphic Network Coding and outputs continuous constant-rate chaff packets when idle to mitigate traffic-analysis.
+.TP
+.B client\-send
+Fragment, onion-encrypt, and inject a secret payload. Can be routed through active SSS-chained nodes or injected passively into external chaotic telemetry streams.
+.TP
+.B client\-receive
+Reconstruct and verify messages from received secret shares in constant-time.
+.TP
+.B status\-audit
+Perform timing diagnostics, cache-flushes, and check for active routing anomalies/honeypots.
+.TP
+.B verify\-path
+Perform Lagrange interpolation at x=0 on homomorphic probe-shares to algebraically verify the route integrity without decrypting the payload.
+.SH MATHEMATICAL PROOF OF IMPREGNABILITY
+The system uses Shamir's Secret Sharing over the prime field Z_251.
+A polynomial of degree at most K-1 requires K points (shares) to reconstruct. Any observer (Eve) possessing K-1 or fewer shares has absolute zero-knowledge of the underlying secret.
+Under Claude Shannon's Perfect Secrecy theorem, for any ciphertext C and any candidate message M:
+.PP
+.RS
+.B P(M | C) = P(M)
+.RE
+.PP
+Because the system is algebraically underdetermined (more unknowns than equations), for every possible guess Eve makes, there exists a unique, valid polynomial that mathematically justifies that guess. Thus, infinite computing power does not aid the attacker.
+.SH SIDE-CHANNEL MITIGATIONS
+All modular reduction, division-free Barrett reduction, and Fermat inversion loops are implemented in branchless constant-time. Additionally, active computational jitter is injected into sensitive algebraic loops to distort power and electromagnetic side-channels (DPA/TEMPEST).
+.SH FILES
+.I /etc/hydra-its/config.toml
+.RS
+Global daemon configuration file.
+.RE
+.SH AUTHORS
+Designed and built by 0x1F464.
