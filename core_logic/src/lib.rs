@@ -10,6 +10,8 @@
 //! 2. **Constant-Time** (no data-dependent branching, loops, or memory accesses).
 //! 3. **Memory Safe** (zeroizing sensitive data on drop).
 
+extern crate alloc;
+
 pub mod field_arith;
 pub mod poly;
 pub mod trapdoor;
@@ -18,3 +20,9 @@ pub mod ratchet;
 pub mod otm;
 pub mod tunnel;
 pub mod sel4_compat;
+pub mod hydra_sss;
+pub mod routing;
+pub mod anomality;
+pub mod morphic_proof;
+pub mod stealth_identity;
+pub mod lorenz;
