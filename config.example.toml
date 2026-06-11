@@ -1,0 +1,50 @@
+# ==============================================================================
+# HYDRA-ITS SHADOW NETWORK CONFIGURATION TEMPLATE
+# Modulus Z_251 - Information-Theoretic Secrecy (ITS)
+# ==============================================================================
+
+[node]
+# Unique identifier of this node in the finite field Z_251 (1..=250)
+id = 1
+
+# Listening port for bare-metal UDP sockets
+port = 8180
+
+# Address to bind the listener to
+bind_address = "0.0.0.0"
+
+[crypto]
+# Security thresholds for Shamir's Secret Sharing (SSS)
+threshold_k = 3
+total_shares_n = 5
+
+# Local private trapdoor point (x, y) modulo 251.
+# Only known to this node's administrator.
+trapdoor_x = 2
+trapdoor_y = 11
+
+# Public anchor point used for Passive Entropy Parasitism (PEP)
+stealth_anchor = 13
+stealth_whitening_factor = 7
+
+[traffic]
+# Chaff and transmission rate configuration
+# If true, the node will emit uniform random chaff packets when queues are empty
+constant_rate_chaff_enabled = true
+
+# The transmission frequency (in milliseconds)
+tick_rate_ms = 100
+
+# The static payload size (must match compile-time constant PAYLOAD_SIZE)
+payload_size_elements = 16
+
+[pep]
+# Passive Entropy Parasitism sources
+entropy_sources = [
+    "https://api.nasa.gov/planetary/apod", # Public telemetry
+    "https://blockchain.info/q/latesthash", # Block hash source
+    "https://torrent-tracker.onion/scrape"  # Torrent tracker metadata
+]
+
+# The candidate telemetry offset bob scans for shannon statistical clues
+clue_offset = 12
