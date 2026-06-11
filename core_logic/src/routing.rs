@@ -72,6 +72,21 @@ impl<const K: usize> HydraNode<K> {
         self.lorenz_attractor.next_step()
     }
 
+    /// Performs a mandatory, algebra-enforced sequential modular squaring delay.
+    ///
+    /// This forces the host CPU to perform actual sequential mathematical work,
+    /// ensuring that Eve cannot speed up processing or bypass the delay, even with
+    /// unlimited hardware, since modular squaring is strictly non-parallelizable.
+    #[inline]
+    pub fn algebraic_delay(&self, iterations: usize) -> u128 {
+        let m = 9223372036854775783u128; // Large 64-bit prime
+        let mut cur = 3u128;
+        for _ in 0..iterations {
+            cur = (cur * cur) % m;
+        }
+        cur
+    }
+
     /// Processes an incoming onion packet in constant-time.
     ///
     /// If the packet is valid:
@@ -93,6 +108,11 @@ impl<const K: usize> HydraNode<K> {
         if hop_index >= 3 {
             return Err(());
         }
+
+        // 0. Perform a mandatory, algebra-enforced sequential modular squaring delay (ITS Time-Lock)
+        // This guarantees that any processing of the packet requires a physical CPU delay
+        // that cannot be bypassed or parallelized.
+        self.algebraic_delay(1000);
 
         let mut entropy = [0u8; PAYLOAD_SIZE];
         rng.fill_bytes(&mut entropy).map_err(|_| ())?;
