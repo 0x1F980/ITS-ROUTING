@@ -1,7 +1,7 @@
 use crate::field_arith::FieldElement;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-/// A polynomial over Z_17 of degree at most K - 1.
+/// A polynomial over Z_251 of degree at most K - 1.
 ///
 /// Represented as a fixed-size array of coefficients:
 /// `P(x) = c_0 + c_1 * x + c_2 * x^2 + ... + c_{K-1} * x^{K-1}`.
@@ -54,28 +54,28 @@ mod tests {
 
     #[test]
     fn test_polynomial_evaluation() {
-        // P(x) = 5 + 3x (modulo 17)
+        // P(x) = 5 + 3x (modulo 251)
         // P(0) = 5
         // P(1) = 8
         // P(2) = 11
         // P(3) = 14
-        // P(4) = 17 = 0
+        // P(4) = 17
         let p = Polynomial::new([FieldElement::new(5), FieldElement::new(3)]);
 
         assert_eq!(p.evaluate(FieldElement::new(0)).value(), 5);
         assert_eq!(p.evaluate(FieldElement::new(1)).value(), 8);
         assert_eq!(p.evaluate(FieldElement::new(2)).value(), 11);
         assert_eq!(p.evaluate(FieldElement::new(3)).value(), 14);
-        assert_eq!(p.evaluate(FieldElement::new(4)).value(), 0);
+        assert_eq!(p.evaluate(FieldElement::new(4)).value(), 17);
     }
 
     #[test]
     fn test_higher_degree_evaluation() {
-        // P(x) = 1 + 2x + 3x^2 (modulo 17)
+        // P(x) = 1 + 2x + 3x^2 (modulo 251)
         // P(0) = 1
         // P(1) = 6
-        // P(2) = 1 + 4 + 12 = 17 = 0
-        // P(3) = 1 + 6 + 27 = 34 = 0
+        // P(2) = 1 + 4 + 12 = 17
+        // P(3) = 1 + 6 + 27 = 34
         let p = Polynomial::new([
             FieldElement::new(1),
             FieldElement::new(2),
@@ -84,7 +84,7 @@ mod tests {
 
         assert_eq!(p.evaluate(FieldElement::new(0)).value(), 1);
         assert_eq!(p.evaluate(FieldElement::new(1)).value(), 6);
-        assert_eq!(p.evaluate(FieldElement::new(2)).value(), 0);
-        assert_eq!(p.evaluate(FieldElement::new(3)).value(), 0);
+        assert_eq!(p.evaluate(FieldElement::new(2)).value(), 17);
+        assert_eq!(p.evaluate(FieldElement::new(3)).value(), 34);
     }
 }

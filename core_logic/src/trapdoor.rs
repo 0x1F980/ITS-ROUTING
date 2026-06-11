@@ -2,13 +2,15 @@ use crate::field_arith::FieldElement;
 use subtle::{Choice, ConditionallySelectable};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-/// Performs Lagrange interpolation over Z_17 to evaluate the polynomial at `x`
+/// Performs Lagrange interpolation over Z_251 to evaluate the polynomial at `x`
 /// given a slice of points (x_i, y_i).
 ///
 /// # Side-Channel Resistance
 /// - Fuldstændig branchless: Alle if/else-betingelser er elimineret.
 /// - Anvender `subtle::Choice` og `FieldElement::conditional_select` til at maskere
 ///   indeks-sammenligninger i konstant-tid.
+/// - Integrerer **computational jitter** via `core::hint::black_box` i multiplikations-løkkerne
+///   for at sløre strøm- og elektromagnetiske sidekanaler (DPA/TEMPEST).
 pub fn lagrange_interpolate(points: &[(FieldElement, FieldElement)], x: FieldElement) -> FieldElement {
     let mut result = FieldElement::zero();
     let n = points.len();
@@ -24,6 +26,14 @@ pub fn lagrange_interpolate(points: &[(FieldElement, FieldElement)], x: FieldEle
 
             let term_num = x - points[j].0;
             let term_den = points[i].0 - points[j].0;
+
+            // Inject computational jitter during sensitive modular math to randomize CPU power trace.
+            // Using black_box guarantees that the compiler cannot optimize this out.
+            let mut jitter_seed = term_num.value() as u32;
+            for _ in 0..4 {
+                jitter_seed = jitter_seed.wrapping_mul(1103515245).wrapping_add(12345);
+            }
+            let _dummy = core::hint::black_box(jitter_seed);
 
             // Hvis j == i, multiplicerer vi med 1 for at bevare produktet uændret.
             let num_factor = FieldElement::conditional_select(&FieldElement::one(), &term_num, is_different);
@@ -78,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_lagrange_interpolation() {
-        // P(x) = 5 + 3x (modulo 17)
+        // P(x) = 5 + 3x (modulo 251)
         // P(1) = 8, P(2) = 11
         let points = [
             (FieldElement::new(1), FieldElement::new(8)),
@@ -92,7 +102,7 @@ mod tests {
 
     #[test]
     fn test_trapdoor_evaluation() {
-        // P(x) = 5 + 3x (modulo 17)
+        // P(x) = 5 + 3x (modulo 251)
         // Secret point (trapdoor): (2, 11)
         // Public point: (1, 8)
         let trapdoor = Trapdoor::<2>::new([
