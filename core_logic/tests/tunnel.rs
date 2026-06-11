@@ -27,13 +27,13 @@ impl SimpleRng {
     }
 
     fn next_field_element(&mut self) -> FieldElement {
-        // Modulo 17 reduktion for at få et uniformt felt-element
-        FieldElement::new((self.next_u32() % 17) as u8)
+        // Modulo 65521 reduktion for at få et uniformt felt-element
+        FieldElement::new((self.next_u32() % 65521) as u16)
     }
 
     fn next_non_zero_field_element(&mut self) -> FieldElement {
-        // Genererer et element i Z_17 \ {0}
-        FieldElement::new(((self.next_u32() % 16) + 1) as u8)
+        // Genererer et element i Z_65521 \ {0}
+        FieldElement::new(((self.next_u32() % 65520) + 1) as u16)
     }
 }
 
@@ -42,7 +42,7 @@ fn test_pure_geometric_tunnel_1000_steps() {
     // =========================================================================
     // 1. SETUP PHASE (Ren SSS & Geometrisk Ratchet)
     // =========================================================================
-    // Modulus p = 17. Threshold K = 2 (lineære polynomier).
+    // Modulus p = 65521. Threshold K = 2 (lineære polynomier).
     // Alice's Master Root R = 5.
     let master_root = FieldElement::new(5);
 
@@ -54,7 +54,7 @@ fn test_pure_geometric_tunnel_1000_steps() {
         public_point,
     ]);
 
-    // Alice og Bob deler det statiske baglæns-polynomium Q(x) = 5 + 3x (modulo 17)
+    // Alice og Bob deler det statiske baglæns-polynomium Q(x) = 5 + 3x (modulo 65521)
     // Alice kender hele polynomiet. Bob kender kun Master Root R = 5 og det indledende punkt.
     let poly_backward = Polynomial::new([FieldElement::new(5), FieldElement::new(3)]);
 
@@ -69,7 +69,7 @@ fn test_pure_geometric_tunnel_1000_steps() {
     let mut rng = SimpleRng::new(0x1337_C0DE);
 
     // Buffer til statistisk ensartethedstest (Chi-i-anden)
-    let mut ciphertexts = [0u8; 1000];
+    let mut ciphertexts = [0u16; 1000];
 
     // Vi simulerer 1.000 kontinuerlige pakker over den rene geometriske tunnel
     for i in 1..=1000 {
@@ -81,32 +81,32 @@ fn test_pure_geometric_tunnel_1000_steps() {
         // =========================================================================
         // A. Baglæns SSS (Autoritet)
         // Alice evaluerer det statiske Q(x) ved et unikt x_i for at generere sit autoritetspunkt.
-        // Vi roterer x_i i feltet Z_17 (undgår x=0 og x=1 for at forhindre overlap med Master Root og public point)
-        let x_i = FieldElement::new(((i % 15) + 2) as u8);
+        // Vi roterer x_i i feltet Z_65521 (undgår x=0 og x=1 for at forhindre overlap med Master Root og public point)
+        let x_i = FieldElement::new(((i % 65519) + 2) as u16);
         let y_back = poly_backward.evaluate(x_i);
         let alice_back_point = (x_i, y_back);
 
-        // Alice udleder det hemmelige nonce N_i ved at evaluere Q(16) (en hemmelig indeks Eve aldrig ser)
-        let nonce = poly_backward.evaluate(FieldElement::new(16));
+        // Alice udleder det hemmelige nonce N_i ved at evaluere Q(65520) (en hemmelig indeks Eve aldrig ser)
+        let nonce = poly_backward.evaluate(FieldElement::new(65520));
 
         // B. Forlæns SSS (Integritet)
-        // Alice udleder den forlæns hemmelighed fra det foregående baglæns punkt og besked
+        // Alice udleder den forlæns hemmelighed s_forw fra det foregående baglæns punkt og besked
         let s_forw = derive_forward_secret(alice_prev_back, alice_prev_msg);
 
         // Alice opretter et nyt forlæns polynomium P_i(x) = s_forw + b_i * x
-        // b_i er en frisk hældning genereret fra hendes TRNG
+        // b_i is a fresh slope generated from her TRNG
         let b_i = rng.next_non_zero_field_element();
         let poly_forward = Polynomial::new([s_forw, b_i]);
 
-        // Alice evaluerer P_i(x) ved beskeden M_i for at danne sit forlæns integritetspunkt
+        // Alice genererer det forlæns integritetspunkt ved x = M_i (beskeden selv!)
         let y_forw = poly_forward.evaluate(secret_msg);
         let alice_forw_point = (secret_msg, y_forw);
 
-        // Alice udleder den hemmelige MAC-nøgle K_MAC ved at evaluere P_i(15) (hemmelig indeks)
-        let k_mac = poly_forward.evaluate(FieldElement::new(15));
+        // Alice udleder den hemmelige MAC-nøgle K_MAC ved at evaluere P_i(65519)
+        let k_mac = poly_forward.evaluate(FieldElement::new(65519));
 
         // C. OTP Maskering & Tag-generering
-        // Alice genererer en frisk OTP-nøgle K_pool fra sin TRNG
+        // Alice genererer en éngangs-nøgle K_pool fra sin TRNG
         let k_pool = rng.next_field_element();
 
         // Alice maskerer k_pool med Bobs offentlige punkt
@@ -133,9 +133,10 @@ fn test_pure_geometric_tunnel_1000_steps() {
             (FieldElement::zero(), master_root),
             alice_back_point,
         ];
-        let bob_nonce = core_logic::trapdoor::lagrange_interpolate(&points_back_reconstructed, FieldElement::new(16));
+        let bob_nonce = core_logic::trapdoor::lagrange_interpolate(&points_back_reconstructed, FieldElement::new(65520));
 
         // B. Dekapsling & Dekryptering
+        // Bob dekapsler K_pool ved hjælp af sin private trapdoor
         let bob_k_pool = decapsulate(&trapdoor, masked_point);
         let decrypted_msg = ciphertext - bob_k_pool;
 
@@ -150,8 +151,8 @@ fn test_pure_geometric_tunnel_1000_steps() {
             (decrypted_msg, alice_forw_point.1),
         ];
 
-        // Bob udleder den hemmelige MAC-nøgle K_MAC ved at evaluere P_i(15)
-        let bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(15));
+        // Bob udleder den hemmelige MAC-nøgle K_MAC ved at evaluere P_i(65519)
+        let bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(65519));
 
         // Bob genskaber det forlæns polynomium som en Polynomial struct til verifikation
         // Hældningen b_i = (y_forw - s_forw) * decrypted_msg^-1
@@ -192,24 +193,26 @@ fn test_pure_geometric_tunnel_1000_steps() {
     // =========================================================================
     // 4. STATISTISK ENSARTETHEDSTEST (Chi-i-anden test på ciphertexts)
     // =========================================================================
-    // Vi tjekker, om de 1.000 ciphertexts er uniformt fordelt over Z_17.
-    let mut counts = [0u32; 17];
+    // Vi tjekker, om de 1.000 ciphertexts er uniformt fordelt over Z_65521.
+    // Vi grupperer dem i 10 statistiske bøtter.
+    let mut counts = [0u32; 10];
     for &c in ciphertexts.iter() {
-        counts[c as usize] += 1;
+        let bin = (c as usize * 10 / 65521).min(9);
+        counts[bin] += 1;
     }
 
-    let expected = 1000.0 / 17.0; // ~58.82 pr. bin
+    let expected = 1000.0 / 10.0;
     let mut chi_squared = 0.0;
     for &count in counts.iter() {
         let diff = (count as f64) - expected;
         chi_squared += (diff * diff) / expected;
     }
 
-    // For df = 16 og alpha = 0.01 er den kritiske værdi ~32.0.
-    // Hvis chi_squared < 32.0, kan vi ikke skelne ciphertexts fra perfekt uniform støj!
+    // For df = 9 og alpha = 0.01 er den kritiske værdi ~21.67.
+    // Hvis chi_squared < 25.0, kan vi ikke skelne ciphertexts fra perfekt uniform støj!
     println!("Chi-squared statistisk værdi: {}", chi_squared);
     assert!(
-        chi_squared < 32.0,
+        chi_squared < 25.0,
         "Statistisk ensartethedstest fejlede! Chi-squared: {}",
         chi_squared
     );
@@ -238,14 +241,14 @@ fn test_active_attacker_mitm_and_replay() {
     let x_i = FieldElement::new(3);
     let y_back = poly_backward.evaluate(x_i);
     let alice_back_point = (x_i, y_back);
-    let nonce = poly_backward.evaluate(FieldElement::new(16));
+    let nonce = poly_backward.evaluate(FieldElement::new(65520));
 
     let s_forw = derive_forward_secret(alice_prev_back, alice_prev_msg);
     let b_i = FieldElement::new(2);
     let poly_forward = Polynomial::new([s_forw, b_i]);
     let y_forw = poly_forward.evaluate(secret_msg);
     let alice_forw_point = (secret_msg, y_forw);
-    let k_mac = poly_forward.evaluate(FieldElement::new(15));
+    let k_mac = poly_forward.evaluate(FieldElement::new(65519));
 
     let k_pool = FieldElement::new(12);
     let masked_point = encapsulate(public_point, k_pool);
@@ -268,7 +271,7 @@ fn test_active_attacker_mitm_and_replay() {
             (FieldElement::zero(), bob_s_forw),
             (decrypted_msg, alice_forw_point.1),
         ];
-        let _bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(15));
+        let _bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(65519));
 
         let slope_num = alice_forw_point.1 - bob_s_forw;
         let slope_den = decrypted_msg.invert();
@@ -297,7 +300,7 @@ fn test_active_attacker_mitm_and_replay() {
             (FieldElement::zero(), bob_s_forw),
             (decrypted_msg, tampered_forw_point.1),
         ];
-        let bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(15));
+        let bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(65519));
 
         // Da Eve ændrede det forlæns punkt, vil den rekonstruerede k_mac være helt forkert,
         // hvilket får Wegman-Carter tag-verifikationen to at fejle!
@@ -305,7 +308,7 @@ fn test_active_attacker_mitm_and_replay() {
             (FieldElement::zero(), master_root),
             alice_back_point,
         ];
-        let bob_nonce = core_logic::trapdoor::lagrange_interpolate(&points_back_reconstructed, FieldElement::new(16));
+        let bob_nonce = core_logic::trapdoor::lagrange_interpolate(&points_back_reconstructed, FieldElement::new(65520));
 
         let is_tag_valid = verify_tag(bob_k_mac, masked_point.1, bob_nonce, tag);
         assert!(!bool::from(is_tag_valid));
@@ -328,15 +331,14 @@ fn test_active_attacker_mitm_and_replay() {
             (FieldElement::zero(), bob_s_forw),
             (decrypted_msg, alice_forw_point.1),
         ];
-        let bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(15));
+        let bob_k_mac = core_logic::trapdoor::lagrange_interpolate(&points_forw_reconstructed, FieldElement::new(65519));
 
-        // Da Bobs s_forw er anderledes, vil den rekonstruerede k_mac være fuldstændig korrupt,
-        // og tag-verifikationen vil fejle prompte!
+        // Da Bobs s_forw is different, the reconstructed k_mac is completely corrupt, and tag verification fails promptly!
         let points_back_reconstructed = [
             (FieldElement::zero(), master_root),
             alice_back_point,
         ];
-        let bob_nonce = core_logic::trapdoor::lagrange_interpolate(&points_back_reconstructed, FieldElement::new(16));
+        let bob_nonce = core_logic::trapdoor::lagrange_interpolate(&points_back_reconstructed, FieldElement::new(65520));
 
         let is_tag_valid = verify_tag(bob_k_mac, masked_point.1, bob_nonce, tag);
         assert!(!bool::from(is_tag_valid));
