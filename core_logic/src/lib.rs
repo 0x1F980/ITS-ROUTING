@@ -26,3 +26,4 @@ pub mod anomality;
 pub mod morphic_proof;
 pub mod stealth_identity;
 pub mod lorenz;
+pub mod time_lock;
