@@ -55,10 +55,10 @@ pub fn encapsulate_with_trng<R: SecureRandom>(
     rng: &mut R,
     public_point: (FieldElement, FieldElement),
 ) -> Result<((FieldElement, FieldElement), FieldElement), R::Error> {
-    let mut buf = [0u8; 2];
+    let mut buf = [0u8; 4];
     rng.fill_bytes(&mut buf)?;
 
-    let val_raw = (buf[0] as u16) | ((buf[1] as u16) << 8);
+    let val_raw = u32::from_be_bytes(buf);
     let k_pool = FieldElement::new(val_raw);
     let masked_point = encapsulate(public_point, k_pool);
 
@@ -86,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_encapsulation_roundtrip() {
-        // P(x) = 5 + 3x (modulo 65521)
+        // P(x) = 5 + 3x (modulo 2147483647)
         // Public point: (1, 8)
         // Secret point (trapdoor): (2, 11)
         let public_point = (FieldElement::new(1), FieldElement::new(8));
@@ -100,7 +100,7 @@ mod tests {
         // Alice encapsulates k_pool
         let masked_point = encapsulate(public_point, k_pool);
         assert_eq!(masked_point.0.value(), 1);
-        assert_eq!(masked_point.1.value(), 20); // 8 + 12 = 20 mod 65521
+        assert_eq!(masked_point.1.value(), 20); // 8 + 12 = 20 mod 2147483647
 
         // Bob decapsulates masked_point
         let recovered_k = decapsulate(&trapdoor, masked_point);
@@ -118,12 +118,12 @@ mod tests {
         let mut rng = MockRng { value: 12 };
         let (masked_point, k_pool) = encapsulate_with_trng(&mut rng, public_point).unwrap();
 
-        // 12 | (12 << 8) = 3084
-        assert_eq!(k_pool.value(), 3084);
+        // 12 repeated over 4 bytes is 0x0C0C0C0C = 202116108
+        assert_eq!(k_pool.value(), 202116108);
         assert_eq!(masked_point.0.value(), 1);
-        assert_eq!(masked_point.1.value(), 3092); // 3084 + 8 = 3092 mod 65521
+        assert_eq!(masked_point.1.value(), 202116116); // 202116108 + 8 = 202116116 mod 2147483647
 
         let recovered_k = decapsulate(&trapdoor, masked_point);
-        assert_eq!(recovered_k.value(), 3084);
+        assert_eq!(recovered_k.value(), 202116108);
     }
 }

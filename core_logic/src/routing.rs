@@ -20,7 +20,7 @@ pub struct HydraOnionPacket {
     /// Hop-by-hop masked SSS-trapdoor points containing `k_pool_j` for Hop j.
     /// `(x_j, y_masked_j)` where `y_masked_j = P_j(x_j) + k_pool_j`.
     pub header_points: [(FieldElement, FieldElement); 3],
-    /// Wegman-Carter authentication tags for each hop's header: `T_j = (K_MAC_j * y_masked_j + N_j) mod 17`
+    /// Wegman-Carter authentication tags for each hop's header: `T_j = (K_MAC_j * y_masked_j + N_j) mod 2147483647`
     pub header_tags: [FieldElement; 3],
     /// The onion-encrypted payload. At each hop, the hop decapsulates `k_pool_j`
     /// and subtracts it from all payload elements, then shifts the payload to reveal
@@ -30,12 +30,12 @@ pub struct HydraOnionPacket {
 
 /// A router node in the Hydra-ITS darknet.
 ///
-/// Each node has its own SSS-Trapdoor, a unique node index (1..=250),
+/// Each node has its own SSS-Trapdoor, a unique node index (1..=2147483646),
 /// manages a queue of packets to maintain a constant-rate output stream,
 /// and houses a deterministic chaotic Lorenz Attractor for dynamic scheduling jitter.
 #[derive(Clone, Debug, Zeroize, ZeroizeOnDrop)]
 pub struct HydraNode<const K: usize> {
-    /// Unique node identifier (1..=250).
+    /// Unique node identifier (1..=2147483646).
     pub node_index: FieldElement,
     /// Bob's/Node's private SSS-Trapdoor.
     pub trapdoor: Trapdoor<K>,
@@ -56,7 +56,7 @@ impl<const K: usize> HydraNode<K> {
         header_mac_key: FieldElement,
         header_nonce: FieldElement,
     ) -> Self {
-        let seed = (node_index.value() as u32) | ((header_mac_key.value() as u32) << 8) | 0x13370000;
+        let seed = node_index.value() ^ header_mac_key.value() ^ 0x13370000;
         HydraNode {
             node_index,
             trapdoor,
@@ -114,7 +114,7 @@ impl<const K: usize> HydraNode<K> {
         // that cannot be bypassed or parallelized.
         self.algebraic_delay(1000);
 
-        let mut entropy = [0u8; PAYLOAD_SIZE];
+        let mut entropy = [0u8; 4];
         rng.fill_bytes(&mut entropy).map_err(|_| ())?;
 
         // 1. Verify Wegman-Carter header tag in constant-time
@@ -145,8 +145,8 @@ impl<const K: usize> HydraNode<K> {
         for i in 0..(PAYLOAD_SIZE - 1) {
             forwarded_payload[i] = decrypted_payload[i + 1];
         }
-        // Pad the last element with random entropy reduced to Z_65521
-        let pad_val = (entropy[0] as u16) | ((entropy[1] as u16) << 8);
+        // Pad the last element with random entropy reduced to Z_2147483647
+        let pad_val = u32::from_be_bytes(entropy);
         forwarded_payload[PAYLOAD_SIZE - 1] = FieldElement::new(pad_val);
 
         // 6. Prepare the forwarded packet structure
@@ -173,8 +173,9 @@ impl<const K: usize> HydraNode<K> {
         if !self.out_queue.is_empty() {
             self.out_queue.remove(0)
         } else {
-            // Generate a dummy packet with random values using full 16-bit entropy
-            let mut buf = [0u8; 64];
+            // Generate a dummy packet with random values using full 32-bit entropy
+            // 25 elements * 4 bytes = 100 bytes of entropy
+            let mut buf = [0u8; 100];
             let _ = rng.fill_bytes(&mut buf);
 
             let mut header_points = [(FieldElement::zero(), FieldElement::zero()); 3];
@@ -182,14 +183,14 @@ impl<const K: usize> HydraNode<K> {
             let mut payload = [FieldElement::zero(); PAYLOAD_SIZE];
 
             for i in 0..3 {
-                let x_raw = (buf[i * 4] as u16) | ((buf[i * 4 + 1] as u16) << 8);
-                let y_raw = (buf[i * 4 + 2] as u16) | ((buf[i * 4 + 3] as u16) << 8);
-                let tag_raw = (buf[12 + i * 2] as u16) | ((buf[12 + i * 2 + 1] as u16) << 8);
+                let x_raw = u32::from_be_bytes([buf[i * 8], buf[i * 8 + 1], buf[i * 8 + 2], buf[i * 8 + 3]]);
+                let y_raw = u32::from_be_bytes([buf[i * 8 + 4], buf[i * 8 + 5], buf[i * 8 + 6], buf[i * 8 + 7]]);
+                let tag_raw = u32::from_be_bytes([buf[24 + i * 4], buf[24 + i * 4 + 1], buf[24 + i * 4 + 2], buf[24 + i * 4 + 3]]);
                 header_points[i] = (FieldElement::new(x_raw), FieldElement::new(y_raw));
                 header_tags[i] = FieldElement::new(tag_raw);
             }
             for i in 0..PAYLOAD_SIZE {
-                let val_raw = (buf[18 + i * 2] as u16) | ((buf[18 + i * 2 + 1] as u16) << 8);
+                let val_raw = u32::from_be_bytes([buf[36 + i * 4], buf[36 + i * 4 + 1], buf[36 + i * 4 + 2], buf[36 + i * 4 + 3]]);
                 payload[i] = FieldElement::new(val_raw);
             }
 
@@ -205,9 +206,9 @@ impl<const K: usize> HydraNode<K> {
     ///
     /// This represents **Morphic Network Coding (MNC)**. The node does not decrypt or read
     /// the contents. It simply computes a linear combination of the two incoming packets
-    /// modulo 17 using scalar factors `c1` and `c2`.
+    /// modulo 2147483647 using scalar factors `c1` and `c2`.
     ///
-    /// Formula: `morphed_packet = (c1 * p1) + (c2 * p2) mod 17`
+    /// Formula: `morphed_packet = (c1 * p1) + (c2 * p2) mod 2147483647`
     pub fn blind_linear_mix(
         &self,
         p1: &HydraOnionPacket,
@@ -338,7 +339,6 @@ mod tests {
         let mut rng = MockRng { state: 42 };
 
         // We set up 3 hops (mixes): Mix 1, Mix 2, Mix 3
-        // Modulus is 251.
         // Public points for Mix 1, 2, 3
         let pub_pt_1 = (FieldElement::new(1), FieldElement::new(8));  // Q1(1) = 8
         let pub_pt_2 = (FieldElement::new(2), FieldElement::new(11)); // Q2(2) = 11

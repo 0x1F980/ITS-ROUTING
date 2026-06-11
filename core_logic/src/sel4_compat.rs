@@ -17,18 +17,18 @@ pub struct Sel4SharedPage {
     /// The serialized packet data.
     ///
     /// Layout:
-    /// - Bytes 0..16: 8 x 16-bit FieldElements (masked_point, forward_point, backward_point, tag, ciphertext)
-    pub data: [u8; 16],
+    /// - Bytes 0..32: 8 x 32-bit FieldElements (masked_point, forward_point, backward_point, tag, ciphertext)
+    pub data: [u8; 32],
     /// Padding to align the structure to a 4KB page boundary.
-    pub padding: [u8; 4080],
+    pub padding: [u8; 4064],
 }
 
 impl Sel4SharedPage {
     /// Creates a new, zeroed `Sel4SharedPage`.
     pub const fn new() -> Self {
         Sel4SharedPage {
-            data: [0u8; 16],
-            padding: [0u8; 4080],
+            data: [0u8; 32],
+            padding: [0u8; 4064],
         }
     }
 
@@ -45,16 +45,24 @@ impl Sel4SharedPage {
             packet.ciphertext.value(),
         ];
         for i in 0..8 {
-            self.data[i * 2] = (values[i] >> 8) as u8;
-            self.data[i * 2 + 1] = (values[i] & 0xFF) as u8;
+            let bytes = values[i].to_be_bytes();
+            self.data[i * 4] = bytes[0];
+            self.data[i * 4 + 1] = bytes[1];
+            self.data[i * 4 + 2] = bytes[2];
+            self.data[i * 4 + 3] = bytes[3];
         }
     }
 
     /// Deserializes a `ScpstPacket` from this page-aligned buffer.
     pub fn deserialize_packet(&self) -> ScpstPacket {
-        let mut values = [0u16; 8];
+        let mut values = [0u32; 8];
         for i in 0..8 {
-            values[i] = ((self.data[i * 2] as u16) << 8) | (self.data[i * 2 + 1] as u16);
+            values[i] = u32::from_be_bytes([
+                self.data[i * 4],
+                self.data[i * 4 + 1],
+                self.data[i * 4 + 2],
+                self.data[i * 4 + 3],
+            ]);
         }
         ScpstPacket {
             masked_point: (
@@ -98,14 +106,14 @@ pub fn verify_memory_barrier(ptr: *const u8, len: usize) -> bool {
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers. The caller must ensure that:
 /// - `endpoint_buf` points to a valid, writable memory block of at least `sizeof(AliceEndpoint<2>)` bytes.
-/// - `poly_coeffs`, `public_point`, and `initial_back` are valid, readable pointers pointing to arrays of at least 2 u16 elements.
+/// - `poly_coeffs`, `public_point`, and `initial_back` are valid, readable pointers pointing to arrays of at least 2 u32 elements.
 #[no_mangle]
 pub unsafe extern "C" fn scpst_alice_init(
     endpoint_buf: *mut AliceEndpoint<2>,
-    poly_coeffs: *const u16,
-    public_point: *const u16,
-    initial_back: *const u16,
-    initial_msg: u16,
+    poly_coeffs: *const u32,
+    public_point: *const u32,
+    initial_back: *const u32,
+    initial_msg: u32,
 ) -> i32 {
     if endpoint_buf.is_null() || poly_coeffs.is_null() || public_point.is_null() || initial_back.is_null() {
         return -1;
@@ -136,15 +144,15 @@ pub unsafe extern "C" fn scpst_alice_init(
 /// # Safety
 /// This function is unsafe because it dereferences raw pointers. The caller must ensure that:
 /// - `endpoint_buf` points to a valid, writable memory block of at least `sizeof(BobEndpoint<2>)` bytes.
-/// - `trapdoor_points` points to a valid, readable array of at least 4 u16 elements (representing 2 points * 2 coordinates).
-/// - `initial_back` points to a valid, readable array of at least 2 u16 elements.
+/// - `trapdoor_points` points to a valid, readable array of at least 4 u32 elements (representing 2 points * 2 coordinates).
+/// - `initial_back` points to a valid, readable array of at least 2 u32 elements.
 #[no_mangle]
 pub unsafe extern "C" fn scpst_bob_init(
     endpoint_buf: *mut BobEndpoint<2>,
-    master_root: u16,
-    trapdoor_points: *const u16,
-    initial_back: *const u16,
-    initial_msg: u16,
+    master_root: u32,
+    trapdoor_points: *const u32,
+    initial_back: *const u32,
+    initial_msg: u32,
 ) -> i32 {
     if endpoint_buf.is_null() || trapdoor_points.is_null() || initial_back.is_null() {
         return -1;
@@ -196,7 +204,7 @@ impl SecureRandom for FfiRng {
 #[no_mangle]
 pub unsafe extern "C" fn scpst_alice_send(
     endpoint: *mut AliceEndpoint<2>,
-    message: u16,
+    message: u32,
     shared_page: *mut Sel4SharedPage,
     trng_callback: unsafe extern "C" fn(*mut u8, usize) -> i32,
 ) -> i32 {
@@ -223,12 +231,12 @@ pub unsafe extern "C" fn scpst_alice_send(
 /// This function is unsafe because it dereferences raw pointers. The caller must ensure that:
 /// - `endpoint` points to a valid, writable `BobEndpoint<2>` structure.
 /// - `shared_page` points to a valid, readable `Sel4SharedPage` memory buffer.
-/// - `decrypted_message_out` points to a valid, writable memory location of at least 1 u16.
+/// - `decrypted_message_out` points to a valid, writable memory location of at least 1 u32.
 #[no_mangle]
 pub unsafe extern "C" fn scpst_bob_receive(
     endpoint: *mut BobEndpoint<2>,
     shared_page: *const Sel4SharedPage,
-    decrypted_message_out: *mut u16,
+    decrypted_message_out: *mut u32,
 ) -> i32 {
     if endpoint.is_null() || shared_page.is_null() || decrypted_message_out.is_null() {
         return -1;
@@ -304,7 +312,7 @@ mod tests {
             );
             assert_eq!(send_res, 0);
 
-            let mut decrypted = 0u16;
+            let mut decrypted = 0u32;
             let recv_res = scpst_bob_receive(
                 &mut bob,
                 &shared_page,

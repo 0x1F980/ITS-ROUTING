@@ -26,14 +26,14 @@ struct Config {
     crypto: CryptoConfig,
     traffic: TrafficConfig,
     #[serde(default)]
-    routing_table: HashMap<u16, String>,
+    routing_table: HashMap<u32, String>,
     #[serde(default)]
     pep: PepConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 struct NodeConfig {
-    id: u16,
+    id: u32,
     port: u16,
     bind_address: String,
 }
@@ -42,10 +42,10 @@ struct NodeConfig {
 struct CryptoConfig {
     threshold_k: usize,
     total_shares_n: usize,
-    trapdoor_x: u16,
-    trapdoor_y: u16,
-    stealth_anchor: u16,
-    stealth_whitening_factor: u16,
+    trapdoor_x: u32,
+    trapdoor_y: u32,
+    stealth_anchor: u32,
+    stealth_whitening_factor: u32,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -70,10 +70,10 @@ struct TimeLockJson {
     x: u64,
     m: u64,
     t: usize,
-    initial_share_1: Vec<u16>,
-    transitions_1: Vec<Vec<u16>>,
-    transitions_2: Vec<Vec<u16>>,
-    encrypted_payload: Vec<u16>,
+    initial_share_1: Vec<u32>,
+    transitions_1: Vec<Vec<u32>>,
+    transitions_2: Vec<Vec<u32>>,
+    encrypted_payload: Vec<u32>,
 }
 
 impl TimeLockJson {
@@ -130,7 +130,7 @@ enum Commands {
         #[arg(short, long)]
         msg: String,
         #[arg(short, long)]
-        dest: u16,
+        dest: u32,
         #[arg(long)]
         pep: bool,
     },
@@ -195,7 +195,7 @@ impl SecureRandom for CliRng {
 // ==============================================================================
 
 fn serialize_packet(packet: &HydraOnionPacket) -> Vec<u8> {
-    let mut bytes = Vec::with_capacity(50);
+    let mut bytes = Vec::with_capacity(100); // 25 elements * 4 bytes = 100 bytes
     for i in 0..3 {
         bytes.extend_from_slice(&packet.header_points[i].0.value().to_be_bytes());
         bytes.extend_from_slice(&packet.header_points[i].1.value().to_be_bytes());
@@ -210,7 +210,7 @@ fn serialize_packet(packet: &HydraOnionPacket) -> Vec<u8> {
 }
 
 fn deserialize_packet(bytes: &[u8]) -> Result<HydraOnionPacket, &'static str> {
-    if bytes.len() < 50 {
+    if bytes.len() < 100 { // 25 elements * 4 bytes = 100 bytes
         return Err("Packet too short");
     }
     let mut header_points = [(FieldElement::zero(), FieldElement::zero()); 3];
@@ -219,20 +219,20 @@ fn deserialize_packet(bytes: &[u8]) -> Result<HydraOnionPacket, &'static str> {
 
     let mut offset = 0;
     for i in 0..3 {
-        let x = u16::from_be_bytes([bytes[offset], bytes[offset + 1]]);
-        let y = u16::from_be_bytes([bytes[offset + 2], bytes[offset + 3]]);
+        let x = u32::from_be_bytes([bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]]);
+        let y = u32::from_be_bytes([bytes[offset + 4], bytes[offset + 5], bytes[offset + 6], bytes[offset + 7]]);
         header_points[i] = (FieldElement::new(x), FieldElement::new(y));
-        offset += 4;
+        offset += 8;
     }
     for i in 0..3 {
-        let tag = u16::from_be_bytes([bytes[offset], bytes[offset + 1]]);
+        let tag = u32::from_be_bytes([bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]]);
         header_tags[i] = FieldElement::new(tag);
-        offset += 2;
+        offset += 4;
     }
     for i in 0..PAYLOAD_SIZE {
-        let val = u16::from_be_bytes([bytes[offset], bytes[offset + 1]]);
+        let val = u32::from_be_bytes([bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]]);
         payload[i] = FieldElement::new(val);
-        offset += 2;
+        offset += 4;
     }
 
     Ok(HydraOnionPacket {
@@ -251,7 +251,6 @@ async fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
     let mut combined_entropy = Vec::new();
 
     for url in sources {
-        // Fetch with a short timeout to avoid blocking the daemon or client
         let res = client.get(url)
             .timeout(std::time::Duration::from_secs(3))
             .send()
@@ -259,7 +258,6 @@ async fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
 
         if let Ok(response) = res {
             if let Ok(text) = response.text().await {
-                // Hash or extract raw bytes from response text to generate high-quality entropy
                 use sha2::{Sha256, Digest};
                 let mut hasher = Sha256::new();
                 hasher.update(text.as_bytes());
@@ -268,7 +266,6 @@ async fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
         }
     }
 
-    // Fallback to random if all HTTP fetches failed
     if combined_entropy.is_empty() {
         println!("Advarsel: Alle eksterne entropi-kilder fejlede. Bruger lokal pseudo-entropi.");
         combined_entropy.extend_from_slice(&[0xAA; 32]);
@@ -374,8 +371,8 @@ async fn run_node(config: Config) {
     // Initialize StateRatchet for dynamic key rotation
     // Seed is derived from the node's private trapdoor coordinates
     let mut seed = [0u8; 32];
-    seed[0..2].copy_from_slice(&config.crypto.trapdoor_x.to_be_bytes());
-    seed[2..4].copy_from_slice(&config.crypto.trapdoor_y.to_be_bytes());
+    seed[0..4].copy_from_slice(&config.crypto.trapdoor_x.to_be_bytes());
+    seed[4..8].copy_from_slice(&config.crypto.trapdoor_y.to_be_bytes());
     let ratchet = Arc::new(Mutex::new(StateRatchet::new(seed)));
 
     // Step the ratchet to get the first set of keys
@@ -402,7 +399,6 @@ async fn run_node(config: Config) {
         loop {
             if let Ok((len, _src)) = socket_recv.recv_from(&mut buf).await {
                 if let Ok(packet) = deserialize_packet(&buf[..len]) {
-                    // Try to process the packet for each possible hop index
                     let mut n = node_recv.lock().await;
                     let mut processed = false;
                     for hop_index in 0..3 {
@@ -458,7 +454,7 @@ async fn run_node(config: Config) {
                 let dummy_packet = node_send.lock().await.pop_constant_rate_packet(&mut rng);
                 // Pick a random peer from the routing table
                 if !routing_table.is_empty() {
-                    let keys: Vec<&u16> = routing_table.keys().collect();
+                    let keys: Vec<&u32> = routing_table.keys().collect();
                     use rand::Rng;
                     let random_idx = rand::thread_rng().gen_range(0..keys.len());
                     let peer_id = keys[random_idx];
@@ -483,7 +479,7 @@ async fn run_node(config: Config) {
 // CLIENT SEND RUNNER
 // ==============================================================================
 
-async fn run_client_send(config: Config, msg: String, dest: u16, pep: bool) {
+async fn run_client_send(config: Config, msg: String, dest: u32, pep: bool) {
     let mut rng = CliRng;
     let msg_bytes = msg.as_bytes();
 
@@ -510,7 +506,7 @@ async fn run_client_send(config: Config, msg: String, dest: u16, pep: bool) {
                 
                 // Map live entropy bytes to FieldElements
                 let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
-                let x = stealth.inject(m, FieldElement::new(entropy_byte as u16));
+                let x = stealth.inject(m, FieldElement::new(entropy_byte as u32));
                 print!("{}, ", x.value());
             }
             println!("]");
@@ -529,8 +525,8 @@ async fn run_client_send(config: Config, msg: String, dest: u16, pep: bool) {
 
     // Initialize StateRatchet to derive keys and nonces dynamically
     let mut seed = [0u8; 32];
-    seed[0..2].copy_from_slice(&config.crypto.trapdoor_x.to_be_bytes());
-    seed[2..4].copy_from_slice(&config.crypto.trapdoor_y.to_be_bytes());
+    seed[0..4].copy_from_slice(&config.crypto.trapdoor_x.to_be_bytes());
+    seed[4..8].copy_from_slice(&config.crypto.trapdoor_y.to_be_bytes());
     let mut ratchet = StateRatchet::new(seed);
 
     let (k_pool_1, mac_key_1, nonce_1) = ratchet.step().unwrap();
@@ -547,7 +543,7 @@ async fn run_client_send(config: Config, msg: String, dest: u16, pep: bool) {
     // Convert message bytes to FieldElements
     let mut payload_elements = Vec::new();
     for &b in msg_bytes.iter() {
-        payload_elements.push(FieldElement::new(b as u16));
+        payload_elements.push(FieldElement::new(b as u32));
     }
 
     let onion_packet = create_onion_packet(
@@ -597,7 +593,7 @@ async fn run_client_receive(config: Config, pep: bool) {
         for (idx, &x_val) in mock_pep_data.iter().enumerate() {
             let x = FieldElement::new(x_val);
             let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
-            let recovered_whitened = stealth.transpose(x, FieldElement::new(entropy_byte as u16));
+            let recovered_whitened = stealth.transpose(x, FieldElement::new(entropy_byte as u32));
             let s_recovered = stealth.shard_unwhiten(recovered_whitened);
             data_points.push(s_recovered);
         }
@@ -618,17 +614,16 @@ async fn run_client_receive(config: Config, pep: bool) {
 
     loop {
         if let Ok((len, _src)) = socket.recv_from(&mut buf).await {
-            // In a real network, shares are received as serialized HydraShare packets.
-            if len >= 4 {
-                let id = FieldElement::new(u16::from_be_bytes([buf[0], buf[1]]));
-                let num_points = u16::from_be_bytes([buf[2], buf[3]]) as usize;
+            if len >= 8 {
+                let id = FieldElement::new(u32::from_be_bytes([buf[0], buf[1], buf[2], buf[3]]));
+                let num_points = u32::from_be_bytes([buf[4], buf[5], buf[6], buf[7]]) as usize;
                 let mut data_points = Vec::new();
-                let mut offset = 4;
+                let mut offset = 8;
                 for _ in 0..num_points {
-                    if offset + 2 <= len {
-                        let val = u16::from_be_bytes([buf[offset], buf[offset + 1]]);
+                    if offset + 4 <= len {
+                        let val = u32::from_be_bytes([buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]]);
                         data_points.push(FieldElement::new(val));
-                        offset += 2;
+                        offset += 4;
                     }
                 }
                 println!("Modtog Share ID: {}", id.value());
@@ -768,32 +763,19 @@ async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBu
     println!("Udfører deniability-transposition over SSS-transitions-matrixen...");
     println!("Dette beviser, at dækhistorien er matematisk 100% konsistent med transitions-vektorerne!");
 
-    // To deny, we compute an alternative initial share for Node 1
-    // By definition, for any chosen message decoy, we can find a consistent initial share 1
-    // Such that the puzzle decrypts to the decoy message exactly.
-    // Let's derive s1_0' = s1_0 + (decoy_diff)
-    // We can evaluate this directly by constructing the alternative initial share 1
-    
-    // We solve to get the valid Y first
+    // Solve to get the valid Y first
     let mut cur = puzzle.x as u128;
     for _ in 0..puzzle.t {
         cur = (cur * cur) % (puzzle.m as u128);
     }
     let y = cur as u64;
 
-    // S_T = 2 * s_{1, T} - s_{2, T} mod 65521
+    // S_T = 2 * s_{1, T} - s_{2, T} mod 2147483647
     // Since S_T = encrypted_payload - decoy
     // We can run the decryption backwards to find alternative s1_T, and then back-transition to find s1_0
-    // But since SSS-chaining transitions are linear and underdetermined, we can just run SssTimeLock::deny!
-    // SssTimeLock::deny simulates Bob asserting any alternative starting share.
-    // Let's find the EXACT alternative starting share 1 that yields our decoy message!
-    // Let's do the backward algebra:
-    // We know:
-    // s_{2, 0} = (y + idx) % 65521
-    // We can compute the full forward trajectory of current_share_2 up to epoch T:
     let mut current_share_2 = Vec::with_capacity(puzzle.initial_share_1.len());
     for idx in 0..puzzle.initial_share_1.len() {
-        let s2_0_raw = ((y as u128 + idx as u128) % 65521) as u16;
+        let s2_0_raw = ((y as u128 + idx as u128) % 2147483647) as u32;
         current_share_2.push(FieldElement::new(s2_0_raw));
     }
     for j in 0..puzzle.t {
@@ -803,21 +785,15 @@ async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBu
         }
     }
 
-    // Now for each index, we want the final secret S_T' to be:
-    // S_T' = encrypted_payload - decoy_msg
-    // We know S_T' = 2 * s_{1, T}' - s_{2, T} mod 65521
-    // So 2 * s_{1, T}' = S_T' + s_{2, T} mod 65521
-    // s_{1, T}' = (S_T' + s_{2, T}) * 2^-1 mod 65521
     let two_inv = FieldElement::new(2).invert();
 
     let mut alternative_s1_t = Vec::with_capacity(puzzle.initial_share_1.len());
     for idx in 0..puzzle.initial_share_1.len() {
-        let s_t_prime = puzzle.encrypted_payload[idx] - FieldElement::new(padded_decoy[idx] as u16);
+        let s_t_prime = puzzle.encrypted_payload[idx] - FieldElement::new(padded_decoy[idx] as u32);
         let s1_t_prime = (s_t_prime + current_share_2[idx]) * two_inv;
         alternative_s1_t.push(s1_t_prime);
     }
 
-    // Now we back-transition alternative_s1_t to alternative_s1_0
     // s_{j} = trans_j - s_{j+1}
     let mut current_s1 = alternative_s1_t;
     for j in (0..puzzle.t).rev() {
@@ -827,7 +803,6 @@ async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBu
         }
     }
 
-    // current_s1 now contains the EXACT alternative initial share 1 that yields our decoy message!
     let alternative_initial_share_1 = current_s1;
 
     // Verify it using deny

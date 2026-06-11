@@ -27,20 +27,14 @@ impl StateRatchet {
         StateRatchet { seed, counter: 0 }
     }
 
-    /// Steps the ratchet forward, deriving the next seed and the 16-bit one-time keys
+    /// Steps the ratchet forward, deriving the next seed and the 32-bit one-time keys
     /// for the current step.
     ///
     /// Returns a tuple containing:
     /// `(k_pool, k_mac, nonce)` as `FieldElement`s.
     ///
     /// # Errors
-    /// Returns `Err(())` if the HKDF expansion fails (which is mathematically impossible
-    /// for a 64-byte output, but handled to guarantee no panic in the runtime path).
-    ///
-    /// # Side-Channel Resistance
-    /// - Uses HKDF-SHA256, which is constant-time and free from data-dependent branches.
-    /// - Intermediate buffers are zeroized on drop.
-    /// - No `panic!` in the runtime path.
+    /// Returns `Err(())` if the HKDF expansion fails.
     pub fn step(&mut self) -> Result<(FieldElement, FieldElement, FieldElement), ()> {
         let salt = self.counter.to_be_bytes();
         
@@ -49,9 +43,9 @@ impl StateRatchet {
         
         // Expand step to get 64 bytes of output key material (OKM).
         // - 32 bytes for the next seed.
-        // - 2 bytes for k_pool.
-        // - 2 bytes for k_mac.
-        // - 2 bytes for nonce.
+        // - 4 bytes for k_pool.
+        // - 4 bytes for k_mac.
+        // - 4 bytes for nonce.
         let mut okm = [0u8; 64];
         if hk.expand(b"scpst-ratchet-step", &mut okm).is_err() {
             return Err(());
@@ -61,10 +55,10 @@ impl StateRatchet {
         let mut next_seed = [0u8; 32];
         next_seed.copy_from_slice(&okm[0..32]);
 
-        // Each element is now a full 16-bit value
-        let k_pool_raw = (okm[32] as u16) | ((okm[33] as u16) << 8);
-        let k_mac_raw = (okm[34] as u16) | ((okm[35] as u16) << 8);
-        let nonce_raw = (okm[36] as u16) | ((okm[37] as u16) << 8);
+        // Each element is now a full 32-bit value
+        let k_pool_raw = u32::from_le_bytes([okm[32], okm[33], okm[34], okm[35]]);
+        let k_mac_raw = u32::from_le_bytes([okm[36], okm[37], okm[38], okm[39]]);
+        let nonce_raw = u32::from_le_bytes([okm[40], okm[41], okm[42], okm[43]]);
 
         // Zeroize the old seed and update with the next seed.
         self.seed.zeroize();

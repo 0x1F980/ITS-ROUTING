@@ -26,7 +26,7 @@ impl StealthIdentity {
 
     /// Alice computes her static contribution `M` beforehand without knowing the network's state.
     ///
-    /// Formula: `M = S - A mod 65521`
+    /// Formula: `M = S - A mod 2147483647`
     /// This masks the shard `S` completely behind the anchor `A`.
     #[inline]
     pub fn impose(&self, shard: FieldElement) -> FieldElement {
@@ -35,7 +35,7 @@ impl StealthIdentity {
 
     /// Alice injects her contribution `M` into an external public entropy pool element `E`.
     ///
-    /// Formula: `X = M + E mod 65521`
+    /// Formula: `X = M + E mod 2147483647`
     /// To any observer without the anchor, the combined result `X` is indistinguishable from random noise.
     #[inline]
     pub fn inject(&self, m: FieldElement, entropy: FieldElement) -> FieldElement {
@@ -44,10 +44,10 @@ impl StealthIdentity {
 
     /// Bob passively extracts Alice's shard `S` from the observed combined block `X` using the anchor and entropy.
     ///
-    /// Formula: `S' = X - E + A mod 65521`
+    /// Formula: `S' = X - E + A mod 2147483647`
     ///
     /// Proof of correctness:
-    /// `S' = (S - A + E) - E + A = S mod 65521`
+    /// `S' = (S - A + E) - E + A = S mod 2147483647`
     #[inline]
     pub fn transpose(&self, x: FieldElement, entropy: FieldElement) -> FieldElement {
         x - entropy + self.anchor
@@ -112,15 +112,15 @@ mod tests {
 
         // 1. Whitening (Sikrer 100% statistisk støj-profil)
         let whitened = stealth.shard_whiten(secret_shard);
-        assert_eq!(whitened.value(), 20); // 15 + 5 = 20 mod 65521
+        assert_eq!(whitened.value(), 20); // 15 + 5 = 20 mod 2147483647
 
         // 2. Impose (Beregnes forinden asynkront)
         let m = stealth.impose(whitened);
-        assert_eq!(m.value(), 8); // 20 - 12 = 8 mod 65521
+        assert_eq!(m.value(), 8); // 20 - 12 = 8 mod 2147483647
 
         // 3. Inject (Indlejres i ekstern entropi)
         let x = stealth.inject(m, external_entropy);
-        assert_eq!(x.value(), 15); // 8 + 7 = 15 mod 65521
+        assert_eq!(x.value(), 15); // 8 + 7 = 15 mod 2147483647
 
         // --- TRANSIT (Eve ejer al infrastruktur og ser kun x = 15, hvilket passer til enhver besked) ---
 
@@ -146,7 +146,7 @@ mod tests {
 
         // Alice modulates the pool at offset 1 to create her statistical echo
         stealth.mimic_shannon_clue(&mut public_entropy_pool, 1).unwrap();
-        assert_eq!(public_entropy_pool[1].value(), 22); // 14 + 8 = 22 mod 65521
+        assert_eq!(public_entropy_pool[1].value(), 22); // 14 + 8 = 22 mod 2147483647
 
         // Bob checks the candidate offset using the original expected telemetry (14)
         let is_clue_found = stealth.discover_clue(public_entropy_pool[1], FieldElement::new(14));

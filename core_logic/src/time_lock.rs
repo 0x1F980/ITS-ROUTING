@@ -6,7 +6,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 /// The complete, self-contained hybrid SSS-Chained Time-Lock puzzle.
 ///
 /// It combines an RSW96 sequential squaring puzzle (computational tidslås)
-/// with a 1-to-1 Shamir's Secret Sharing (SSS) chain over Z_65521 (information-theoretically secure).
+/// with a 1-to-1 Shamir's Secret Sharing (SSS) chain over Z_2147483647 (information-theoretically secure).
 /// It provides perfect deniability: any starting share guess decrypts to a mathematically
 /// consistent and valid message, rendering it impossible for an attacker with infinite computing power
 /// to prove which message is the "true" one.
@@ -109,23 +109,23 @@ impl SssTimeLock {
         // We have k=2, n=3.
         // For each byte m, we define:
         // - Share 1 at epoch 0: s_{1, 0}^m (chosen randomly)
-        // - Share 2 at epoch 0: s_{2, 0}^m = (Y + m) % 65521
+        // - Share 2 at epoch 0: s_{2, 0}^m = (Y + m) % 2147483647
         let mut initial_share_1 = Vec::with_capacity(len);
         let mut current_share_1 = Vec::with_capacity(len);
         let mut current_share_2 = Vec::with_capacity(len);
 
-        let mut entropy_buf = [0u8; 2];
+        let mut entropy_buf = [0u8; 4];
 
         for idx in 0..len {
             // Generate a random initial share for Node 1
             rng.fill_bytes(&mut entropy_buf).map_err(|_| ())?;
-            let s1_0_raw = ((entropy_buf[0] as u16) | ((entropy_buf[1] as u16) << 8)) % 65521;
+            let s1_0_raw = u32::from_be_bytes(entropy_buf) % 2147483647;
             let s1_0 = FieldElement::new(s1_0_raw);
             initial_share_1.push(s1_0);
             current_share_1.push(s1_0);
 
             // Derive initial share for Node 2 from the RSW96 time-lock output Y
-            let s2_0_raw = ((y as u128 + idx as u128) % 65521) as u16;
+            let s2_0_raw = ((y as u128 + idx as u128) % 2147483647) as u32;
             let s2_0 = FieldElement::new(s2_0_raw);
             current_share_2.push(s2_0);
         }
@@ -141,11 +141,11 @@ impl SssTimeLock {
             for idx in 0..len {
                 // Generate random next shares for epoch j+1
                 rng.fill_bytes(&mut entropy_buf).map_err(|_| ())?;
-                let next_s1_raw = ((entropy_buf[0] as u16) | ((entropy_buf[1] as u16) << 8)) % 65521;
+                let next_s1_raw = u32::from_be_bytes(entropy_buf) % 2147483647;
                 let next_s1 = FieldElement::new(next_s1_raw);
 
                 rng.fill_bytes(&mut entropy_buf).map_err(|_| ())?;
-                let next_s2_raw = ((entropy_buf[0] as u16) | ((entropy_buf[1] as u16) << 8)) % 65521;
+                let next_s2_raw = u32::from_be_bytes(entropy_buf) % 2147483647;
                 let next_s2 = FieldElement::new(next_s2_raw);
 
                 // Compute transition values: C_j = next_s + current_s
@@ -166,13 +166,13 @@ impl SssTimeLock {
 
         // 6. Encrypt the payload using the final epoch's secrets as One-Time Pads.
         // Secret at epoch T is derived from Lagrange interpolation at x = 0:
-        // S_T = 2 * s_{1, T} - s_{2, T} mod 65521
+        // S_T = 2 * s_{1, T} - s_{2, T} mod 2147483647
         let mut encrypted_payload = Vec::with_capacity(len);
         let two = FieldElement::new(2);
 
         for idx in 0..len {
             let secret_t = (two * current_share_1[idx]) - current_share_2[idx];
-            let msg_fe = FieldElement::new(message[idx] as u16);
+            let msg_fe = FieldElement::new(message[idx] as u32);
             encrypted_payload.push(msg_fe + secret_t);
         }
 
@@ -209,12 +209,12 @@ impl SssTimeLock {
         let mut current_share_2 = Vec::with_capacity(len);
 
         for idx in 0..len {
-            let s2_0_raw = ((y as u128 + idx as u128) % 65521) as u16;
+            let s2_0_raw = ((y as u128 + idx as u128) % 2147483647) as u32;
             current_share_2.push(FieldElement::new(s2_0_raw));
         }
 
         // 3. Step forward through the SSS chain for all epochs using transition values
-        // Formula: s_{t+1} = transition_val - s_t mod 65521
+        // Formula: s_{t+1} = transition_val - s_t mod 2147483647
         for j in 0..self.t {
             let trans_1 = &self.transitions_1[j];
             let trans_2 = &self.transitions_2[j];
@@ -226,7 +226,7 @@ impl SssTimeLock {
         }
 
         // 4. Reconstruct final secrets at epoch T and decrypt payload via One-Time Pad
-        // Formula: S_T = 2 * s_{1, T} - s_{2, T} mod 65521
+        // Formula: S_T = 2 * s_{1, T} - s_{2, T} mod 2147483647
         let mut decrypted_message = Vec::with_capacity(len);
         let two = FieldElement::new(2);
 
@@ -244,7 +244,7 @@ impl SssTimeLock {
     /// Given *any* alternative start share value, this function computes the corresponding
     /// transitions and decrypts to a completely consistent, alternative message.
     /// Since all messages are mathematically consistent, an attacker with infinite computing power
-    /// cannot prove which message is the true one!
+    /// cannot prove which message is the "true" one!
     pub fn deny(&self, alternative_initial_share_1: &[FieldElement]) -> Result<Vec<u8>, ()> {
         let len = self.initial_share_1.len();
         if alternative_initial_share_1.len() != len {
@@ -263,7 +263,7 @@ impl SssTimeLock {
         let mut current_share_2 = Vec::with_capacity(len);
 
         for idx in 0..len {
-            let s2_0_raw = ((y as u128 + idx as u128) % 65521) as u16;
+            let s2_0_raw = ((y as u128 + idx as u128) % 2147483647) as u32;
             current_share_2.push(FieldElement::new(s2_0_raw));
         }
 

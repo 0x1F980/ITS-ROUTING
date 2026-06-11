@@ -30,17 +30,17 @@ impl MorphicProbe {
         n: usize,
         rng: &mut R,
     ) -> Result<Vec<Self>, ()> {
-        if k == 0 || n < k || n >= 65521 {
+        if k == 0 || n < k || n >= 2147483647 {
             return Err(());
         }
 
         let mut coeffs = Zeroizing::new(Vec::with_capacity(k));
         coeffs.push(s_probe);
 
-        let mut buf = [0u8; 2];
+        let mut buf = [0u8; 4];
         for _ in 1..k {
             rng.fill_bytes(&mut buf).map_err(|_| ())?;
-            let val = ((buf[0] as u16) | ((buf[1] as u16) << 8)) % 65521;
+            let val = u32::from_be_bytes(buf) % 2147483647;
             let is_zero = Choice::from((val == 0) as u8);
             let val_fe = FieldElement::new(val);
             let non_zero_fe = FieldElement::conditional_select(&val_fe, &FieldElement::one(), is_zero);
@@ -49,13 +49,13 @@ impl MorphicProbe {
 
         let mut shares = Vec::with_capacity(n);
         for i in 1..=n {
-            let x = FieldElement::new(i as u16);
+            let x = FieldElement::new(i as u32);
             
             // Horner's method to evaluate dynamic polynomial at point x
             let mut y = coeffs[k - 1];
             for j in (0..k - 1).rev() {
                 // Inject computational jitter during Horner's evaluation to randomize power trace
-                let mut jitter_seed = x.value() as u32;
+                let mut jitter_seed = x.value();
                 for _ in 0..3 {
                     jitter_seed = jitter_seed.wrapping_mul(1103515245).wrapping_add(12345);
                 }
@@ -134,7 +134,7 @@ mod tests {
 
         // Let's perform a homomorphic morphic blending (scaling by 2, adding 3)
         // new_y = 2 * y + 3
-        // Modulo arithmetic: new_secret = 2 * 9 + 3 = 21 modulo 251
+        // Modulo arithmetic: new_secret = 2 * 9 + 3 = 21 modulo 2147483647
         let factor = FieldElement::new(2);
         let addition = FieldElement::new(3);
 

@@ -5,16 +5,13 @@ use hal_abstraction::SecureRandom;
 use subtle::{Choice, ConditionallySelectable};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
-/// Converts a raw byte (0..=255) into a single `FieldElement` of Z_65521.
-///
-/// Since MODULUS is 65521 (which is >= 256), any byte fits perfectly and directly into
-/// a single FieldElement without any splitting or bases, achieving 100% throughput density!
+/// Converts a raw byte (0..=255) into a single `FieldElement` of Z_2147483647.
 #[inline]
 pub fn byte_to_field_elements(byte: u8) -> FieldElement {
-    FieldElement::new(byte as u16)
+    FieldElement::new(byte as u32)
 }
 
-/// Converts a `FieldElement` of Z_65521 back into a raw byte.
+/// Converts a `FieldElement` back into a raw byte.
 #[inline]
 pub fn field_elements_to_byte(fe: FieldElement) -> u8 {
     fe.value() as u8
@@ -31,20 +28,14 @@ pub struct HydraShare {
 
 /// Fragments a slice of secret bytes into `n` shares, such that any `k` shares
 /// can reconstruct the original secret, and any `k-1` shares reveal absolute 0 information.
-///
-/// # Arguments
-/// * `secret_data` - The raw bytes of the webpage or file to fragment.
-/// * `k` - The reconstruction threshold.
-/// * `n` - The total number of shares to generate.
-/// * `rng` - A secure random number generator to supply polynomial coefficients.
 pub fn fragment_data<R: SecureRandom>(
     secret_data: &[u8],
     k: usize,
     n: usize,
     rng: &mut R,
 ) -> Result<Vec<HydraShare>, ()> {
-    if k == 0 || n < k || n >= 65521 {
-        return Err(()); // Z_65521 supports up to n = 65520 participants (since x=0 is the secret)
+    if k == 0 || n < k || n >= 2147483647 {
+        return Err(());
     }
 
     // Convert bytes directly 1-to-1 into FieldElements with zeroizing protection
@@ -57,22 +48,22 @@ pub fn fragment_data<R: SecureRandom>(
     let mut shares = Vec::with_capacity(n);
     for i in 1..=n {
         shares.push(HydraShare {
-            id: FieldElement::new(i as u16),
+            id: FieldElement::new(i as u32),
             data_points: Vec::with_capacity(field_elements.len()),
         });
     }
 
     // Buffer for generating random coefficients
-    let mut coef_buf = [0u8; 2];
+    let mut coef_buf = [0u8; 4];
 
     // For each secret FieldElement, we generate a random polynomial of degree k-1
     for &secret in field_elements.iter() {
-        // Coefficients: coeffs[0] is the secret, coeffs[1..k] are random in Z_65521
+        // Coefficients: coeffs[0] is the secret, coeffs[1..k] are random in Z_2147483647
         let mut coeffs = Zeroizing::new(Vec::with_capacity(k));
         coeffs.push(secret);
         for _ in 1..k {
             rng.fill_bytes(&mut coef_buf).map_err(|_| ())?;
-            let val_raw = ((coef_buf[0] as u16) | ((coef_buf[1] as u16) << 8)) % 65521;
+            let val_raw = u32::from_be_bytes(coef_buf) % 2147483647;
             
             // Ensure the highest coefficient is non-zero to preserve the degree
             let is_zero = Choice::from((val_raw == 0) as u8);
@@ -97,10 +88,6 @@ pub fn fragment_data<R: SecureRandom>(
 }
 
 /// Reconstructs the original secret bytes from at least `k` Hydra shares.
-///
-/// # Arguments
-/// * `shares` - A slice of received shares (must contain at least `k` unique shares).
-/// * `k` - The reconstruction threshold.
 pub fn reconstruct_data(shares: &[HydraShare], k: usize) -> Result<Vec<u8>, ()> {
     if shares.len() < k {
         return Err(());
@@ -160,7 +147,7 @@ mod tests {
     fn test_byte_splitting_roundtrip() {
         for b in 0..=255 {
             let fe = byte_to_field_elements(b);
-            assert!(fe.value() < 65521);
+            assert!(fe.value() < 2147483647);
             let reconstructed = field_elements_to_byte(fe);
             assert_eq!(reconstructed, b);
         }

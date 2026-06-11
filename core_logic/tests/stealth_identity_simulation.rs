@@ -38,7 +38,7 @@ fn test_passive_entropy_parasitism_complete_simulation() {
     let k = 3;
     let n = 5;
 
-    // Split the webpage into SSS-shares over Z_65521 (1-to-1 mapping)
+    // Split the webpage into SSS-shares over Z_2147483647 (1-to-1 mapping)
     let initial_shares = fragment_data(webpage_bytes, k, n, &mut rng).unwrap();
     assert_eq!(initial_shares.len(), 5);
 
@@ -49,9 +49,9 @@ fn test_passive_entropy_parasitism_complete_simulation() {
     // This is the "Entropy Pool" E.
     let mut external_public_telemetry = vec![FieldElement::zero(); webpage_bytes.len()];
     for val in external_public_telemetry.iter_mut() {
-        let mut buf = [0u8; 2];
+        let mut buf = [0u8; 4];
         let _ = rng.fill_bytes(&mut buf);
-        *val = FieldElement::new((buf[0] as u16) | ((buf[1] as u16) << 8));
+        *val = FieldElement::new(u32::from_be_bytes(buf));
     }
 
     // =========================================================================
