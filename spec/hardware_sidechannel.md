@@ -75,7 +75,7 @@ When transferring keys or fragments over physical/analog mediums (such as handwr
 Shamir's Secret Sharing (SSS) shares are exported into an ASCII-standardized hexadecimal format with a robust trailing checksum.
 *   **Adler-32 Checksum:** To protect against bit flips, typos, or character swaps, each printed or handwritten share includes an integrated Adler-32 checksum appended to the payload.
 *   **Formatting Structure:** Shares are represented as formatted blocks of hex strings separated by hyphens (e.g., `DATA-DATA-CHECKSUM`).
-*   **Verification:** During the CLI command `client-import-share` (implemented in `hydra_cli/src/main.rs`), the parser verifies the checksum before performing Lagrange interpolation, guaranteeing that no corrupt shares can propagate into the mathematical reconstruction layer.
+*   **Verification:** During the CLI command `client-import-share` (implemented in `its_net_cli/src/main.rs`), the parser verifies the checksum before performing Lagrange interpolation, guaranteeing that no corrupt shares can propagate into the mathematical reconstruction layer.
 
 ### Formal Mathematical Proof of Total Algebraic Isolation of Adler-32:
 A critical concern in high-security systems is whether appending a deterministic checksum (like Adler-32) to SSS shares leaks information about the underlying secret $S$, thereby compromising the information-theoretic security of the Shamir scheme. We prove that the Adler-32 checksum is algebraically isolated and leaks absolutely zero information about the secret.

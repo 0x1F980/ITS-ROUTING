@@ -1,11 +1,11 @@
-# Dockerfile for 100% Hermetic, Reproducible Static Compilation of Hydra-ITS
+# Dockerfile for 100% Hermetic, Reproducible Static Compilation of Morphic Routing Network (ITS/SCPST)
 # Uses rust:1.80-alpine to lock down the toolchain version and guarantee statically linked musl binaries.
 
 FROM rust:1.80-alpine as builder
 
 RUN apk add --no-cache musl-dev
 
-WORKDIR /usr/src/hydra-its
+WORKDIR /usr/src/its-net
 
 # Copy the entire workspace source files
 COPY . .
@@ -18,6 +18,6 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 FROM scratch
 
 # Copy only the statically compiled, stripped binaries
-COPY --from=builder /usr/src/hydra-its/target/x86_64-unknown-linux-musl/release/hydra_cli /hydra-its
+COPY --from=builder /usr/src/its-net/target/x86_64-unknown-linux-musl/release/its-net /its-net
 
-ENTRYPOINT ["/hydra-its"]
+ENTRYPOINT ["/its-net"]

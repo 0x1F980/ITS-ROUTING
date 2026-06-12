@@ -13,7 +13,7 @@ pkgs.mkShell {
 
   shellHook = ''
     echo "====================================================================="
-    echo "⚡ Hydra-ITS Hermetic Development Environment Active ⚡"
+    echo "⚡ Morphic Routing Network (ITS/SCPST) Hermetic Development Environment Active ⚡"
     echo "Targeting 100% reproducible builds and supply chain sterility."
     echo "====================================================================="
   '';

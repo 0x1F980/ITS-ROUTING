@@ -1,6 +1,6 @@
-# Bash completion for hydra-its CLI
+# Bash completion for its-net CLI
 
-_hydra_its_completions() {
+_its_net_completions() {
     local cur prev opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -36,4 +36,4 @@ _hydra_its_completions() {
     return 0
 }
 
-complete -F _hydra_its_completions hydra-its
+complete -F _its_net_completions its-net

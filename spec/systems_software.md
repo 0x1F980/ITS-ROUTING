@@ -56,7 +56,7 @@ Spectre and Meltdown exploit speculative execution in modern CPUs. During specul
 ### Rust Memory Zeroization Protocol:
 To eliminate this risk, all sensitive containers in our ecosystem are wrapped in types implementing the `zeroize::Zeroize` and `zeroize::ZeroizeOnDrop` traits.
 * **Verification Targets:**
-  Auditors should inspect `ZeroizedBuffer` in `hydra_cli/src/main.rs` and verify that any variable containing decrypted coordinates or key-shares is wrapped in zeroizing containers.
+  Auditors should inspect `ZeroizedBuffer` in `its_net_cli/src/main.rs` and verify that any variable containing decrypted coordinates or key-shares is wrapped in zeroizing containers.
 
 ```rust
 // Verify zeroization on drop behavior
@@ -93,7 +93,7 @@ let result = FieldElement::conditional_select(&a, &b, mask);
 
 ## 3. seL4 Microkernel Compartmentalization
 
-For absolute security, the core cryptographic library (`core_logic`) is designed to execute inside an isolated **seL4 microkernel compartment** (or enclave) with zero network permissions. This guarantees that even if the transport layer (`hydra_cli`) is fully compromised, the master keys cannot be exfiltrated.
+For absolute security, the core cryptographic library (`core_logic`) is designed to execute inside an isolated **seL4 microkernel compartment** (or enclave) with zero network permissions. This guarantees that even if the transport layer (`its_net_cli`) is fully compromised, the master keys cannot be exfiltrated.
 
 ### 4KB Shared Page Memory Alignment:
 Communication between the untrusted transport daemon and the isolated krypto-enclave is restricted to page-aligned, fixed-size shared memory regions.
@@ -115,7 +115,7 @@ Standard modern software stacks suffer from immense "supply-chain inflation" due
 
 ### Macro-Free Design:
 Our ecosystem completely replaces heavy transitive dependencies with primitive, hand-written standard library implementations:
-*   **JSON/Serialization:** We completely eliminate `serde` and `serde_json`. Parsing of local system configuration files is executed using a hand-written, macro-free parser (`parse_config` in `hydra_cli/src/main.rs`) based on strict line splitting and string slicing.
+*   **JSON/Serialization:** We completely eliminate `serde` and `serde_json`. Parsing of local system configuration files is executed using a hand-written, macro-free parser (`parse_config` in `its_net_cli/src/main.rs`) based on strict line splitting and string slicing.
 *   **Network Transport:** We completely eliminate `tokio` and `reqwest` inside the CLI daemon. Network transmissions are decoupled using the synchronous `PacketCourier` trait and executed via standard `std::net::UdpSocket` threads.
 *   **Entropy Gathering:** We completely eliminate external crates like `rand` inside the binary. Entropy is pulled directly from the OS-hardened `/dev/urandom` interface.
 

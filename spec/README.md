@@ -55,7 +55,7 @@ The specification suite is divided into three distinct technical domains:
 To preserve high auditability, the ecosystem is strictly partitioned into distinct private repositories:
 
 *   **`0x1F464/ITS`:** Standalone, sterile, `no_std` krypto-kasse containing `core_logic` arithmetic.
-*   **`0x1F464/ITS-net`:** OS transport layer containing the network dæmon (`hydra_cli`), UDP courier, and routing.
+*   **`0x1F464/ITS-net`:** OS transport layer containing the network dæmon (`its_net_cli`), UDP courier, and routing.
 *   **`0x1F464/ITS-ledger`:** Blockchain syncer, public trapdoor registry, and distributed consensus mechanisms.
 *   **`0x1F464/ITS-hardware`:** Hardware drivers, physical TRNG integrations, and CRF hardware gate-array software simulators.
 

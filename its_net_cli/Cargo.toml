@@ -1,7 +1,11 @@
 [package]
-name = "hydra_cli"
+name = "its_net_cli"
 version = "0.1.0"
 edition = "2021"
+
+[[bin]]
+name = "its-net"
+path = "src/main.rs"
 
 [dependencies]
 core_logic = { git = "ssh://git@github.com/0x1F464/ITS.git", branch = "master" }

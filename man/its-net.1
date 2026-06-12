@@ -1,23 +1,23 @@
-.TH HYDRA-ITS 1 "June 2026" "v0.1.0" "Hydra-ITS Security Reference"
+.TH ITS-NET 1 "June 2026" "v0.1.0" "ITS-net Security Reference"
 .SH NAME
-hydra-its \- Information-Theoretic Secrecy (ITS) Onion Routing & Ambient Entropy Harvesting CLI
+its-net \- Information-Theoretic Secrecy (ITS) Onion Routing & Ambient Entropy Harvesting CLI
 .SH SYNOPSIS
-.B hydra-its
+.B its-net
 [\fB\-c \fIconfig_file\fR] [\fB\-h\fR] [\fB\-v\fR]
 .I COMMAND
 [\fIARGS...\fR]
 .SH DESCRIPTION
-.B hydra-its
+.B its-net
 is a bare-metal, high-performance, and mathematically impregnable shadow network tool designed for Information-Theoretic Secrecy (ITS) routing.
 Unlike traditional networks (Tor, Nym) which rely on computationally hard problems (RSA, ECC, AES),
-.B hydra-its
+.B its-net
 guarantees perfect secrecy (unbreakable even with infinite computational power) by utilizing Shamir's Secret Sharing (SSS) chained over a finite field modulus of Z_{2^31-1}.
 .PP
 The application supports Morphic Network Coding (MNC), Homomorphic Path Attestation, Onion-chaff routing, and Ambient Entropy Harvesting (AEH).
 .SH OPTIONS
 .TP
 .BI \-c ", " \-\-config " config_file"
-Specify the path to the TOML configuration file. Defaults to /etc/hydra-its/config.toml if present.
+Specify the path to the TOML configuration file. Defaults to /etc/its-net/config.toml if present.
 .TP
 .B \-h ", " \-\-help
 Show the standard help menu and exit.
@@ -53,7 +53,7 @@ Because the system is algebraically underdetermined (more unknowns than equation
 .SH SIDE-CHANNEL MITIGATIONS
 All modular reduction, division-free Barrett reduction, and Fermat inversion loops are implemented in branchless constant-time. Additionally, active computational jitter is injected into sensitive algebraic loops to distort power and electromagnetic side-channels (DPA/TEMPEST).
 .SH FILES
-.I /etc/hydra-its/config.toml
+.I /etc/its-net/config.toml
 .RS
 Global daemon configuration file.
 .RE

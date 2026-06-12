@@ -1035,7 +1035,7 @@ fn main() {
                     s_idx += 2;
                 } else {
                     let arg = &command_args[s_idx];
-                    if arg.starts_with("HYDRA-SHARE:") {
+                    if arg.starts_with("ITS-SHARE:") {
                         shares_input.push(arg.clone());
                     }
                     s_idx += 1;
@@ -1075,7 +1075,7 @@ fn main() {
 fn print_usage() {
     println!("Morphic Routing Shadow Network CLI (Sterilized Synkron Version)");
     println!("Anvendelse:");
-    println!("  hydra-its [subcommand] [valg]");
+    println!("  its-net [subcommand] [valg]");
     println!("\nSubcommands:");
     println!("  start-node      Starts an active onion routing daemon node");
     println!("                  -p, --port <port>       Port to bind the listener to");

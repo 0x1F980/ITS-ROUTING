@@ -1,4 +1,4 @@
-# ITS-net: OS Transport Layer & CLI Daemon (hydra_cli)
+# ITS-net: OS Transport Layer & CLI Daemon (its_net_cli)
 
 ## GNU General Public License v3.0 Only
 Copyright (C) 2026 0x1F464. All rights reserved.
@@ -9,7 +9,7 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
 
 ## 1. Oversigt & Arkitektur
 
-Dette depot udgør **`ITS-net`** (`hydra_cli` craten), transport- og CLI-lag-daemonen i **Hydra-ITS** mørkenetssystemet. 
+Dette depot udgør **`ITS-net`** (`its_net_cli` craten), transport- og CLI-lag-daemonen i **Morphic Routing Network (ITS/SCPST)** mørkenetssystemet. 
 
 Systemet implementerer det overordnede OS-niveau netværkslag og binder kryptolaget (`ITS`), hardware-abstraktionen (`ITS-hardware`) og konsensus-lagringen (`ITS-ledger`) sammen til en uigennemtrængelig og støj-immun kommunikationstunnel.
 
@@ -24,12 +24,12 @@ Systemet implementerer det overordnede OS-niveau netværkslag og binder kryptola
 ## 2. Nøglemekanismer i ITS-net
 
 ### 2.1 Aktiv Trafikanalyse-Mitigering & Anomali Detektion
-`hydra_cli/src/anomaly_detection.rs`
+`its_net_cli/src/anomaly_detection.rs`
 - **Trafikmønster-Overvågning**: Overvåger løbende indgående og udgående pakkehastigheder, tidsmæssige intervaller og latens.
 - **Automatisk Rerouting**: Hvis der detekteres en statistisk afvigelse (anomali) i netværksadfærden (f.eks. Eve forsøger timing-korrelation), afbrydes den eksisterende tunnel øjeblikkeligt, og der rutes asymmetrisk udenom de mistænkte noder.
 
 ### 2.2 Transport-Protokol Agnostisk Courier
-`hydra_cli/src/main.rs`
+`its_net_cli/src/main.rs`
 - **PacketCourier Trait**: Kommunikationen is helt afkoblet fra det underliggende netværkslag. Den medfølgende UDP-courier sender krypterede SSS-shares, som fremstår som 100% statistisk hvid støj overfor eksterne observatører.
 
 ---

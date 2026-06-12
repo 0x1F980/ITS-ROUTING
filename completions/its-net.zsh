@@ -1,6 +1,6 @@
-#compdef hydra-its
+#compdef its-net
 
-_hydra_its() {
+_its_net() {
     local line
 
     _arguments -C \
@@ -12,7 +12,7 @@ _hydra_its() {
 
     case $state in
         cmds)
-            _values "hydra-its command" \
+            _values "its-net command" \
                 'start-node[Start a bare-metal active VPS routing node]' \
                 'client-send[Send an Onion-encrypted, fragmented packet]' \
                 'client-receive[Receive, reconstruct and verify packets]' \
@@ -49,4 +49,4 @@ _hydra_its() {
     esac
 }
 
-_hydra_its "$@"
+_its_net "$@"

@@ -175,7 +175,7 @@ Thus, Eve is mathematically incapable of performing statistical timing correlati
 
 ## 4. Zero-Dependency Supply Chain Immunity (Crate Sterilization)
 
-A major vector for state-sponsored surveillance and infrastructure compromise is the software supply chain. Complex macro expansions, multi-layered dependencies, and third-party cryptographic crates can hide backdoor trojans or compilation-time vulnerabilities. To achieve absolute architectural sterility, the `hydra_cli` executable has been completely stripped of all external dependencies.
+A major vector for state-sponsored surveillance and infrastructure compromise is the software supply chain. Complex macro expansions, multi-layered dependencies, and third-party cryptographic crates can hide backdoor trojans or compilation-time vulnerabilities. To achieve absolute architectural sterility, the `its_net_cli` executable has been completely stripped of all external dependencies.
 
 *   **Total Dependency Elimination:** The CLI is 100% free of external crates like `tokio`, `reqwest`, `serde`, `serde_json`, `toml`, `clap`, and `rand`.
 *   **Pure Synchrounous OS Threads:** All daemon tasks, continuous chaffing loops, and passive winnowing listeners utilize native OS threads via `std::thread::spawn` and pure `std::net::UdpSocket` structures, avoiding heavy asynchronous engines.
@@ -205,57 +205,57 @@ Morphic Routing Network (ITS/SCPST) is managed via a single, cohesive binary int
 ### Command 1: Start an Active Routing Node
 Starts an active onion router node on a VPS or bare-metal host:
 ```bash
-hydra-its start-node --config config.toml --port 8180 --chaff-rate 100
+its-net start-node --config config.toml --port 8180 --chaff-rate 100
 ```
 
 ### Command 2: Single-Shot AEH Transmission
 Dispatches a single authenticated, steganographically-camouflaged message across our diverse channels:
 ```bash
-hydra-its client-send --msg "Secret Classified Message" --dest 3 --aeh --config config.toml
+its-net client-send --msg "Secret Classified Message" --dest 3 --aeh --config config.toml
 ```
 
 ### Command 3: Continuous Decoy Chaffing Loop (Alice)
 Starts a permanent background schedule loop, uploading mock blocks and substitute real blocks securely:
 ```bash
-hydra-its client-send --msg "Secret Intelligence" --dest 3 --aeh --continuous --config config.toml
+its-net client-send --msg "Secret Intelligence" --dest 3 --aeh --continuous --config config.toml
 ```
 
 ### Command 4: Continuous Winnowing Loop (Bob)
 Runs Bob's receiver schedule, passively monitoring channels and verifying Wegman-Carter tags:
 ```bash
-hydra-its client-receive --aeh --continuous --config config.toml
+its-net client-receive --aeh --continuous --config config.toml
 ```
 
 ### Command 5: Duress / Password Protected Communication
 Launches sending or receiving under duress password derivation:
 ```bash
 # Alice sends a password-derived share (True Seed)
-hydra-its client-send --msg "Top Secret Payload" --dest 3 --aeh --password "TruePassword123" --config config.toml
+its-net client-send --msg "Top Secret Payload" --dest 3 --aeh --password "TruePassword123" --config config.toml
 
 # Alice sends under physical duress (creates a decoy "recipe" payload)
-hydra-its client-send --msg "Top Secret Payload" --dest 3 --aeh --password "DecoyPassword456" --duress --config config.toml
+its-net client-send --msg "Top Secret Payload" --dest 3 --aeh --password "DecoyPassword456" --duress --config config.toml
 
 # Bob receives using his true credentials
-hydra-its client-receive --aeh --password "TruePassword123" --config config.toml
+its-net client-receive --aeh --password "TruePassword123" --config config.toml
 
 # Bob unlocks under coercion (reveals only the decoy recipe safely)
-hydra-its client-receive --aeh --password "DecoyPassword456" --duress --config config.toml
+its-net client-receive --aeh --password "DecoyPassword456" --duress --config config.toml
 ```
 
 ### Command 6: Local Hybrid Time-Lock Puzzle
 Encrypts a document with RSW96 squarings chained inside SSS perfect secrecy:
 ```bash
-hydra-its time-lock --file top_secret.txt --epochs 100000 --out locked_file.its
+its-net time-lock --file top_secret.txt --epochs 100000 --out locked_file.its
 ```
 
 ### Command 7: Solve Time-Lock and Unlock Message
 ```bash
-hydra-its time-unlock --puzzle locked_file.its --out decrypted.txt
+its-net time-unlock --puzzle locked_file.its --out decrypted.txt
 ```
 
 ### Command 8: Assert Alternative Decoy Message under Duress
 ```bash
-hydra-its time-deny --puzzle locked_file.its --decoy "This is a simple shopping list." --out decoy_decrypted.txt
+its-net time-deny --puzzle locked_file.its --decoy "This is a simple shopping list." --out decoy_decrypted.txt
 ```
 
 ---
@@ -263,13 +263,13 @@ hydra-its time-deny --puzzle locked_file.its --decoy "This is a simple shopping 
 ## 7. Shell Completions & Unix Manpages
 
 Complete autocomplete shell scripts are provided inside the workspace under the `completions/` folder:
-*   **Bash:** `completions/hydra-its.bash` — Copies to `/etc/bash_completion.d/hydra-its`
-*   **Zsh:** `completions/hydra-its.zsh` — Copies to your `$fpath` as `_hydra-its`
-*   **Fish:** `completions/hydra-its.fish` — Copies to `~/.config/fish/completions/`
+*   **Bash:** `completions/its-net.bash` — Copies to `/etc/bash_completion.d/its-net`
+*   **Zsh:** `completions/its-net.zsh` — Copies to your `$fpath` as `_its-net`
+*   **Fish:** `completions/its-net.fish` — Copies to `~/.config/fish/completions/`
 
 ### Activation in Zsh:
 ```zsh
-cp completions/hydra-its.zsh ~/.zsh/completion/_hydra-its
+cp completions/its-net.zsh ~/.zsh/completion/_its-net
 echo "fpath=(~/.zsh/completion \$fpath)" >> ~/.zshrc
 echo "autoload -U compinit && compinit" >> ~/.zshrc
 source ~/.zshrc
@@ -278,9 +278,9 @@ source ~/.zshrc
 ### Manual page Installation:
 Read the formatted UNIX manual page inside your terminal using standard `man` systems:
 ```bash
-sudo cp man/hydra-its.1 /usr/share/man/man1/
+sudo cp man/its-net.1 /usr/share/man/man1/
 sudo mandb
-man hydra-its
+man its-net
 ```
 
 ---
