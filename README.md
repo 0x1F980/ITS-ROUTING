@@ -34,6 +34,8 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
                          └──────────────────────────────┘
 ```
 
+**Upstream crate:** [`git@github.com:0x1F464/ITS-self_enclosed_timelock.git`](https://github.com/0x1F464/ITS-self_enclosed_timelock) — used by `its-net time-lock`, `time-unlock`, and `time-deny`.
+
 ---
 
 ## 2. High-Assurance Documentation Portal

@@ -11,7 +11,7 @@ path = "src/main.rs"
 core_logic = { git = "ssh://git@github.com/0x1F464/ITS.git", branch = "master" }
 its_hardware = { git = "ssh://git@github.com/0x1F464/ITS-hardware.git", branch = "master" }
 its_ledger = { git = "ssh://git@github.com/0x1F464/ITS-ledger.git", branch = "master" }
-its_self_enclosed_timelock = { git = "ssh://git@github.com/0x1F464/ITS-self_enclosed_timelock.git", branch = "master" }
+its_self_enclosed_timelock = { git = "git@github.com:0x1F464/ITS-self_enclosed_timelock.git", branch = "master" }
 subtle = { version = "2.5.0", default-features = false }
 zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
 
