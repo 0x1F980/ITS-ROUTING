@@ -75,6 +75,13 @@ Builds an alternative, mathematically consistent puzzle that decrypts to a decoy
 its-net time-deny --puzzle secret.its --decoy "Cover story text" --out decoy.its
 ```
 
+### Command 10: Provenance Erasure (Γ + optional OTP)
+```bash
+its-net fingerprint-erasure --file tainted.jpg --out clean.png --pad offline.pad --out-otp wire.bin
+its_fe otp-unmask --in wire.bin --pad offline.pad --out clean.png   # Bob
+```
+Flags: `--delta`, `--format`, `--pad`, `--out-otp`.
+
 ---
 
 ## 2. Configuration File Syntax (`config.toml`)

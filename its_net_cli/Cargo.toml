@@ -13,6 +13,7 @@ its_hardware = { git = "ssh://git@github.com/0x1F464/ITS-hardware.git", branch =
 its_ledger = { git = "ssh://git@github.com/0x1F464/ITS-ledger.git", branch = "master" }
 its_self_enclosed_timelock = { git = "ssh://git@github.com/0x1F464/ITS-self_enclosed_timelock.git", branch = "master" }
 its_otm_public_attestation = { git = "ssh://git@github.com/0x1F464/ITS-OTM_public_attestation.git", branch = "main" }
+its_fingerprint_erasure = { path = "../../ITS-fingerprint_erasure" }
 subtle = { version = "2.5.0", default-features = false }
 zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
 

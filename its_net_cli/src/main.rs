@@ -1014,6 +1014,42 @@ fn main() {
             }
             run_time_deny(puzzle, decoy, out);
         }
+        "fingerprint-erasure" => {
+            let mut file = PathBuf::new();
+            let mut out = PathBuf::new();
+            let mut out_otp = PathBuf::new();
+            let mut pad = PathBuf::new();
+            let mut delta = None;
+            let mut output_format = its_fingerprint_erasure::OutputFormat::Auto;
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-f" || command_args[s_idx] == "--file" || command_args[s_idx] == "--in")
+                    && s_idx + 1 < command_args.len()
+                {
+                    file = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-o" || command_args[s_idx] == "--out") && s_idx + 1 < command_args.len() {
+                    out = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--out-otp" && s_idx + 1 < command_args.len() {
+                    out_otp = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--pad" && s_idx + 1 < command_args.len() {
+                    pad = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--delta" && s_idx + 1 < command_args.len() {
+                    delta = command_args[s_idx + 1].parse().ok();
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--format" && s_idx + 1 < command_args.len() {
+                    output_format = parse_fe_output_format(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            run_fingerprint_erasure(file, out, out_otp, pad, delta, output_format);
+        }
         "client-export-share" => {
             let mut msg = String::new();
             let mut threshold_k = None;
@@ -1123,6 +1159,13 @@ fn print_usage() {
     println!("                  -p, --puzzle <path>     Target puzzle .its file");
     println!("                  -d, --decoy <text>      Harmless decoy message of equal length");
     println!("                  -o, --out <path>        Output alternative decrypted file path");
+    println!("  fingerprint-erasure  Γ then optional OTP (Extract→Q→C→Reconstruct→mask)");
+    println!("                  -f, --file, --in <path> Input file");
+    println!("                  -o, --out <path>        Normalized file for Bob (after otp-unmask)");
+    println!("                  --pad <path>            Offline pad (required with --out-otp)");
+    println!("                  --out-otp <path>        ITS-WIR1 wire ciphertext for Eve-facing transport");
+    println!("                  --delta <N>             Quantization threshold");
+    println!("                  --format <fmt>          auto|sem1|png|txt|bin");
     println!("  client-export-share Serialize Shamir shares into physical character strings (analog export)");
     println!("                  -m, --msg <text>        Target secret message to split");
     println!("                  -k, --threshold <k>     Override threshold k");
@@ -1837,6 +1880,84 @@ fn run_client_receive(
 // ==============================================================================
 // LOCAL TIME-LOCK RUNNERS (HYBRID SSS-CHAINED DENIABLE TIME-LOCK)
 // ==============================================================================
+
+fn parse_fe_output_format(s: &str) -> its_fingerprint_erasure::OutputFormat {
+    match s.to_ascii_lowercase().as_str() {
+        "sem1" => its_fingerprint_erasure::OutputFormat::Sem1,
+        "png" => its_fingerprint_erasure::OutputFormat::Png,
+        "txt" => its_fingerprint_erasure::OutputFormat::Txt,
+        "bin" => its_fingerprint_erasure::OutputFormat::Bin,
+        _ => its_fingerprint_erasure::OutputFormat::Auto,
+    }
+}
+
+fn run_fingerprint_erasure(
+    file_path: PathBuf,
+    out_path: PathBuf,
+    out_otp_path: PathBuf,
+    pad_path: PathBuf,
+    delta: Option<u32>,
+    output_format: its_fingerprint_erasure::OutputFormat,
+) {
+    if file_path.as_os_str().is_empty() || out_path.as_os_str().is_empty() {
+        println!("Fejl: fingerprint-erasure kræver --file og --out.");
+        return;
+    }
+    let want_otp = !out_otp_path.as_os_str().is_empty();
+    if want_otp && pad_path.as_os_str().is_empty() {
+        println!("Fejl: --out-otp kræver --pad.");
+        return;
+    }
+
+    let input = match std::fs::read(&file_path) {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            println!("Fejl: Kunne ikke læse input: {:?}", e);
+            return;
+        }
+    };
+
+    let gamma_out = match its_fingerprint_erasure::erase_provenance(
+        &input,
+        its_fingerprint_erasure::ErasureOptions {
+            delta,
+            output_format,
+        },
+    ) {
+        Ok(outp) => outp,
+        Err(e) => {
+            println!("Fejl under provenance erasure: {:?}", e);
+            return;
+        }
+    };
+
+    if let Err(e) = std::fs::write(&out_path, &gamma_out.bytes) {
+        println!("Fejl: Kunne ikke skrive normaliseret output: {:?}", e);
+        return;
+    }
+    println!("Provenance erasure fuldført.");
+    println!("- Normaliseret: {:?}", out_path);
+
+    if want_otp {
+        let mut pad = match its_fingerprint_erasure::PadFile::open(&pad_path) {
+            Ok(p) => p,
+            Err(e) => {
+                println!("Fejl: Pad-fil: {:?}", e);
+                return;
+            }
+        };
+        match its_fingerprint_erasure::otp_mask(&gamma_out.bytes, &mut pad) {
+            Ok(wire) => {
+                if let Err(e) = std::fs::write(&out_otp_path, &wire) {
+                    println!("Fejl: Kunne ikke skrive wire: {:?}", e);
+                    return;
+                }
+                println!("- Wire (OTP): {:?}", out_otp_path);
+            }
+            Err(e) => println!("Fejl under OTP mask: {:?}", e),
+        }
+    }
+}
 
 fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
     let mut rng = TimelockRng;

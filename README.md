@@ -36,11 +36,16 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
                          │ ITS-OTM_public_attestation   │
                          │ Public Wegman-Carter OTM     │
                          └──────────────────────────────┘
+                         ┌──────────────────────────────┐
+                         │  ITS-FINGERPRINT_ERASURE     │
+                         │ Provenance erasure (raw bytes)│
+                         └──────────────────────────────┘
 ```
 
 **Upstream crates:**
 * [`ITS-self_enclosed_timelock`](https://github.com/0x1F464/ITS-self_enclosed_timelock) — `its-net time-lock`, `time-unlock`, `time-deny`
 * [`ITS-OTM_public_attestation`](https://github.com/0x1F464/ITS-OTM_public_attestation) — AEH/sneakernet OTM verify via `verify_public_otm_tag`; standalone `its_otm` CLI for public bundles
+* [`ITS-FINGERPRINT_ERASURE`](https://github.com/0x1F464/ITS-FINGERPRINT_ERASURE) — Γ normalization + transport OTP (`its_fe process` / `otp-mask` / `its-net fingerprint-erasure`)
 
 ---
 
