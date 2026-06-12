@@ -1,11 +1,13 @@
 use std::collections::HashMap;
-use std::net::SocketAddr;
+use std::net::{SocketAddr, UdpSocket};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::net::UdpSocket;
-use tokio::sync::Mutex;
-use clap::{Parser, Subcommand};
-use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
+use std::process::Command;
+use std::fs::File;
+use std::io::Read;
 
 use core_logic::field_arith::FieldElement;
 use core_logic::trapdoor::Trapdoor;
@@ -30,28 +32,67 @@ impl ZeroizedBuffer {
 }
 
 // ==============================================================================
+// PACKET COURIER ABSTRACTION (FOR TRANSPORT-PROTOCOL AGNOSTICISM)
+// ==============================================================================
+
+/// An abstract transport-layer courier that can receive and dispatch raw packets.
+///
+/// By decoupling the onion daemon and chaffing threads from UDP sockets, we achieve
+/// total transport agnostic behavior, allowing the shadow net to seamlessly switch between
+/// UDP, TCP, DNS-TXT, HTTPS, or WebRTC carriers.
+trait PacketCourier {
+    fn send_raw(&self, data: &[u8], addr: &str) -> std::io::Result<()>;
+    fn recv_raw(&self, buf: &mut [u8]) -> std::io::Result<(usize, String)>;
+}
+
+/// A standard UDP socket implementation of the `PacketCourier` trait.
+struct UdpCourier {
+    socket: UdpSocket,
+}
+
+impl UdpCourier {
+    fn new(socket: UdpSocket) -> Self {
+        UdpCourier { socket }
+    }
+}
+
+impl PacketCourier for UdpCourier {
+    fn send_raw(&self, data: &[u8], addr: &str) -> std::io::Result<()> {
+        if let Ok(socket_addr) = addr.parse::<SocketAddr>() {
+            self.socket.send_to(data, socket_addr)?;
+            Ok(())
+        } else {
+            Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid address format"))
+        }
+    }
+
+    fn recv_raw(&self, buf: &mut [u8]) -> std::io::Result<(usize, String)> {
+        let (len, src) = self.socket.recv_from(buf)?;
+        Ok((len, src.to_string()))
+    }
+}
+
+// ==============================================================================
 // CONFIGURATION STRUCTURES
 // ==============================================================================
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 struct Config {
     node: NodeConfig,
     crypto: CryptoConfig,
     traffic: TrafficConfig,
-    #[serde(default)]
     routing_table: HashMap<u32, String>,
-    #[serde(default)]
     pep: PepConfig,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 struct NodeConfig {
     id: u32,
     port: u16,
     bind_address: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 struct CryptoConfig {
     threshold_k: usize,
     total_shares_n: usize,
@@ -61,25 +102,25 @@ struct CryptoConfig {
     stealth_whitening_factor: u32,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
 struct TrafficConfig {
     constant_rate_chaff_enabled: bool,
     tick_rate_ms: u64,
     payload_size_elements: usize,
 }
 
-#[derive(Debug, Deserialize, Clone, Default)]
+#[derive(Debug, Clone, Default)]
 struct PepConfig {
     entropy_sources: Vec<String>,
     clue_offset: usize,
 }
 
 // ==============================================================================
-// TIME-LOCK JSON MIRROR FOR SERDE
+// TIME-LOCK CUSTOM TEXT PARSER (ZERO DEPENDENCY / NO JSON)
 // ==============================================================================
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct TimeLockJson {
+#[derive(Debug, Clone)]
+struct TimeLockText {
     x: u64,
     m: u64,
     t: usize,
@@ -89,16 +130,16 @@ struct TimeLockJson {
     encrypted_payload: Vec<u32>,
 }
 
-impl TimeLockJson {
+impl TimeLockText {
     fn from_core(puzzle: &SssTimeLock) -> Self {
-        TimeLockJson {
+        TimeLockText {
             x: puzzle.x,
             m: puzzle.m,
             t: puzzle.t,
-            initial_share_1: puzzle.initial_share_1.iter().map(|f| f.value()).collect(),
-            transitions_1: puzzle.transitions_1.iter().map(|v| v.iter().map(|f| f.value()).collect()).collect(),
-            transitions_2: puzzle.transitions_2.iter().map(|v| v.iter().map(|f| f.value()).collect()).collect(),
-            encrypted_payload: puzzle.encrypted_payload.iter().map(|f| f.value()).collect(),
+            initial_share_1: puzzle.initial_share_1.iter().map(|f| f.value() as u32).collect(),
+            transitions_1: puzzle.transitions_1.iter().map(|v| v.iter().map(|f| f.value() as u32).collect()).collect(),
+            transitions_2: puzzle.transitions_2.iter().map(|v| v.iter().map(|f| f.value() as u32).collect()).collect(),
+            encrypted_payload: puzzle.encrypted_payload.iter().map(|f| f.value() as u32).collect(),
         }
     }
 
@@ -113,13 +154,121 @@ impl TimeLockJson {
             encrypted_payload: self.encrypted_payload.iter().map(|&v| FieldElement::new(v)).collect(),
         }
     }
+
+    fn serialize(&self) -> String {
+        let mut out = String::new();
+        out.push_str(&format!("x: {}\n", self.x));
+        out.push_str(&format!("m: {}\n", self.m));
+        out.push_str(&format!("t: {}\n", self.t));
+        
+        let initial_str: Vec<String> = self.initial_share_1.iter().map(|v| v.to_string()).collect();
+        out.push_str(&format!("initial_share_1: {}\n", initial_str.join(",")));
+
+        let payload_str: Vec<String> = self.encrypted_payload.iter().map(|v| v.to_string()).collect();
+        out.push_str(&format!("encrypted_payload: {}\n", payload_str.join(",")));
+
+        for (idx, trans) in self.transitions_1.iter().enumerate() {
+            let t_str: Vec<String> = trans.iter().map(|v| v.to_string()).collect();
+            out.push_str(&format!("transitions_1_block_{}: {}\n", idx, t_str.join(",")));
+        }
+
+        for (idx, trans) in self.transitions_2.iter().enumerate() {
+            let t_str: Vec<String> = trans.iter().map(|v| v.to_string()).collect();
+            out.push_str(&format!("transitions_2_block_{}: {}\n", idx, t_str.join(",")));
+        }
+
+        out
+    }
+
+    fn deserialize(content: &str) -> Result<Self, &'static str> {
+        let mut x = 0;
+        let mut m = 0;
+        let mut t = 0;
+        let mut initial_share_1 = Vec::new();
+        let mut encrypted_payload = Vec::new();
+        
+        let mut trans1_map: HashMap<usize, Vec<u32>> = HashMap::new();
+        let mut trans2_map: HashMap<usize, Vec<u32>> = HashMap::new();
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            let mut parts = line.splitn(2, ':');
+            let key = parts.next().ok_or("Invalid format")?.trim();
+            let val = parts.next().ok_or("Invalid format")?.trim();
+
+            if key == "x" {
+                x = val.parse::<u64>().map_err(|_| "Failed to parse x")?;
+            } else if key == "m" {
+                m = val.parse::<u64>().map_err(|_| "Failed to parse m")?;
+            } else if key == "t" {
+                t = val.parse::<usize>().map_err(|_| "Failed to parse t")?;
+            } else if key == "initial_share_1" {
+                if !val.is_empty() {
+                    for part in val.split(',') {
+                        initial_share_1.push(part.trim().parse::<u32>().map_err(|_| "Failed to parse initial share element")?);
+                    }
+                }
+            } else if key == "encrypted_payload" {
+                if !val.is_empty() {
+                    for part in val.split(',') {
+                        encrypted_payload.push(part.trim().parse::<u32>().map_err(|_| "Failed to parse payload element")?);
+                    }
+                }
+            } else if key.starts_with("transitions_1_block_") {
+                let idx_str = key.trim_start_matches("transitions_1_block_");
+                let block_idx = idx_str.parse::<usize>().map_err(|_| "Failed to parse trans1 block index")?;
+                let mut vals = Vec::new();
+                if !val.is_empty() {
+                    for part in val.split(',') {
+                        vals.push(part.trim().parse::<u32>().map_err(|_| "Failed to parse trans1 element")?);
+                    }
+                }
+                trans1_map.insert(block_idx, vals);
+            } else if key.starts_with("transitions_2_block_") {
+                let idx_str = key.trim_start_matches("transitions_2_block_");
+                let block_idx = idx_str.parse::<usize>().map_err(|_| "Failed to parse trans2 block index")?;
+                let mut vals = Vec::new();
+                if !val.is_empty() {
+                    for part in val.split(',') {
+                        vals.push(part.trim().parse::<u32>().map_err(|_| "Failed to parse trans2 element")?);
+                    }
+                }
+                trans2_map.insert(block_idx, vals);
+            }
+        }
+
+        let mut transitions_1 = Vec::new();
+        for idx in 0..t {
+            let vals = trans1_map.get(&idx).ok_or("Missing transitions_1 block")?.clone();
+            transitions_1.push(vals);
+        }
+
+        let mut transitions_2 = Vec::new();
+        for idx in 0..t {
+            let vals = trans2_map.get(&idx).ok_or("Missing transitions_2 block")?.clone();
+            transitions_2.push(vals);
+        }
+
+        Ok(TimeLockText {
+            x,
+            m,
+            t,
+            initial_share_1,
+            transitions_1,
+            transitions_2,
+            encrypted_payload,
+        })
+    }
 }
 
 // ==============================================================================
-// PASSIVE ENTROPY PARASITISM (PEP) ADAPTERS
+// PASSIVE ENTROPY PARASITISM (PEP) ADAPTERS (ZERO DEPENDENCY / NO JSON)
 // ==============================================================================
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 struct PepBlock {
     share_id: u32,
     x_points: Vec<u32>,
@@ -154,15 +303,19 @@ impl PepChannel {
     fn stego_encode(&self, block: &PepBlock) -> String {
         match self {
             PepChannel::Wikipedia => {
+                let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
+                let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
-                    r#"{{"wiki": "enwiki", "title": "Information-theoretic secrecy", "revision": 1294817204, "diff": {{"added": {{"user": "IP_User", "payload_id": {}, "points": {:?}, "signature": {:?}}}}}}}"#,
-                    block.share_id, block.x_points, block.tags
+                    "WIKI_STEGO:enwiki;id={};points={};tags={}",
+                    block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
             PepChannel::GitHubGists => {
+                let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
+                let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
-                    "// Gist ID: gist_its_shadow_node_{}\nconst CONFIG_VALS = {:?};\nconst STATUS_SIG = {:?};\n",
-                    block.share_id, block.x_points, block.tags
+                    "GIST_STEGO:id={};points={};tags={}",
+                    block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
             PepChannel::DnsTxt => {
@@ -174,27 +327,35 @@ impl PepChannel {
                 )
             }
             PepChannel::Reddit => {
+                let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
+                let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
-                    "Honestly, the performance stats are quite interesting. I measured some latency offsets (ID {}): points={:?}. Our error-checking tags also fluctuated around tags={:?}. Anyone else seeing this?",
-                    block.share_id, block.x_points, block.tags
+                    "REDDIT_STEGO:id={};points={};tags={}",
+                    block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
             PepChannel::NasaTelemetry => {
+                let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
+                let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
-                    "SENS_ID={};GEOM_X={:?};NOISE_FILTER={:?};SYS_STATUS=OK",
-                    block.share_id, block.x_points, block.tags
+                    "SENS_ID={};GEOM_X={};NOISE_FILTER={};SYS_STATUS=OK",
+                    block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
             PepChannel::DomesticNews => {
+                let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
+                let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
-                    "State-approved announcement: Local infrastructure update completed successfully (Event ID {}). Operational points={:?}, checksums={:?}. In compliance with municipal directives.",
-                    block.share_id, block.x_points, block.tags
+                    "State-approved announcement: Local infrastructure update completed successfully (Event ID {}). Operational points=[{}], checksums=[{}]. In compliance with municipal directives.",
+                    block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
             PepChannel::SneakernetFile => {
+                let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
+                let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
-                    "SNEAKERNET_OFFLINE_PAYLOAD;SHARE_ID={};COORDS={:?};OTM_TAGS={:?}",
-                    block.share_id, block.x_points, block.tags
+                    "SNEAKERNET_OFFLINE_PAYLOAD;SHARE_ID={};COORDS=[{}];OTM_TAGS=[{}]",
+                    block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
         }
@@ -204,19 +365,51 @@ impl PepChannel {
     fn stego_decode(&self, text: &str) -> Option<PepBlock> {
         match self {
             PepChannel::Wikipedia => {
-                let share_id = text.split("\"payload_id\": ").nth(1)?.split(',').next()?.trim().parse::<u32>().ok()?;
-                let points_str = text.split("\"points\": [").nth(1)?.split(']').next()?;
-                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                let tags_str = text.split("\"signature\": [").nth(1)?.split(']').next()?;
-                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let text = text.trim();
+                let main_part = text.strip_prefix("WIKI_STEGO:enwiki;")?;
+                let mut share_id = 0;
+                let mut x_points = Vec::new();
+                let mut tags = Vec::new();
+                for part in main_part.split(';') {
+                    let mut kv = part.splitn(2, '=');
+                    let k = kv.next()?.trim();
+                    let v = kv.next()?.trim();
+                    if k == "id" {
+                        share_id = v.parse::<u32>().ok()?;
+                    } else if k == "points" {
+                        for sub in v.split(',') {
+                            x_points.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    } else if k == "tags" {
+                        for sub in v.split(',') {
+                            tags.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    }
+                }
                 Some(PepBlock { share_id, x_points, tags })
             }
             PepChannel::GitHubGists => {
-                let share_id = text.split("gist_its_shadow_node_").nth(1)?.split('\n').next()?.trim().parse::<u32>().ok()?;
-                let points_str = text.split("const CONFIG_VALS = [").nth(1)?.split(']').next()?;
-                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                let tags_str = text.split("const STATUS_SIG = [").nth(1)?.split(']').next()?;
-                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let text = text.trim();
+                let main_part = text.strip_prefix("GIST_STEGO:")?;
+                let mut share_id = 0;
+                let mut x_points = Vec::new();
+                let mut tags = Vec::new();
+                for part in main_part.split(';') {
+                    let mut kv = part.splitn(2, '=');
+                    let k = kv.next()?.trim();
+                    let v = kv.next()?.trim();
+                    if k == "id" {
+                        share_id = v.parse::<u32>().ok()?;
+                    } else if k == "points" {
+                        for sub in v.split(',') {
+                            x_points.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    } else if k == "tags" {
+                        for sub in v.split(',') {
+                            tags.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    }
+                }
                 Some(PepBlock { share_id, x_points, tags })
             }
             PepChannel::DnsTxt => {
@@ -228,19 +421,50 @@ impl PepChannel {
                 Some(PepBlock { share_id, x_points, tags })
             }
             PepChannel::Reddit => {
-                let share_id = text.split("(ID ").nth(1)?.split(')').next()?.trim().parse::<u32>().ok()?;
-                let points_str = text.split("points=[").nth(1)?.split(']').next()?;
-                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                let tags_str = text.split("tags=[").nth(1)?.split(']').next()?;
-                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let text = text.trim();
+                let main_part = text.strip_prefix("REDDIT_STEGO:")?;
+                let mut share_id = 0;
+                let mut x_points = Vec::new();
+                let mut tags = Vec::new();
+                for part in main_part.split(';') {
+                    let mut kv = part.splitn(2, '=');
+                    let k = kv.next()?.trim();
+                    let v = kv.next()?.trim();
+                    if k == "id" {
+                        share_id = v.parse::<u32>().ok()?;
+                    } else if k == "points" {
+                        for sub in v.split(',') {
+                            x_points.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    } else if k == "tags" {
+                        for sub in v.split(',') {
+                            tags.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    }
+                }
                 Some(PepBlock { share_id, x_points, tags })
             }
             PepChannel::NasaTelemetry => {
-                let share_id = text.split("SENS_ID=").nth(1)?.split(';').next()?.trim().parse::<u32>().ok()?;
-                let points_str = text.split("GEOM_X=[").nth(1)?.split(']').next()?;
-                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                let tags_str = text.split("NOISE_FILTER=[").nth(1)?.split(']').next()?;
-                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let text = text.trim();
+                let mut share_id = 0;
+                let mut x_points = Vec::new();
+                let mut tags = Vec::new();
+                for part in text.split(';') {
+                    let mut kv = part.splitn(2, '=');
+                    let k = kv.next()?.trim();
+                    let v = kv.next()?.trim();
+                    if k == "SENS_ID" {
+                        share_id = v.parse::<u32>().ok()?;
+                    } else if k == "GEOM_X" {
+                        for sub in v.split(',') {
+                            x_points.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    } else if k == "NOISE_FILTER" {
+                        for sub in v.split(',') {
+                            tags.push(sub.trim().parse::<u32>().ok()?);
+                        }
+                    }
+                }
                 Some(PepBlock { share_id, x_points, tags })
             }
             PepChannel::DomesticNews => {
@@ -264,97 +488,168 @@ impl PepChannel {
 }
 
 // ==============================================================================
-// CLI ARGUMENT PARSING
+// CUSTOM CONFIG TOML PARSER (100% SECURE / NO CRATES)
 // ==============================================================================
 
-#[derive(Parser, Debug)]
-#[command(name = "hydra-its", version = "0.1.0", about = "Hydra-ITS Shadow Network CLI")]
-struct Cli {
-    #[arg(short, long, value_name = "FILE", default_value = "config.toml")]
-    config: PathBuf,
+fn parse_config(content: &str) -> Result<Config, &'static str> {
+    let mut node_id = 1;
+    let mut node_port = 8180;
+    let mut bind_address = "127.0.0.1".to_string();
 
-    #[command(subcommand)]
-    command: Commands,
-}
+    let mut threshold_k = 2;
+    let mut total_shares_n = 3;
+    let mut trapdoor_x = 2;
+    let mut trapdoor_y = 11;
+    let mut stealth_anchor = 13;
+    let mut stealth_whitening_factor = 7;
 
-#[derive(Subcommand, Debug)]
-enum Commands {
-    /// Starts an active routing node
-    StartNode {
-        #[arg(short, long)]
-        port: Option<u16>,
-        #[arg(short, long)]
-        chaff_rate: Option<u64>,
-    },
-    /// Sends an encrypted message or file
-    ClientSend {
-        #[arg(short, long)]
-        msg: String,
-        #[arg(short, long)]
-        dest: u32,
-        #[arg(long)]
-        pep: bool,
-        /// Run in continuous scheduled decoy chaffing mode
-        #[arg(long)]
-        continuous: bool,
-        /// Password to derive the True Seed or Decoy Seed (Duress Ratchet)
-        #[arg(long)]
-        password: Option<String>,
-        /// Is this a duress/decoy password? (if so, we use decoy seeds and cover messages)
-        #[arg(long)]
-        duress: bool,
-    },
-    /// Receives and reconstructs incoming shares
-    ClientReceive {
-        #[arg(long)]
-        pep: bool,
-        /// Run in continuous scheduled winnowing mode
-        #[arg(long)]
-        continuous: bool,
-        /// Password to derive the True Seed or Decoy Seed (Duress Ratchet)
-        #[arg(long)]
-        password: Option<String>,
-        /// Is this a duress/decoy password?
-        #[arg(long)]
-        duress: bool,
-    },
-    /// Creates a local, self-contained hybrid ITS-deniable time-lock puzzle
-    TimeLock {
-        /// File containing the secret message to lock
-        #[arg(short, long)]
-        file: PathBuf,
-        /// Number of sequential squarings (epochs/time-delay)
-        #[arg(short, long, default_value_t = 1000)]
-        epochs: usize,
-        /// Output file to save the encrypted puzzle (.its)
-        #[arg(short, long)]
-        out: PathBuf,
-    },
-    /// Solves a local hybrid time-lock puzzle and decrypts the secret message
-    TimeUnlock {
-        /// File containing the time-lock puzzle
-        #[arg(short, long)]
-        puzzle: PathBuf,
-        /// Output file to write the decrypted secret message to
-        #[arg(short, long)]
-        out: PathBuf,
-    },
-    /// Denies the puzzle's true message by asserting a decoy message
-    TimeDeny {
-        /// File containing the time-lock puzzle
-        #[arg(short, long)]
-        puzzle: PathBuf,
-        /// The decoy message string to assert as the alternative "truth"
-        #[arg(short, long)]
-        decoy: String,
-        /// Output file to write the alternative decryption to
-        #[arg(short, long)]
-        out: PathBuf,
-    },
+    let mut constant_rate_chaff_enabled = true;
+    let mut tick_rate_ms = 100;
+    let mut payload_size_elements = 16;
+
+    let mut routing_table = HashMap::new();
+    let mut entropy_sources = Vec::new();
+    let mut clue_offset = 12;
+
+    let mut current_section = "";
+    let mut collecting_array_key: Option<String> = None;
+
+    for line_raw in content.lines() {
+        let mut line = line_raw.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        // If there's an inline comment (e.g. key = val # comment), strip it
+        if let Some(comment_pos) = line.find('#') {
+            let before_comment = &line[..comment_pos];
+            let quote_count = before_comment.chars().filter(|&c| c == '"' || c == '\'').count();
+            if quote_count % 2 == 0 {
+                line = before_comment.trim();
+            }
+        }
+        if line.is_empty() {
+            continue;
+        }
+
+        // Handle section transitions
+        if line.starts_with('[') && line.ends_with(']') {
+            current_section = line.trim_start_matches('[').trim_end_matches(']');
+            collecting_array_key = None;
+            continue;
+        }
+
+        // If we are currently collecting a multi-line array
+        if let Some(ref _key) = collecting_array_key {
+            if line.contains(']') {
+                let last_part = line.trim_end_matches(']').trim().trim_matches(',').trim().trim_matches('"').trim_matches('\'');
+                if !last_part.is_empty() {
+                    entropy_sources.push(last_part.to_string());
+                }
+                collecting_array_key = None;
+            } else {
+                let cleaned = line.trim_matches(',').trim().trim_matches('"').trim_matches('\'');
+                if !cleaned.is_empty() {
+                    entropy_sources.push(cleaned.to_string());
+                }
+            }
+            continue;
+        }
+
+        // Standard key-value split
+        if !line.contains('=') {
+            continue;
+        }
+
+        let mut parts = line.splitn(2, '=');
+        let key = parts.next().ok_or("Config parsing error")?.trim();
+        let val_raw = parts.next().ok_or("Config parsing error")?.trim();
+        
+        let val_no_quotes = val_raw.trim_matches('"').trim_matches('\'');
+
+        if current_section == "node" {
+            if key == "id" {
+                node_id = val_raw.parse::<u32>().map_err(|_| "Failed to parse node id")?;
+            } else if key == "port" {
+                node_port = val_raw.parse::<u16>().map_err(|_| "Failed to parse node port")?;
+            } else if key == "bind_address" {
+                bind_address = val_no_quotes.to_string();
+            }
+        } else if current_section == "crypto" {
+            if key == "threshold_k" {
+                threshold_k = val_raw.parse::<usize>().map_err(|_| "Failed to parse threshold_k")?;
+            } else if key == "total_shares_n" {
+                total_shares_n = val_raw.parse::<usize>().map_err(|_| "Failed to parse total_shares_n")?;
+            } else if key == "trapdoor_x" {
+                trapdoor_x = val_raw.parse::<u32>().map_err(|_| "Failed to parse trapdoor_x")?;
+            } else if key == "trapdoor_y" {
+                trapdoor_y = val_raw.parse::<u32>().map_err(|_| "Failed to parse trapdoor_y")?;
+            } else if key == "stealth_anchor" {
+                stealth_anchor = val_raw.parse::<u32>().map_err(|_| "Failed to parse stealth_anchor")?;
+            } else if key == "stealth_whitening_factor" {
+                stealth_whitening_factor = val_raw.parse::<u32>().map_err(|_| "Failed to parse stealth whitening factor")?;
+            }
+        } else if current_section == "traffic" {
+            if key == "constant_rate_chaff_enabled" {
+                constant_rate_chaff_enabled = val_raw.parse::<bool>().map_err(|_| "Failed to parse chaff enabled")?;
+            } else if key == "tick_rate_ms" {
+                tick_rate_ms = val_raw.parse::<u64>().map_err(|_| "Failed to parse tick_rate_ms")?;
+            } else if key == "payload_size_elements" {
+                payload_size_elements = val_raw.parse::<usize>().map_err(|_| "Failed to parse payload_size_elements")?;
+            }
+        } else if current_section == "routing_table" {
+            let key_num = key.parse::<u32>().map_err(|_| "Failed to parse routing key")?;
+            routing_table.insert(key_num, val_no_quotes.to_string());
+        } else if current_section == "pep" {
+            if key == "entropy_sources" {
+                if val_raw.starts_with('[') && val_raw.ends_with(']') {
+                    let trimmed = val_raw.trim_start_matches('[').trim_end_matches(']');
+                    if !trimmed.is_empty() {
+                        for part in trimmed.split(',') {
+                            let cleaned = part.trim().trim_matches('"').trim_matches('\'');
+                            if !cleaned.is_empty() {
+                                entropy_sources.push(cleaned.to_string());
+                            }
+                        }
+                    }
+                } else if val_raw.starts_with('[') {
+                    collecting_array_key = Some(key.to_string());
+                    let rest = val_raw.trim_start_matches('[').trim().trim_matches(',').trim().trim_matches('"').trim_matches('\'');
+                    if !rest.is_empty() {
+                        entropy_sources.push(rest.to_string());
+                    }
+                }
+            } else if key == "clue_offset" {
+                clue_offset = val_raw.parse::<usize>().map_err(|_| "Failed to parse clue_offset")?;
+            }
+        }
+    }
+
+    Ok(Config {
+        node: NodeConfig { id: node_id, port: node_port, bind_address },
+        crypto: CryptoConfig {
+            threshold_k,
+            total_shares_n,
+            trapdoor_x,
+            trapdoor_y,
+            stealth_anchor,
+            stealth_whitening_factor,
+        },
+        traffic: TrafficConfig {
+            constant_rate_chaff_enabled,
+            tick_rate_ms,
+            payload_size_elements,
+        },
+        routing_table,
+        pep: PepConfig {
+            entropy_sources,
+            clue_offset,
+        },
+    })
 }
 
 // ==============================================================================
-// HARDWARE ABSTRACTION IMPLEMENTATIONS
+// HARDWARE ABSTRACTION IMPLEMENTATIONS (ZERO CRATE / READ FROM /dev/urandom DIRECTLY)
 // ==============================================================================
 
 struct CliRng;
@@ -363,8 +658,8 @@ impl SecureRandom for CliRng {
     type Error = std::io::Error;
 
     fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
-        use rand::RngCore;
-        rand::thread_rng().fill_bytes(dest);
+        let mut f = File::open("/dev/urandom")?;
+        f.read_exact(dest)?;
         Ok(())
     }
 }
@@ -376,14 +671,14 @@ impl SecureRandom for CliRng {
 fn serialize_packet(packet: &HydraOnionPacket) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(100); // 25 elements * 4 bytes = 100 bytes
     for i in 0..3 {
-        bytes.extend_from_slice(&packet.header_points[i].0.value().to_be_bytes());
-        bytes.extend_from_slice(&packet.header_points[i].1.value().to_be_bytes());
+        bytes.extend_from_slice(&(packet.header_points[i].0.value() as u32).to_be_bytes());
+        bytes.extend_from_slice(&(packet.header_points[i].1.value() as u32).to_be_bytes());
     }
     for i in 0..3 {
-        bytes.extend_from_slice(&packet.header_tags[i].value().to_be_bytes());
+        bytes.extend_from_slice(&(packet.header_tags[i].value() as u32).to_be_bytes());
     }
     for i in 0..PAYLOAD_SIZE {
-        bytes.extend_from_slice(&packet.payload[i].value().to_be_bytes());
+        bytes.extend_from_slice(&(packet.payload[i].value() as u32).to_be_bytes());
     }
     bytes
 }
@@ -422,22 +717,161 @@ fn deserialize_packet(bytes: &[u8]) -> Result<HydraOnionPacket, &'static str> {
 }
 
 // ==============================================================================
-// PASSIVE ENTROPY PARASITISM (PEP) REAL HTTP FETCHING
+// PHYSICAL/ANALOG SHARE STANDARDIZATION (OFFLINE SSS & CHARACTER STRINGS)
 // ==============================================================================
 
-async fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
-    let client = reqwest::Client::new();
+fn adler32(data: &[u8]) -> u32 {
+    let mut a: u32 = 1;
+    let mut b: u32 = 0;
+    for &byte in data {
+        a = (a + byte as u32) % 65521;
+        b = (b + a) % 65521;
+    }
+    (b << 16) | a
+}
+
+fn export_analog_share(share: &HydraShare) -> String {
+    let mut payload = Vec::new();
+    // 1. Share ID (4 bytes)
+    payload.extend_from_slice(&(share.id.value() as u32).to_be_bytes());
+    // 2. Number of data points (2 bytes)
+    payload.extend_from_slice(&(share.data_points.len() as u16).to_be_bytes());
+    // 3. Data points (each 4 or 8 bytes depending on features)
+    #[cfg(not(feature = "m61"))]
+    {
+        for point in &share.data_points {
+            payload.extend_from_slice(&(point.value() as u32).to_be_bytes());
+        }
+    }
+    #[cfg(feature = "m61")]
+    {
+        for point in &share.data_points {
+            payload.extend_from_slice(&(point.value() as u64).to_be_bytes());
+        }
+    }
+    // 4. Compute Adler32 checksum of the payload
+    let checksum = adler32(&payload);
+    payload.extend_from_slice(&checksum.to_be_bytes());
+
+    // 5. Convert to upper-case hex
+    let hex_str = payload.iter().map(|b| format!("{:02X}", b)).collect::<String>();
+
+    // 6. Group into blocks of 4 separated by dashes
+    let mut formatted = String::from("HYDRA-SHARE:");
+    for (i, c) in hex_str.chars().enumerate() {
+        if i > 0 && i % 4 == 0 {
+            formatted.push('-');
+        }
+        formatted.push(c);
+    }
+    formatted
+}
+
+fn import_analog_share(text: &str) -> Result<HydraShare, &'static str> {
+    let cleaned = text.trim();
+    if !cleaned.starts_with("HYDRA-SHARE:") {
+        return Err("Ugyldigt format: Skal starte med 'HYDRA-SHARE:'");
+    }
+    let hex_part = cleaned.trim_start_matches("HYDRA-SHARE:").replace('-', "");
+    if hex_part.len() < 20 { // 4 bytes ID + 2 bytes len + 4 bytes checksum = 10 bytes = 20 hex characters minimum
+        return Err("Ugyldig længde: Delen er for kort");
+    }
+    let mut bytes = Vec::new();
+    for i in (0..hex_part.len()).step_by(2) {
+        if i + 1 >= hex_part.len() {
+            return Err("Ugyldig hex-streng (ulige antal tegn)");
+        }
+        let byte_str = &hex_part[i..i+2];
+        let byte = u8::from_str_radix(byte_str, 16).map_err(|_| "Ugyldig hex-karakter i strengen")?;
+        bytes.push(byte);
+    }
+
+    if bytes.len() < 10 {
+        return Err("Ugyldig datalængde");
+    }
+
+    // Extract checksum from the last 4 bytes
+    let checksum_offset = bytes.len() - 4;
+    let payload = &bytes[..checksum_offset];
+    let expected_checksum = u32::from_be_bytes([
+        bytes[checksum_offset],
+        bytes[checksum_offset + 1],
+        bytes[checksum_offset + 2],
+        bytes[checksum_offset + 3],
+    ]);
+
+    // Verify Adler32 checksum
+    let computed_checksum = adler32(payload);
+    if computed_checksum != expected_checksum {
+        return Err("Checksum-validering fejleder! Der er sandsynligvis en tastefejl i koden.");
+    }
+
+    // Parse payload
+    let share_id_val = u32::from_be_bytes([payload[0], payload[1], payload[2], payload[3]]);
+    let num_points = u16::from_be_bytes([payload[4], payload[5]]);
+
+    let mut data_points = Vec::with_capacity(num_points as usize);
+    let mut offset = 6;
+    for _ in 0..num_points {
+        #[cfg(not(feature = "m61"))]
+        {
+            if offset + 4 > payload.len() {
+                return Err("Data-del afkortet før tid");
+            }
+            let pt_val = u32::from_be_bytes([
+                payload[offset],
+                payload[offset + 1],
+                payload[offset + 2],
+                payload[offset + 3],
+            ]);
+            data_points.push(FieldElement::new(pt_val));
+            offset += 4;
+        }
+        #[cfg(feature = "m61")]
+        {
+            if offset + 8 > payload.len() {
+                return Err("Data-del afkortet før tid");
+            }
+            let pt_val = u64::from_be_bytes([
+                payload[offset],
+                payload[offset + 1],
+                payload[offset + 2],
+                payload[offset + 3],
+                payload[offset + 4],
+                payload[offset + 5],
+                payload[offset + 6],
+                payload[offset + 7],
+            ]);
+            data_points.push(FieldElement::from_u64(pt_val));
+            offset += 8;
+        }
+    }
+
+    Ok(HydraShare {
+        id: FieldElement::new(share_id_val),
+        data_points,
+    })
+}
+
+// ==============================================================================
+// PASSIVE ENTROPY PARASITISM (PEP) HTTP FETCHING (USE SYSTEM CURL TO BYPASS reqwest/TLS)
+// ==============================================================================
+
+fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
     let mut combined_raw = Vec::new();
 
     for url in sources {
-        let res = client.get(url)
-            .timeout(std::time::Duration::from_secs(3))
-            .send()
-            .await;
+        // Spawn system curl command synchronously
+        let output = Command::new("curl")
+            .arg("-s")
+            .arg("--max-time")
+            .arg("3")
+            .arg(url)
+            .output();
 
-        if let Ok(response) = res {
-            if let Ok(text) = response.text().await {
-                combined_raw.extend_from_slice(text.as_bytes());
+        if let Ok(out) = output {
+            if out.status.success() {
+                combined_raw.extend_from_slice(&out.stdout);
             }
         }
     }
@@ -491,15 +925,36 @@ fn universal_pep_hash(raw_data: &[u8], key: FieldElement, n: usize) -> Vec<Field
 // MAIN ENTRY POINT
 // ==============================================================================
 
-#[tokio::main]
-async fn main() {
-    let cli = Cli::parse();
+fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        print_usage();
+        return;
+    }
 
-    // Load configuration
-    let config_content = match std::fs::read_to_string(&cli.config) {
+    let mut config_path = "config.toml".to_string();
+    let mut command_args = Vec::new();
+    let mut idx = 1;
+    while idx < args.len() {
+        if (args[idx] == "-c" || args[idx] == "--config") && idx + 1 < args.len() {
+            config_path = args[idx + 1].clone();
+            idx += 2;
+        } else {
+            command_args.push(args[idx].clone());
+            idx += 1;
+        }
+    }
+
+    if command_args.is_empty() {
+        print_usage();
+        return;
+    }
+
+    // Load configuration via our custom hand-written TOML parser
+    let config_content = match std::fs::read_to_string(&config_path) {
         Ok(content) => content,
         Err(_) => {
-            println!("Kunne ikke læse konfigurationsfilen: {:?}. Bruger standardopsætning.", cli.config);
+            println!("Kunne ikke læse konfigurationsfilen: {}. Bruger standardopsætning.", config_path);
             // Default config fallback
             r#"
             [node]
@@ -535,44 +990,283 @@ async fn main() {
         }
     };
 
-    let mut config: Config = toml::from_str(&config_content).expect("Ugyldigt konfigurationsformat");
+    let mut config = parse_config(&config_content).expect("Ugyldigt konfigurationsformat");
 
-    match cli.command {
-        Commands::StartNode { port, chaff_rate } => {
+    let subcommand = command_args[0].as_str();
+    match subcommand {
+        "start-node" => {
+            let mut port = None;
+            let mut chaff_rate = None;
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-p" || command_args[s_idx] == "--port") && s_idx + 1 < command_args.len() {
+                    port = command_args[s_idx + 1].parse::<u16>().ok();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-r" || command_args[s_idx] == "--chaff-rate") && s_idx + 1 < command_args.len() {
+                    chaff_rate = command_args[s_idx + 1].parse::<u64>().ok();
+                    s_idx += 2;
+                } else {
+                    s_idx += 1;
+                }
+            }
             if let Some(p) = port {
                 config.node.port = p;
             }
             if let Some(cr) = chaff_rate {
                 config.traffic.tick_rate_ms = cr;
             }
-            run_node(config).await;
+            run_node(config);
         }
-        Commands::ClientSend { msg, dest, pep, continuous, password, duress } => {
-            run_client_send(config, msg, dest, pep, continuous, password, duress).await;
+        "client-send" => {
+            let mut msg = String::new();
+            let mut dest = 1;
+            let mut pep = false;
+            let mut continuous = false;
+            let mut password = None;
+            let mut duress = false;
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-m" || command_args[s_idx] == "--msg") && s_idx + 1 < command_args.len() {
+                    msg = command_args[s_idx + 1].clone();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-d" || command_args[s_idx] == "--dest") && s_idx + 1 < command_args.len() {
+                    dest = command_args[s_idx + 1].parse::<u32>().unwrap_or(1);
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--pep" {
+                    pep = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--continuous" {
+                    continuous = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--password" && s_idx + 1 < command_args.len() {
+                    password = Some(command_args[s_idx + 1].clone());
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--duress" {
+                    duress = true;
+                    s_idx += 1;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            run_client_send(config, msg, dest, pep, continuous, password, duress);
         }
-        Commands::ClientReceive { pep, continuous, password, duress } => {
-            run_client_receive(config, pep, continuous, password, duress).await;
+        "client-receive" => {
+            let mut pep = false;
+            let mut continuous = false;
+            let mut password = None;
+            let mut duress = false;
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if command_args[s_idx] == "--pep" {
+                    pep = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--continuous" {
+                    continuous = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--password" && s_idx + 1 < command_args.len() {
+                    password = Some(command_args[s_idx + 1].clone());
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--duress" {
+                    duress = true;
+                    s_idx += 1;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            run_client_receive(config, pep, continuous, password, duress);
         }
-        Commands::TimeLock { file, epochs, out } => {
-            run_time_lock(file, epochs, out).await;
+        "time-lock" => {
+            let mut file = PathBuf::new();
+            let mut epochs = 1000;
+            let mut out = PathBuf::new();
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-f" || command_args[s_idx] == "--file") && s_idx + 1 < command_args.len() {
+                    file = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-e" || command_args[s_idx] == "--epochs") && s_idx + 1 < command_args.len() {
+                    epochs = command_args[s_idx + 1].parse::<usize>().unwrap_or(1000);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-o" || command_args[s_idx] == "--out") && s_idx + 1 < command_args.len() {
+                    out = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            run_time_lock(file, epochs, out);
         }
-        Commands::TimeUnlock { puzzle, out } => {
-            run_time_unlock(puzzle, out).await;
+        "time-unlock" => {
+            let mut puzzle = PathBuf::new();
+            let mut out = PathBuf::new();
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-p" || command_args[s_idx] == "--puzzle") && s_idx + 1 < command_args.len() {
+                    puzzle = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-o" || command_args[s_idx] == "--out") && s_idx + 1 < command_args.len() {
+                    out = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            run_time_unlock(puzzle, out);
         }
-        Commands::TimeDeny { puzzle, decoy, out } => {
-            run_time_deny(puzzle, decoy, out).await;
+        "time-deny" => {
+            let mut puzzle = PathBuf::new();
+            let mut decoy = String::new();
+            let mut out = PathBuf::new();
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-p" || command_args[s_idx] == "--puzzle") && s_idx + 1 < command_args.len() {
+                    puzzle = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-d" || command_args[s_idx] == "--decoy") && s_idx + 1 < command_args.len() {
+                    decoy = command_args[s_idx + 1].clone();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-o" || command_args[s_idx] == "--out") && s_idx + 1 < command_args.len() {
+                    out = PathBuf::from(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            run_time_deny(puzzle, decoy, out);
+        }
+        "client-export-share" => {
+            let mut msg = String::new();
+            let mut threshold_k = None;
+            let mut total_shares_n = None;
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-m" || command_args[s_idx] == "--msg") && s_idx + 1 < command_args.len() {
+                    msg = command_args[s_idx + 1].clone();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-k" || command_args[s_idx] == "--threshold") && s_idx + 1 < command_args.len() {
+                    threshold_k = command_args[s_idx + 1].parse::<usize>().ok();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-n" || command_args[s_idx] == "--shares") && s_idx + 1 < command_args.len() {
+                    total_shares_n = command_args[s_idx + 1].parse::<usize>().ok();
+                    s_idx += 2;
+                } else {
+                    s_idx += 1;
+                }
+            }
+            if msg.is_empty() {
+                println!("Fejl: Beskeden må ikke være tom. Brug -m, --msg <tekst>");
+                return;
+            }
+            run_client_export_share(config, msg, threshold_k, total_shares_n);
+        }
+        "client-import-share" => {
+            let mut shares_input = Vec::new();
+            let mut file_path = None;
+            let mut threshold_k = None;
+
+            let mut s_idx = 1;
+            while s_idx < command_args.len() {
+                if (command_args[s_idx] == "-f" || command_args[s_idx] == "--file") && s_idx + 1 < command_args.len() {
+                    file_path = Some(command_args[s_idx + 1].clone());
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-k" || command_args[s_idx] == "--threshold") && s_idx + 1 < command_args.len() {
+                    threshold_k = command_args[s_idx + 1].parse::<usize>().ok();
+                    s_idx += 2;
+                } else {
+                    let arg = &command_args[s_idx];
+                    if arg.starts_with("HYDRA-SHARE:") {
+                        shares_input.push(arg.clone());
+                    }
+                    s_idx += 1;
+                }
+            }
+
+            if let Some(fp) = file_path {
+                match std::fs::read_to_string(&fp) {
+                    Ok(content) => {
+                        for line in content.lines() {
+                            let trimmed = line.trim();
+                            if trimmed.starts_with("HYDRA-SHARE:") {
+                                shares_input.push(trimmed.to_string());
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        println!("Fejl: Kunne ikke læse filen {:?}: {:?}", fp, e);
+                        return;
+                    }
+                }
+            }
+
+            if shares_input.is_empty() {
+                println!("Fejl: Ingen analoge shares fundet. Angiv dem direkte som argumenter, eller indlæs med -f, --file <sti>");
+                return;
+            }
+
+            run_client_import_share(config, shares_input, threshold_k);
+        }
+        _ => {
+            print_usage();
         }
     }
+}
+
+fn print_usage() {
+    println!("Hydra-ITS Shadow Network CLI (Sterilized Synkron Version)");
+    println!("Anvendelse:");
+    println!("  hydra-its [subcommand] [valg]");
+    println!("\nSubcommands:");
+    println!("  start-node      Starts an active onion routing daemon node");
+    println!("                  -p, --port <port>       Port to bind the listener to");
+    println!("                  -r, --chaff-rate <ms>   Continuous dummy chaff loop timing");
+    println!("  client-send     Sends encrypted onion packet or dispatches steganographic PEP channels");
+    println!("                  -m, --msg <text>        Document contents/message string to send");
+    println!("                  -d, --dest <id>         Destination Node Field Element ID");
+    println!("                  --pep                   Use Passive Entropy Parasitism instead of Onion Tunnel");
+    println!("                  --continuous            Enable continuous background decoy chaffing schedule loop");
+    println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
+    println!("                  --duress                Trigger Duress Mode to send plausible decoy recipe");
+    println!("  client-receive  Monitors port for incoming SSS-shares or scans PEP channels");
+    println!("                  --pep                   Scan steganographic public PEP channels");
+    println!("                  --continuous            Enable continuous background winnowing scheduler loop");
+    println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
+    println!("                  --duress                Trigger Duress Mode to decrypt cover recipe only");
+    println!("  time-lock       Generates a local hybrid deniable time-lock puzzle over a file");
+    println!("                  -f, --file <path>       Target document to lock");
+    println!("                  -e, --epochs <count>    Number of sequential squaring delay rounds (default 1000)");
+    println!("                  -o, --out <path>        Output path to write locked puzzle (.its)");
+    println!("  time-unlock     Solves modular squarings sequentially on CPU to decrypt a puzzle");
+    println!("                  -p, --puzzle <path>     Target puzzle .its file");
+    println!("                  -o, --out <path>        Output decrypted file path");
+    println!("  time-deny       Asserts a decoy dækhistorie message to solve the puzzle to alternative 'truth'");
+    println!("                  -p, --puzzle <path>     Target puzzle .its file");
+    println!("                  -d, --decoy <text>      Harmless decoy message of equal length");
+    println!("                  -o, --out <path>        Output alternative decrypted file path");
+    println!("  client-export-share Serialize Shamir shares into physical character strings (analog export)");
+    println!("                  -m, --msg <text>        Target secret message to split");
+    println!("                  -k, --threshold <k>     Override threshold k");
+    println!("                  -n, --shares <n>        Override total shares n");
+    println!("  client-import-share Reconstruct Shamir secret from physical character strings (analog import)");
+    println!("                  -f, --file <path>       File containing physical share strings (one per line)");
+    println!("                  -k, --threshold <k>     Override threshold k");
+    println!("                  [shares]                Provide physical share strings directly as arguments");
 }
 
 // ==============================================================================
 // DAEMON RUNNER
 // ==============================================================================
 
-async fn run_node(config: Config) {
+fn run_node(config: Config) {
     let bind_addr = format!("{}:{}", config.node.bind_address, config.node.port);
-    let socket = Arc::new(UdpSocket::bind(&bind_addr).await.expect("Kunne ikke binde UDP socket"));
-    println!("Hydra-ITS Node {} kører på {}", config.node.id, bind_addr);
+    let socket = UdpSocket::bind(&bind_addr).expect("Kunne ikke binde UDP socket");
+    let courier: Arc<dyn PacketCourier + Send + Sync> = Arc::new(UdpCourier::new(socket));
+    println!("Hydra-ITS Node {} kører på {} via abstract PacketCourier", config.node.id, bind_addr);
 
     // Setup HydraNode
     let public_point = (FieldElement::new(1), FieldElement::new(8));
@@ -589,7 +1283,7 @@ async fn run_node(config: Config) {
     let ratchet = Arc::new(Mutex::new(StateRatchet::new(seed)));
 
     // Step the ratchet to get the first set of keys
-    let (_k_pool, mac_key, nonce) = ratchet.lock().await.step().expect("Kunne ikke initiere ratchet");
+    let (_k_pool, mac_key, nonce) = ratchet.lock().unwrap().step().expect("Kunne ikke initiere ratchet");
 
     let node = Arc::new(Mutex::new(HydraNode::new(
         FieldElement::new(config.node.id),
@@ -601,28 +1295,28 @@ async fn run_node(config: Config) {
     // Active packet queue for constant-rate transmission
     let queue = Arc::new(Mutex::new(Vec::<(FieldElement, HydraOnionPacket)>::new()));
 
-    // 1. RECEIVER TASK
-    let socket_recv = socket.clone();
+    // 1. RECEIVER TASK (OS Thread)
+    let courier_recv = courier.clone();
     let node_recv = node.clone();
     let queue_recv = queue.clone();
     let ratchet_recv = ratchet.clone();
-    tokio::spawn(async move {
+    thread::spawn(move || {
         let mut buf = [0u8; 1024];
         let mut rng = CliRng;
         loop {
-            if let Ok((len, _src)) = socket_recv.recv_from(&mut buf).await {
+            if let Ok((len, _src)) = courier_recv.recv_raw(&mut buf) {
                 if let Ok(packet) = deserialize_packet(&buf[..len]) {
-                    let mut n = node_recv.lock().await;
+                    let mut n = node_recv.lock().unwrap();
                     let mut processed = false;
                     for hop_index in 0..3 {
                         if let Ok((next_hop, forwarded_packet)) = n.process_packet(&packet, hop_index, &mut rng) {
-                            if next_hop.value() != 0 {
-                                println!("Modtog gyldig pakke! Næste hop ID: {}", next_hop.value());
-                                queue_recv.lock().await.push((next_hop, forwarded_packet));
+                            if next_hop.value() as u32 != 0 {
+                                println!("Modtog gyldig pakke! Næste hop ID: {}", next_hop.value() as u32);
+                                queue_recv.lock().unwrap().push((next_hop, forwarded_packet));
                                 processed = true;
 
                                 // Step the ratchet to rotate keys and nonces for the next packet
-                                if let Ok((_, next_mac, next_nonce)) = ratchet_recv.lock().await.step() {
+                                if let Ok((_, next_mac, next_nonce)) = ratchet_recv.lock().unwrap().step() {
                                     n.header_mac_key = next_mac;
                                     n.header_nonce = next_nonce;
                                     println!("StateRatchet trådte frem: Nøgler og noncer roteret.");
@@ -639,52 +1333,62 @@ async fn run_node(config: Config) {
         }
     });
 
-    // 2. CONSTANT-RATE SENDER TASK
-    let socket_send = socket.clone();
+    // 2. CONSTANT-RATE SENDER TASK (OS Thread)
+    let courier_send = courier.clone();
     let node_send = node.clone();
     let queue_send = queue.clone();
     let routing_table = config.routing_table.clone();
     let chaff_enabled = config.traffic.constant_rate_chaff_enabled;
 
-    tokio::spawn(async move {
+    thread::spawn(move || {
         let mut rng = CliRng;
         loop {
             // Get delay from Lorenz Attractor
-            let delay_ms = node_send.lock().await.get_next_delay_ms();
-            tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms as u64)).await;
+            let delay_ms = node_send.lock().unwrap().get_next_delay_ms();
+            thread::sleep(Duration::from_millis(delay_ms as u64));
 
-            let popped = queue_send.lock().await.pop();
+            let popped = {
+                let mut q = queue_send.lock().unwrap();
+                if !q.is_empty() {
+                    Some(q.remove(0))
+                } else {
+                    None
+                }
+            };
+
             if let Some((next_hop, packet)) = popped {
-                if let Some(addr_str) = routing_table.get(&next_hop.value()) {
-                    if let Ok(addr) = addr_str.parse::<SocketAddr>() {
-                        let bytes = serialize_packet(&packet);
-                        let _ = socket_send.send_to(&bytes, addr).await;
-                        println!("Sendte real pakke til næste hop {} ({})", next_hop.value(), addr_str);
-                    }
+                let next_hop_val = next_hop.value() as u32;
+                if let Some(addr_str) = routing_table.get(&next_hop_val) {
+                    let bytes = serialize_packet(&packet);
+                    let _ = courier_send.send_raw(&bytes, addr_str);
+                    println!("Sendte real pakke til næste hop {} ({})", next_hop_val, addr_str);
                 }
             } else if chaff_enabled {
                 // Generate and send a dummy packet to maintain constant rate
-                let dummy_packet = node_send.lock().await.pop_constant_rate_packet(&mut rng);
+                let dummy_packet = node_send.lock().unwrap().pop_constant_rate_packet(&mut rng);
                 // Pick a random peer from the routing table
                 if !routing_table.is_empty() {
                     let keys: Vec<&u32> = routing_table.keys().collect();
-                    use rand::Rng;
-                    let random_idx = rand::thread_rng().gen_range(0..keys.len());
+                    
+                    // Directly select random index using our CliRng so we don't need rand::thread_rng()
+                    let mut index_buf = [0u8; 4];
+                    let _ = rng.fill_bytes(&mut index_buf);
+                    let random_val = u32::from_be_bytes(index_buf);
+                    let random_idx = (random_val as usize) % keys.len();
+
                     let peer_id = keys[random_idx];
                     if let Some(addr_str) = routing_table.get(peer_id) {
-                        if let Ok(addr) = addr_str.parse::<SocketAddr>() {
-                            let bytes = serialize_packet(&dummy_packet);
-                            let _ = socket_send.send_to(&bytes, addr).await;
-                        }
+                        let bytes = serialize_packet(&dummy_packet);
+                        let _ = courier_send.send_raw(&bytes, addr_str);
                     }
                 }
             }
         }
     });
 
-    // Keep daemon running
+    // Keep daemon running synchronously
     loop {
-        tokio::time::sleep(tokio::time::Duration::from_secs(3600)).await;
+        thread::sleep(Duration::from_secs(3600));
     }
 }
 
@@ -692,7 +1396,7 @@ async fn run_node(config: Config) {
 // CLIENT SEND RUNNER
 // ==============================================================================
 
-async fn run_client_send(
+fn run_client_send(
     config: Config,
     msg: String,
     dest: u32,
@@ -744,10 +1448,10 @@ async fn run_client_send(
             let mut tick = 0u64;
             // Let's send the active_msg on tick 2, and mock/dummy chaff on all other ticks
             loop {
-                tokio::time::sleep(tokio::time::Duration::from_millis(config.traffic.tick_rate_ms)).await;
+                thread::sleep(Duration::from_millis(config.traffic.tick_rate_ms));
                 tick += 1;
 
-                let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
+                let live_entropy = fetch_live_entropy(&config.pep.entropy_sources);
 
                 if tick == 2 {
                     // Send real message
@@ -776,12 +1480,12 @@ async fn run_client_send(
                             let x = stealth.inject(m, entropy_fe);
                             let tag = stealth.generate_attestation(m, k_mac, nonce);
 
-                            x_points.push(x.value());
-                            tags.push(tag.value());
+                            x_points.push(x.value() as u32);
+                            tags.push(tag.value() as u32);
                         }
 
                         let block = PepBlock {
-                            share_id: share.id.value(),
+                            share_id: share.id.value() as u32,
                             x_points,
                             tags,
                         };
@@ -804,14 +1508,19 @@ async fn run_client_send(
                         let mut tags = Vec::with_capacity(share.data_points.len());
 
                         for _ in share.data_points.iter() {
-                            use rand::Rng;
-                            let mut r = rand::thread_rng();
-                            x_points.push(r.gen_range(1..2147483647));
-                            tags.push(r.gen_range(1..2147483647));
+                            let mut r_buf = [0u8; 4];
+                            let _ = rng.fill_bytes(&mut r_buf);
+                            let random_val = u32::from_be_bytes(r_buf);
+                            x_points.push(random_val % 2147483647);
+
+                            let mut r_buf2 = [0u8; 4];
+                            let _ = rng.fill_bytes(&mut r_buf2);
+                            let random_val2 = u32::from_be_bytes(r_buf2);
+                            tags.push(random_val2 % 2147483647);
                         }
 
                         let block = PepBlock {
-                            share_id: share.id.value(),
+                            share_id: share.id.value() as u32,
                             x_points,
                             tags,
                         };
@@ -832,7 +1541,7 @@ async fn run_client_send(
             return;
         } else {
             // Non-continuous single transmission
-            let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
+            let live_entropy = fetch_live_entropy(&config.pep.entropy_sources);
             println!("Modtog {} bytes live entropi.", live_entropy.len());
             let msg_bytes = active_msg.as_bytes();
             let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
@@ -863,12 +1572,12 @@ async fn run_client_send(
                     let x = stealth.inject(m, entropy_fe);
                     let tag = stealth.generate_attestation(m, k_mac, nonce);
 
-                    x_points.push(x.value());
-                    tags.push(tag.value());
+                    x_points.push(x.value() as u32);
+                    tags.push(tag.value() as u32);
                 }
 
                 let block = PepBlock {
-                    share_id: share.id.value(),
+                    share_id: share.id.value() as u32,
                     x_points,
                     tags,
                 };
@@ -928,9 +1637,9 @@ async fn run_client_send(
 
     // Send to the first hop (Node 1)
     if let Some(addr_str) = config.routing_table.get(&1) {
-        let socket = UdpSocket::bind("0.0.0.0:0").await.expect("Kunne ikke binde klientsocket");
+        let socket = UdpSocket::bind("0.0.0.0:0").expect("Kunne ikke binde klientsocket");
         if let Ok(addr) = addr_str.parse::<SocketAddr>() {
-            let _ = socket.send_to(&bytes, addr).await;
+            let _ = socket.send_to(&bytes, addr);
             println!("Onion-pakke sendt til første hop {} ({})", 1, addr_str);
         }
     } else {
@@ -942,7 +1651,7 @@ async fn run_client_send(
 // CLIENT RECEIVE RUNNER
 // ==============================================================================
 
-async fn run_client_receive(
+fn run_client_receive(
     config: Config,
     pep: bool,
     continuous: bool,
@@ -951,7 +1660,7 @@ async fn run_client_receive(
 ) {
     if pep {
         println!("Henter live entropi fra offentlige kilder til transposition...");
-        let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
+        let live_entropy = fetch_live_entropy(&config.pep.entropy_sources);
         println!("Modtog {} bytes live entropi.", live_entropy.len());
 
         println!("Modtager via Passive Entropy Parasitism (PEP)...");
@@ -1019,12 +1728,12 @@ async fn run_client_receive(
                 let entropy_fe = entropy_points[idx];
                 let x = stealth.inject(m, entropy_fe);
                 let tag = stealth.generate_attestation(m, k_mac, nonce);
-                x_points.push(x.value());
-                tags.push(tag.value());
+                x_points.push(x.value() as u32);
+                tags.push(tag.value() as u32);
             }
 
             let block = PepBlock {
-                share_id: share.id.value(),
+                share_id: share.id.value() as u32,
                 x_points,
                 tags,
             };
@@ -1038,7 +1747,7 @@ async fn run_client_receive(
             let mut tick = 0u64;
 
             loop {
-                tokio::time::sleep(tokio::time::Duration::from_millis(config.traffic.tick_rate_ms)).await;
+                thread::sleep(Duration::from_millis(config.traffic.tick_rate_ms));
                 tick += 1;
 
                 if tick == 2 {
@@ -1213,13 +1922,13 @@ async fn run_client_receive(
 
     println!("Lytter efter indkommende SSS-shares på port {}...", config.node.port);
     let bind_addr = format!("{}:{}", config.node.bind_address, config.node.port);
-    let socket = UdpSocket::bind(&bind_addr).await.expect("Kunne ikke binde UDP socket");
+    let socket = UdpSocket::bind(&bind_addr).expect("Kunne ikke binde UDP socket");
 
     let mut shares = Vec::<HydraShare>::new();
     let mut buf = [0u8; 1024];
 
     loop {
-        if let Ok((len, _src)) = socket.recv_from(&mut buf).await {
+        if let Ok((len, _src)) = socket.recv_from(&mut buf) {
             if len >= 8 {
                 let id = FieldElement::new(u32::from_be_bytes([buf[0], buf[1], buf[2], buf[3]]));
                 let num_points = u32::from_be_bytes([buf[4], buf[5], buf[6], buf[7]]) as usize;
@@ -1254,7 +1963,7 @@ async fn run_client_receive(
 // LOCAL TIME-LOCK RUNNERS (HYBRID SSS-CHAINED DENIABLE TIME-LOCK)
 // ==============================================================================
 
-async fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
+fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
     let mut rng = CliRng;
     println!("Indlæser dokument til tidslåsning: {:?}", file_path);
 
@@ -1271,9 +1980,8 @@ async fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
 
     match SssTimeLock::generate(&message_bytes, epochs, &mut rng) {
         Ok(puzzle) => {
-            let json_puzzle = TimeLockJson::from_core(&puzzle);
-            let serialized = serde_json::to_string_pretty(&json_puzzle)
-                .expect("Kunne ikke serialisere tidslåsen");
+            let text_puzzle = TimeLockText::from_core(&puzzle);
+            let serialized = text_puzzle.serialize();
 
             if let Err(e) = std::fs::write(&out_path, serialized) {
                 println!("Fejl: Kunne ikke gemme tidslåsen i filen: {:?}", e);
@@ -1292,7 +2000,7 @@ async fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
     }
 }
 
-async fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
+fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
     println!("Indlæser tidslåst puslespil fra: {:?}", puzzle_path);
 
     let puzzle_content = match std::fs::read_to_string(&puzzle_path) {
@@ -1303,7 +2011,7 @@ async fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
         }
     };
 
-    let json_puzzle: TimeLockJson = match serde_json::from_str(&puzzle_content) {
+    let text_puzzle = match TimeLockText::deserialize(&puzzle_content) {
         Ok(p) => p,
         Err(e) => {
             println!("Fejl: Ugyldigt tidslås-filformat: {:?}", e);
@@ -1311,7 +2019,7 @@ async fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
         }
     };
 
-    let puzzle = json_puzzle.to_core();
+    let puzzle = text_puzzle.to_core();
 
     println!("Starter den sekventielle tids-omvej på din lokale CPU...");
     println!("Udfører {} modulære kvadreringer... Snyd og genveje er umulige!", puzzle.t);
@@ -1336,7 +2044,7 @@ async fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
     }
 }
 
-async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
+fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     println!("Indlæser tidslåst puslespil til deniability-test: {:?}", puzzle_path);
 
     let puzzle_content = match std::fs::read_to_string(&puzzle_path) {
@@ -1347,7 +2055,7 @@ async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBu
         }
     };
 
-    let json_puzzle: TimeLockJson = match serde_json::from_str(&puzzle_content) {
+    let text_puzzle = match TimeLockText::deserialize(&puzzle_content) {
         Ok(p) => p,
         Err(e) => {
             println!("Fejl: Ugyldigt tidslås-filformat: {:?}", e);
@@ -1355,7 +2063,7 @@ async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBu
         }
     };
 
-    let puzzle = json_puzzle.to_core();
+    let puzzle = text_puzzle.to_core();
     let decoy_bytes = decoy_msg.as_bytes();
 
     if decoy_bytes.len() != puzzle.initial_share_1.len() {
@@ -1392,49 +2100,155 @@ async fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBu
         }
     }
 
-    let two_inv = FieldElement::new(2).invert();
-
-    let mut alternative_s1_t = Vec::with_capacity(puzzle.initial_share_1.len());
+    let mut decoy_shares_1_t = Vec::with_capacity(puzzle.initial_share_1.len());
     for idx in 0..puzzle.initial_share_1.len() {
-        let s_t_prime = puzzle.encrypted_payload[idx] - FieldElement::new(padded_decoy[idx] as u32);
-        let s1_t_prime = (s_t_prime + current_share_2[idx]) * two_inv;
-        alternative_s1_t.push(s1_t_prime);
+        let s2_t = current_share_2[idx];
+        let d_byte = padded_decoy[idx];
+        let secret_t = puzzle.encrypted_payload[idx] - FieldElement::new(d_byte as u32);
+        let s1_t = (secret_t + s2_t) * FieldElement::new(2).invert();
+        decoy_shares_1_t.push(s1_t);
     }
 
-    // s_{j} = trans_j - s_{j+1}
-    let mut current_s1 = alternative_s1_t;
+    let mut decoy_shares_1_0 = decoy_shares_1_t;
     for j in (0..puzzle.t).rev() {
         let trans_1 = &puzzle.transitions_1[j];
-        for idx in 0..puzzle.initial_share_1.len() {
-            current_s1[idx] = trans_1[idx] - current_s1[idx];
+        for idx in 0..decoy_shares_1_0.len() {
+            decoy_shares_1_0[idx] = trans_1[idx] - decoy_shares_1_0[idx];
         }
     }
 
-    let alternative_initial_share_1 = current_s1;
+    let mut alt_puzzle = puzzle;
+    alt_puzzle.initial_share_1 = decoy_shares_1_0;
 
-    // Verify it using deny
-    match puzzle.deny(&alternative_initial_share_1) {
-        Ok(denied_bytes) => {
-            if let Err(e) = std::fs::write(&out_path, &denied_bytes) {
-                println!("Fejl: Kunne ikke skrive dækhistorie-filen: {:?}", e);
-                return;
-            }
+    let solved_decoy_bytes = alt_puzzle.solve().unwrap();
+    assert_eq!(solved_decoy_bytes, padded_decoy);
 
-            println!("Deniability-transposition fuldført!");
-            println!("- Dekrypteret dækhistorie gemt i: {:?}", out_path);
-            println!("- Matematisk konsistent start-share 1 udledt:");
-            print!("  [");
-            for v in alternative_initial_share_1.iter().take(5) {
-                print!("{}, ", v.value());
+    // Save the alternative puzzle text
+    let alt_text_puzzle = TimeLockText::from_core(&alt_puzzle);
+    let serialized_alt = alt_text_puzzle.serialize();
+
+    if let Err(e) = std::fs::write(&out_path, serialized_alt) {
+        println!("Fejl: Kunne ikke gemme den alternative tidslås: {:?}", e);
+        return;
+    }
+
+    println!("Succes! Alternativ 'bageopskrift' tidslås genereret og gemt i: {:?}", out_path);
+    println!("Hvis nogen tvinger dig til at løse puslespillet, kan du udlevere denne alternative fil.");
+    println!("Den vil dekryptere til din dækhistorie: \"{}\"", String::from_utf8_lossy(&padded_decoy).trim());
+}
+
+fn run_client_export_share(config: Config, msg: String, threshold_k: Option<usize>, total_shares_n: Option<usize>) {
+    let k = threshold_k.unwrap_or(config.crypto.threshold_k);
+    let n = total_shares_n.unwrap_or(config.crypto.total_shares_n);
+    println!("Analog-export: Fragmenterer besked med k={}, n={}", k, n);
+
+    let mut rng = CliRng;
+    match fragment_data(msg.as_bytes(), k, n, &mut rng) {
+        Ok(shares) => {
+            println!("--- REPRODUCIBLE PHYSICAL SSS SHARES (KOPIDUPLICERBARE PAPIRBLOKKE) ---");
+            for share in &shares {
+                let encoded = export_analog_share(share);
+                println!("{}", encoded);
             }
-            if alternative_initial_share_1.len() > 5 {
-                print!("... {} more", alternative_initial_share_1.len() - 5);
-            }
-            println!("]");
-            println!("Ingen – ikke engang med uendelig computerkraft – kan skelne denne dækhistorie fra sandheden!");
+            println!("----------------------------------------------------------------------");
+            println!("Opbevar disse strenge sikkert på uafhængige analoge medier (papir, QR-koder, mikrofilm).");
+            println!("Enhver samling af {} ud af disse {} strenge kan fuldstændigt rekonstruere beskeden.", k, n);
         }
         Err(_) => {
-            println!("Fejl under beregning af deniability-transposition.");
+            println!("Fejl under fragmentering af data.");
         }
     }
 }
+
+fn run_client_import_share(config: Config, shares_input: Vec<String>, threshold_k: Option<usize>) {
+    let k = threshold_k.unwrap_or(config.crypto.threshold_k);
+    println!("Analog-import: Forsøger at rekonstruere besked ud fra {} analoge dele (k={}).", shares_input.len(), k);
+
+    let mut parsed_shares = Vec::new();
+    for input in &shares_input {
+        let trimmed = input.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        match import_analog_share(trimmed) {
+            Ok(share) => {
+                println!("Indlæste gyldig share ID: {}", share.id.value() as u32);
+                parsed_shares.push(share);
+            }
+            Err(e) => {
+                println!("Fejl ved indlæsning af share \"{}\": {}", trimmed, e);
+                return;
+            }
+        }
+    }
+
+    if parsed_shares.is_empty() {
+        println!("Fejl: Ingen gyldige analoge dele indtastet.");
+        return;
+    }
+
+    match reconstruct_data(&parsed_shares, k) {
+        Ok(secret_bytes) => {
+            println!("\n--- REKONSTRUERET HEMMELIGHED (100% KORREKT) ---");
+            println!("{}", String::from_utf8_lossy(&secret_bytes));
+            println!("-------------------------------------------------");
+        }
+        Err(_) => {
+            println!("Fejl: Rekonstruktion fejlede. Muligvis for få dele (har {}, behøver k={}), eller delene tilhører ikke samme hemmelighed.", parsed_shares.len(), k);
+        }
+    }
+}
+
+#[cfg(test)]
+mod cli_analog_tests {
+    use super::*;
+
+    #[test]
+    fn test_analog_share_roundtrip() {
+        #[cfg(feature = "m61")]
+        println!("--- CLI TEST: FEATURE m61 IS ENABLED ---");
+        #[cfg(not(feature = "m61"))]
+        println!("--- CLI TEST: FEATURE m61 IS DISABLED ---");
+
+        let mut rng = CliRng;
+        let original_secret = b"Information-Theoretic Absolute Secrecy is the ultimate goal!";
+        let k = 3;
+        let n = 5;
+        let shares = fragment_data(original_secret, k, n, &mut rng).unwrap();
+
+        // Export each share to analog text format
+        let mut exported_strings = Vec::new();
+        for share in &shares {
+            let exported = export_analog_share(share);
+            exported_strings.push(exported);
+        }
+
+        // Test single share round-trip accuracy
+        let test_share = &shares[0];
+        let test_exported = export_analog_share(test_share);
+        println!("EXPORTED HEX STRING: {}", test_exported);
+        let test_imported = import_analog_share(&test_exported).unwrap();
+        println!("ORIGINAL ID: {}, IMPORTED ID: {}", test_share.id.value() as u64, test_imported.id.value() as u64);
+        println!("ORIGINAL LEN: {}, IMPORTED LEN: {}", test_share.data_points.len(), test_imported.data_points.len());
+        for i in 0..test_share.data_points.len() {
+            println!("PT [{}]: ORIGINAL={}, IMPORTED={}", i, test_share.data_points[i].value() as u64, test_imported.data_points[i].value() as u64);
+        }
+
+        assert_eq!(test_share.id.value(), test_imported.id.value());
+        assert_eq!(test_share.data_points.len(), test_imported.data_points.len());
+        for i in 0..test_share.data_points.len() {
+            assert_eq!(test_share.data_points[i].value(), test_imported.data_points[i].value());
+        }
+        let subset_to_import = &exported_strings[0..k];
+        let mut imported_shares = Vec::new();
+        for s_str in subset_to_import {
+            let imported = import_analog_share(s_str).unwrap();
+            imported_shares.push(imported);
+        }
+
+        // Reconstruct secret from imported shares
+        let reconstructed = reconstruct_data(&imported_shares, k).unwrap();
+        assert_eq!(reconstructed, original_secret);
+    }
+}
+

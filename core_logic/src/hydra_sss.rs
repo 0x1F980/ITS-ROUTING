@@ -5,7 +5,7 @@ use hal_abstraction::SecureRandom;
 use subtle::{Choice, ConditionallySelectable};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
-/// Converts a raw byte (0..=255) into a single `FieldElement` of Z_2147483647.
+/// Converts a raw byte (0..=255) into a single `FieldElement` of Z_p.
 #[inline]
 pub fn byte_to_field_elements(byte: u8) -> FieldElement {
     FieldElement::new(byte as u32)
@@ -34,7 +34,7 @@ pub fn fragment_data<R: SecureRandom>(
     n: usize,
     rng: &mut R,
 ) -> Result<Vec<HydraShare>, ()> {
-    if k == 0 || n < k || n >= 2147483647 {
+    if k == 0 || n < k || n >= crate::field_arith::MODULUS as usize {
         return Err(());
     }
 
@@ -53,23 +53,31 @@ pub fn fragment_data<R: SecureRandom>(
         });
     }
 
-    // Buffer for generating random coefficients
-    let mut coef_buf = [0u8; 4];
-
     // For each secret FieldElement, we generate a random polynomial of degree k-1
     for &secret in field_elements.iter() {
-        // Coefficients: coeffs[0] is the secret, coeffs[1..k] are random in Z_2147483647
+        // Coefficients: coeffs[0] is the secret, coeffs[1..k] are random in Z_p
         let mut coeffs = Zeroizing::new(Vec::with_capacity(k));
         coeffs.push(secret);
         for _ in 1..k {
-            rng.fill_bytes(&mut coef_buf).map_err(|_| ())?;
-            let val_raw = u32::from_be_bytes(coef_buf) % 2147483647;
-            
-            // Ensure the highest coefficient is non-zero to preserve the degree
-            let is_zero = Choice::from((val_raw == 0) as u8);
-            let val_fe = FieldElement::new(val_raw);
-            let non_zero_fe = FieldElement::conditional_select(&val_fe, &FieldElement::one(), is_zero);
-            coeffs.push(non_zero_fe);
+            #[cfg(not(feature = "m61"))]
+            let val_fe = {
+                let mut coef_buf = [0u8; 4];
+                rng.fill_bytes(&mut coef_buf).map_err(|_| ())?;
+                let val_raw = u32::from_be_bytes(coef_buf) % 2147483647;
+                let is_zero = Choice::from((val_raw == 0) as u8);
+                let val_fe = FieldElement::new(val_raw);
+                FieldElement::conditional_select(&val_fe, &FieldElement::one(), is_zero)
+            };
+            #[cfg(feature = "m61")]
+            let val_fe = {
+                let mut coef_buf = [0u8; 8];
+                rng.fill_bytes(&mut coef_buf).map_err(|_| ())?;
+                let val_raw = u64::from_be_bytes(coef_buf) % 2305843009213693951;
+                let is_zero = Choice::from((val_raw == 0) as u8);
+                let val_fe = FieldElement::from_u64(val_raw);
+                FieldElement::conditional_select(&val_fe, &FieldElement::one(), is_zero)
+            };
+            coeffs.push(val_fe);
         }
 
         // Evaluate the polynomial at x = 1..=n for each share
@@ -114,6 +122,7 @@ pub fn reconstruct_data(shares: &[HydraShare], k: usize) -> Result<Vec<u8>, ()> 
         reconstructed_elements.push(secret);
     }
 
+    // Convert reconstructed FieldElements back to bytes
     let mut secret_bytes = Vec::with_capacity(num_points);
     for &fe in reconstructed_elements.iter() {
         secret_bytes.push(field_elements_to_byte(fe));
@@ -147,7 +156,7 @@ mod tests {
     fn test_byte_splitting_roundtrip() {
         for b in 0..=255 {
             let fe = byte_to_field_elements(b);
-            assert!(fe.value() < 2147483647);
+            assert!(fe.value() < crate::field_arith::MODULUS);
             let reconstructed = field_elements_to_byte(fe);
             assert_eq!(reconstructed, b);
         }
@@ -168,9 +177,25 @@ mod tests {
             assert_eq!(share.data_points.len(), secret.len());
         }
 
-        // Reconstruct using shares [0, 2, 5, 8] (4 shares)
-        let subset = vec![shares[0].clone(), shares[2].clone(), shares[5].clone(), shares[8].clone()];
-        let reconstructed = reconstruct_data(&subset, k).unwrap();
-        assert_eq!(reconstructed, secret);
+        // Reconstruct from exactly 4 shares (1, 2, 3, 4)
+        let subset_shares_4 = &shares[0..4];
+        let reconstructed_4 = reconstruct_data(subset_shares_4, k).unwrap();
+        assert_eq!(reconstructed_4, secret);
+
+        // Reconstruct from a different subset of 4 shares (e.g. 2, 4, 6, 8)
+        let subset_shares_diff = vec![
+            shares[1].clone(),
+            shares[3].clone(),
+            shares[5].clone(),
+            shares[7].clone(),
+        ];
+        let reconstructed_diff = reconstruct_data(&subset_shares_diff, k).unwrap();
+        assert_eq!(reconstructed_diff, secret);
+
+        // Verify that trying to reconstruct with fewer than k shares (e.g. 3) fails/gives garbage
+        // Since we explicitly require k shares in `reconstruct_data`, passing a slice of length 3 should fail
+        let subset_shares_short = &shares[0..3];
+        let reconstruct_fail = reconstruct_data(subset_shares_short, k);
+        assert!(reconstruct_fail.is_err());
     }
 }
