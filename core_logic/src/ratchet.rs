@@ -21,6 +21,13 @@ pub struct StateRatchet {
 }
 
 impl StateRatchet {
+    /// Derives a 32-byte secret seed from a password and salt using PBKDF2-HMAC-SHA256.
+    pub fn derive_seed(password: &str, salt: &[u8], iterations: u32) -> [u8; 32] {
+        let mut seed = [0u8; 32];
+        pbkdf2::pbkdf2_hmac::<sha2::Sha256>(password.as_bytes(), salt, iterations, &mut seed);
+        seed
+    }
+
     /// Creates a new `StateRatchet` with a given initial seed and counter set to 0.
     #[inline]
     pub fn new(seed: [u8; 32]) -> Self {
@@ -106,5 +113,17 @@ mod tests {
         assert_eq!(nonce_a2.value(), nonce_b2.value());
 
         assert_ne!(k_pool_a1.value(), k_pool_a2.value());
+    }
+
+    #[test]
+    fn test_ratchet_derive_seed() {
+        let password = "true_password_123";
+        let salt = b"salt_for_pep_channel";
+        let seed1 = StateRatchet::derive_seed(password, salt, 100);
+        let seed2 = StateRatchet::derive_seed(password, salt, 100);
+        let seed3 = StateRatchet::derive_seed("decoy_password", salt, 100);
+
+        assert_eq!(seed1, seed2);
+        assert_ne!(seed1, seed3);
     }
 }

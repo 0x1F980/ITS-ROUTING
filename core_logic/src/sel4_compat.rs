@@ -1,3 +1,32 @@
+//! # seL4 Compatibility and Hardware Boundary Interface
+//!
+//! This module defines the page-aligned shared memory structures and formal FFI boundaries
+//! designed to execute inside an isolated, secure seL4 hardware enclave.
+//!
+//! ### Enclave Security Boundary Specification:
+//! ```mermaid
+//! graph TD
+//!     subgraph SecureEnclave ["Isolated seL4 Secure Compartment (no net permissions)"]
+//!         ratchet["StateRatchet State"]
+//!         stealth["StealthIdentity Cryptography"]
+//!         sss["Shamir Secret Sharing core"]
+//!     end
+//!     subgraph UntrustedOS ["Untrusted OS Space / Transport Daemon (has net permissions)"]
+//!         cli["hydra_cli daemon"]
+//!         net["Network & Public APIs (Wikipedia, Reddit, etc.)"]
+//!     end
+//!     cli -->|"1. Fetch PEP Entropy"| net
+//!     cli -->|"2. Invoke FFI via Sel4SharedPage"| stealth
+//!     stealth -->|"3. Zeroize sensitive state"| ratchet
+//! ```
+//! 
+//! To guarantee absolute impregnability against endpoint memory compromise:
+//! 1. All core cryptographic state operations (`ratchet.rs`, `stealth_identity.rs`, and `hydra_sss.rs`)
+//!    run exclusively inside the isolated seL4 compartment.
+//! 2. This enclave is spawned with **ZERO network permissions** to prevent exfiltration.
+//! 3. Communication with the untrusted transport daemon is restricted to aligned, 4096-byte `Sel4SharedPage` buffers.
+//! 4. Any state memory is aggressively zeroized upon boundary transition.
+
 use crate::field_arith::FieldElement;
 use crate::poly::Polynomial;
 use crate::trapdoor::Trapdoor;

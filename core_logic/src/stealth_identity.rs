@@ -95,6 +95,32 @@ impl StealthIdentity {
         let reconstructed_anchor = pool_element - expected_raw_element;
         reconstructed_anchor.ct_eq(&self.anchor)
     }
+
+    /// Generates a Wegman-Carter One-Time MAC attestation tag for our static contribution `m`.
+    ///
+    /// Formula: `T = (K_MAC * M + Nonce) mod 2147483647`
+    #[inline]
+    pub fn generate_attestation(
+        &self,
+        m: FieldElement,
+        k_mac: FieldElement,
+        nonce: FieldElement,
+    ) -> FieldElement {
+        (k_mac * m) + nonce
+    }
+
+    /// Verifies a Wegman-Carter One-Time MAC attestation tag in constant-time.
+    #[inline]
+    pub fn verify_attestation(
+        &self,
+        m: FieldElement,
+        k_mac: FieldElement,
+        nonce: FieldElement,
+        tag: FieldElement,
+    ) -> Choice {
+        let expected = self.generate_attestation(m, k_mac, nonce);
+        tag.ct_eq(&expected)
+    }
 }
 
 #[cfg(test)]

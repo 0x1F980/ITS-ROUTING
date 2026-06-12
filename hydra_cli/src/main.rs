@@ -15,6 +15,19 @@ use core_logic::stealth_identity::StealthIdentity;
 use core_logic::ratchet::StateRatchet;
 use core_logic::time_lock::SssTimeLock;
 use hal_abstraction::SecureRandom;
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
+/// A memory-secured container that zeroizes its contents upon drop to protect RAM state.
+#[derive(Zeroize, ZeroizeOnDrop, Default)]
+struct ZeroizedBuffer {
+    data: Vec<u8>,
+}
+
+impl ZeroizedBuffer {
+    fn new(data: Vec<u8>) -> Self {
+        ZeroizedBuffer { data }
+    }
+}
 
 // ==============================================================================
 // CONFIGURATION STRUCTURES
@@ -103,6 +116,154 @@ impl TimeLockJson {
 }
 
 // ==============================================================================
+// PASSIVE ENTROPY PARASITISM (PEP) ADAPTERS
+// ==============================================================================
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct PepBlock {
+    share_id: u32,
+    x_points: Vec<u32>,
+    tags: Vec<u32>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PepChannel {
+    Wikipedia,
+    GitHubGists,
+    DnsTxt,
+    Reddit,
+    NasaTelemetry,
+    DomesticNews,
+    SneakernetFile,
+}
+
+impl PepChannel {
+    fn name(&self) -> &'static str {
+        match self {
+            PepChannel::Wikipedia => "Wikipedia API (Simulated)",
+            PepChannel::GitHubGists => "GitHub Gists API (Simulated)",
+            PepChannel::DnsTxt => "DNS TXT Records (Simulated)",
+            PepChannel::Reddit => "Reddit Comments API (Simulated)",
+            PepChannel::NasaTelemetry => "NASA Seismology API (Simulated)",
+            PepChannel::DomesticNews => "State-Approved Domestic News Board (Simulated ALT)",
+            PepChannel::SneakernetFile => "Sneakernet Local File / QR (Simulated ALT)",
+        }
+    }
+
+    /// Encodes a PepBlock into simulated steganographic camouflage text
+    fn stego_encode(&self, block: &PepBlock) -> String {
+        match self {
+            PepChannel::Wikipedia => {
+                format!(
+                    r#"{{"wiki": "enwiki", "title": "Information-theoretic secrecy", "revision": 1294817204, "diff": {{"added": {{"user": "IP_User", "payload_id": {}, "points": {:?}, "signature": {:?}}}}}}}"#,
+                    block.share_id, block.x_points, block.tags
+                )
+            }
+            PepChannel::GitHubGists => {
+                format!(
+                    "// Gist ID: gist_its_shadow_node_{}\nconst CONFIG_VALS = {:?};\nconst STATUS_SIG = {:?};\n",
+                    block.share_id, block.x_points, block.tags
+                )
+            }
+            PepChannel::DnsTxt => {
+                let points_str = block.x_points.iter().map(|v| v.to_string()).collect::<Vec<_>>().join("-");
+                let tags_str = block.tags.iter().map(|v| v.to_string()).collect::<Vec<_>>().join("-");
+                format!(
+                    "v=spf1 ip4:192.168.1.1 include:_spf.google.com its_id={} points={} tags={} ~all",
+                    block.share_id, points_str, tags_str
+                )
+            }
+            PepChannel::Reddit => {
+                format!(
+                    "Honestly, the performance stats are quite interesting. I measured some latency offsets (ID {}): points={:?}. Our error-checking tags also fluctuated around tags={:?}. Anyone else seeing this?",
+                    block.share_id, block.x_points, block.tags
+                )
+            }
+            PepChannel::NasaTelemetry => {
+                format!(
+                    "SENS_ID={};GEOM_X={:?};NOISE_FILTER={:?};SYS_STATUS=OK",
+                    block.share_id, block.x_points, block.tags
+                )
+            }
+            PepChannel::DomesticNews => {
+                format!(
+                    "State-approved announcement: Local infrastructure update completed successfully (Event ID {}). Operational points={:?}, checksums={:?}. In compliance with municipal directives.",
+                    block.share_id, block.x_points, block.tags
+                )
+            }
+            PepChannel::SneakernetFile => {
+                format!(
+                    "SNEAKERNET_OFFLINE_PAYLOAD;SHARE_ID={};COORDS={:?};OTM_TAGS={:?}",
+                    block.share_id, block.x_points, block.tags
+                )
+            }
+        }
+    }
+
+    /// Decodes a stego-encoded string back into a PepBlock
+    fn stego_decode(&self, text: &str) -> Option<PepBlock> {
+        match self {
+            PepChannel::Wikipedia => {
+                let share_id = text.split("\"payload_id\": ").nth(1)?.split(',').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("\"points\": [").nth(1)?.split(']').next()?;
+                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("\"signature\": [").nth(1)?.split(']').next()?;
+                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+            PepChannel::GitHubGists => {
+                let share_id = text.split("gist_its_shadow_node_").nth(1)?.split('\n').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("const CONFIG_VALS = [").nth(1)?.split(']').next()?;
+                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("const STATUS_SIG = [").nth(1)?.split(']').next()?;
+                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+            PepChannel::DnsTxt => {
+                let share_id = text.split("its_id=").nth(1)?.split(' ').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("points=").nth(1)?.split(' ').next()?;
+                let x_points = points_str.split('-').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("tags=").nth(1)?.split(' ').next()?;
+                let tags = tags_str.split('-').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+            PepChannel::Reddit => {
+                let share_id = text.split("(ID ").nth(1)?.split(')').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("points=[").nth(1)?.split(']').next()?;
+                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("tags=[").nth(1)?.split(']').next()?;
+                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+            PepChannel::NasaTelemetry => {
+                let share_id = text.split("SENS_ID=").nth(1)?.split(';').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("GEOM_X=[").nth(1)?.split(']').next()?;
+                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("NOISE_FILTER=[").nth(1)?.split(']').next()?;
+                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+            PepChannel::DomesticNews => {
+                let share_id = text.split("(Event ID ").nth(1)?.split(')').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("points=[").nth(1)?.split(']').next()?;
+                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("checksums=[").nth(1)?.split(']').next()?;
+                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+            PepChannel::SneakernetFile => {
+                let share_id = text.split("SHARE_ID=").nth(1)?.split(';').next()?.trim().parse::<u32>().ok()?;
+                let points_str = text.split("COORDS=[").nth(1)?.split(']').next()?;
+                let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                let tags_str = text.split("OTM_TAGS=[").nth(1)?.split(']').next()?;
+                let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
+                Some(PepBlock { share_id, x_points, tags })
+            }
+        }
+    }
+}
+
+// ==============================================================================
 // CLI ARGUMENT PARSING
 // ==============================================================================
 
@@ -133,11 +294,29 @@ enum Commands {
         dest: u32,
         #[arg(long)]
         pep: bool,
+        /// Run in continuous scheduled decoy chaffing mode
+        #[arg(long)]
+        continuous: bool,
+        /// Password to derive the True Seed or Decoy Seed (Duress Ratchet)
+        #[arg(long)]
+        password: Option<String>,
+        /// Is this a duress/decoy password? (if so, we use decoy seeds and cover messages)
+        #[arg(long)]
+        duress: bool,
     },
     /// Receives and reconstructs incoming shares
     ClientReceive {
         #[arg(long)]
         pep: bool,
+        /// Run in continuous scheduled winnowing mode
+        #[arg(long)]
+        continuous: bool,
+        /// Password to derive the True Seed or Decoy Seed (Duress Ratchet)
+        #[arg(long)]
+        password: Option<String>,
+        /// Is this a duress/decoy password?
+        #[arg(long)]
+        duress: bool,
     },
     /// Creates a local, self-contained hybrid ITS-deniable time-lock puzzle
     TimeLock {
@@ -334,11 +513,11 @@ async fn main() {
             }
             run_node(config).await;
         }
-        Commands::ClientSend { msg, dest, pep } => {
-            run_client_send(config, msg, dest, pep).await;
+        Commands::ClientSend { msg, dest, pep, continuous, password, duress } => {
+            run_client_send(config, msg, dest, pep, continuous, password, duress).await;
         }
-        Commands::ClientReceive { pep } => {
-            run_client_receive(config, pep).await;
+        Commands::ClientReceive { pep, continuous, password, duress } => {
+            run_client_receive(config, pep, continuous, password, duress).await;
         }
         Commands::TimeLock { file, epochs, out } => {
             run_time_lock(file, epochs, out).await;
@@ -479,40 +658,194 @@ async fn run_node(config: Config) {
 // CLIENT SEND RUNNER
 // ==============================================================================
 
-async fn run_client_send(config: Config, msg: String, dest: u32, pep: bool) {
+async fn run_client_send(
+    config: Config,
+    msg: String,
+    dest: u32,
+    pep: bool,
+    continuous: bool,
+    password: Option<String>,
+    duress: bool,
+) {
     let mut rng = CliRng;
-    let msg_bytes = msg.as_bytes();
+    let mut active_msg = msg;
+
+    if pep && duress {
+        println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
+        println!("Initializing decoy cover-channels with plausible harmless content.");
+        active_msg = "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes.".to_string();
+    }
+
+    let msg_bytes = active_msg.as_bytes();
 
     if pep {
-        println!("Henter live entropi fra offentlige kilder...");
-        let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
-        println!("Modtog {} bytes live entropi.", live_entropy.len());
-
-        println!("Sender via Passive Entropy Parasitism (PEP)...");
         let anchor = FieldElement::new(config.crypto.stealth_anchor);
-        let whitening = FieldElement::new(config.crypto.stealth_whitening_factor);
-        let stealth = StealthIdentity::new(anchor, whitening);
 
-        // Fragment data
-        let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
-            .expect("Kunne ikke fragmentere data");
+        // Derive/Initialize StateRatchet
+        let seed = if let Some(ref pwd) = password {
+            let salt: &[u8] = if duress { b"scpst-pep-decoy-salt" } else { b"scpst-pep-true-salt" };
+            println!("Deriverer seed fra password vha. PBKDF2-HMAC-SHA256...");
+            StateRatchet::derive_seed(pwd, salt, 1000)
+        } else {
+            let mut s = [0u8; 32];
+            s[0..4].copy_from_slice(&config.crypto.stealth_anchor.to_be_bytes());
+            s[4..8].copy_from_slice(&config.crypto.stealth_whitening_factor.to_be_bytes());
+            s
+        };
 
-        println!("PEP-shards genereret og indlejret i live entropi:");
-        for share in shares.iter() {
-            print!("Share ID {}: [", share.id.value());
-            for (idx, &s) in share.data_points.iter().enumerate() {
-                let s_whitened = stealth.shard_whiten(s);
-                let m = stealth.impose(s_whitened);
-                
-                // Map live entropy bytes to FieldElements
-                let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
-                let x = stealth.inject(m, FieldElement::new(entropy_byte as u32));
-                print!("{}, ", x.value());
+        let ratchet = StateRatchet::new(seed);
+        let channels = [
+            PepChannel::Wikipedia,
+            PepChannel::GitHubGists,
+            PepChannel::DnsTxt,
+            PepChannel::Reddit,
+            PepChannel::NasaTelemetry,
+            PepChannel::DomesticNews,
+            PepChannel::SneakernetFile,
+        ];
+
+        if continuous {
+            println!("\nStarter kontinuerlig scheduled decoy chaffing-loop...");
+            println!("Sender i faste intervaller á {} ms.", config.traffic.tick_rate_ms);
+            let mut tick = 0u64;
+            // Let's send the active_msg on tick 2, and mock/dummy chaff on all other ticks
+            loop {
+                tokio::time::sleep(tokio::time::Duration::from_millis(config.traffic.tick_rate_ms)).await;
+                tick += 1;
+
+                let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
+
+                if tick == 2 {
+                    // Send real message
+                    println!("\n--- [TICK {}]: SENDER REAL/AUTHENTICATED MESSAGE ---", tick);
+                    let msg_bytes = active_msg.as_bytes();
+                    let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
+                        .expect("Kunne ikke fragmentere");
+
+                    for share in shares.iter() {
+                        let share_idx = share.id.value() as u64;
+                        let mut share_ratchet = ratchet.clone();
+                        share_ratchet.counter = share_idx;
+                        let (k_pool, k_mac, nonce) = share_ratchet.step().unwrap();
+
+                        let stealth = StealthIdentity::new(anchor, k_pool);
+                        let mut x_points = Vec::with_capacity(share.data_points.len());
+                        let mut tags = Vec::with_capacity(share.data_points.len());
+
+                        for (idx, &s) in share.data_points.iter().enumerate() {
+                            let s_whitened = stealth.shard_whiten(s);
+                            let m = stealth.impose(s_whitened);
+                            let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
+                            let entropy_fe = FieldElement::new(entropy_byte as u32);
+                            let x = stealth.inject(m, entropy_fe);
+                            let tag = stealth.generate_attestation(m, k_mac, nonce);
+
+                            x_points.push(x.value());
+                            tags.push(tag.value());
+                        }
+
+                        let block = PepBlock {
+                            share_id: share.id.value(),
+                            x_points,
+                            tags,
+                        };
+
+                        let channel = channels[(share.id.value() as usize - 1) % channels.len()];
+                        let stego_text = channel.stego_encode(&block);
+                        println!("\n[Real Block dispatched to {}]:", channel.name());
+                        println!("{}", stego_text);
+                    }
+                } else {
+                    // Send mock/dummy chaff block
+                    println!("\n--- [TICK {}]: SENDER DECOY CHAFF PACKET (PLANNED METADATA) ---", tick);
+                    // Use standard decoy coordinates and fake tags to keep format perfectly matched
+                    let dummy_text = "Heartbeat telemetry data keeping connection flat";
+                    let dummy_shares = fragment_data(dummy_text.as_bytes(), config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
+                        .expect("Kunne ikke fragmentere dummy");
+
+                    for share in dummy_shares.iter() {
+                        let mut x_points = Vec::with_capacity(share.data_points.len());
+                        let mut tags = Vec::with_capacity(share.data_points.len());
+
+                        for _ in share.data_points.iter() {
+                            use rand::Rng;
+                            let mut r = rand::thread_rng();
+                            x_points.push(r.gen_range(1..2147483647));
+                            tags.push(r.gen_range(1..2147483647));
+                        }
+
+                        let block = PepBlock {
+                            share_id: share.id.value(),
+                            x_points,
+                            tags,
+                        };
+
+                        let channel = channels[(share.id.value() as usize - 1) % channels.len()];
+                        let stego_text = channel.stego_encode(&block);
+                        println!("\n[Chaff Block dispatched to {}]:", channel.name());
+                        println!("{}", stego_text);
+                    }
+                }
+
+                // For simulation and test purposes, let's stop after tick 3
+                if tick >= 3 {
+                    println!("\nContinuous scheduled loops fuldført for simulation.");
+                    break;
+                }
             }
-            println!("]");
+            return;
+        } else {
+            // Non-continuous single transmission
+            let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
+            println!("Modtog {} bytes live entropi.", live_entropy.len());
+            let msg_bytes = active_msg.as_bytes();
+            let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
+                .expect("Kunne ikke fragmentere data");
+
+            println!("PEP-shards genereret, attesteret og steganografisk camoufleret:");
+
+            for share in shares.iter() {
+                let share_idx = share.id.value() as u64;
+                let mut share_ratchet = ratchet.clone();
+                share_ratchet.counter = share_idx;
+                let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Kunne ikke trække ratchet");
+
+                // Construct StealthIdentity using k_pool dynamically as the whitening factor
+                let stealth = StealthIdentity::new(anchor, k_pool);
+
+                let mut x_points = Vec::with_capacity(share.data_points.len());
+                let mut tags = Vec::with_capacity(share.data_points.len());
+
+                for (idx, &s) in share.data_points.iter().enumerate() {
+                    let s_whitened = stealth.shard_whiten(s);
+                    let m = stealth.impose(s_whitened);
+
+                    // Map live entropy bytes to FieldElements
+                    let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
+                    let entropy_fe = FieldElement::new(entropy_byte as u32);
+
+                    let x = stealth.inject(m, entropy_fe);
+                    let tag = stealth.generate_attestation(m, k_mac, nonce);
+
+                    x_points.push(x.value());
+                    tags.push(tag.value());
+                }
+
+                let block = PepBlock {
+                    share_id: share.id.value(),
+                    x_points,
+                    tags,
+                };
+
+                let channel = channels[(share.id.value() as usize - 1) % channels.len()];
+                let stego_text = channel.stego_encode(&block);
+
+                println!("\n--- [ {} ] ---", channel.name());
+                println!("{}", stego_text);
+            }
+            println!("\nPEP-transmission fuldført med fuld steganografisk sløring og Wegman-Carter OTM-attestering.");
+            return;
         }
-        println!("PEP-transmission fuldført (shards indlejret i den uvidende eksterne entropi-strøm).");
-        return;
     }
 
     println!("Sender via 3-hop Onion Routing...");
@@ -573,36 +906,266 @@ async fn run_client_send(config: Config, msg: String, dest: u32, pep: bool) {
 // CLIENT RECEIVE RUNNER
 // ==============================================================================
 
-async fn run_client_receive(config: Config, pep: bool) {
+async fn run_client_receive(
+    config: Config,
+    pep: bool,
+    continuous: bool,
+    password: Option<String>,
+    duress: bool,
+) {
     if pep {
         println!("Henter live entropi fra offentlige kilder til transposition...");
         let live_entropy = fetch_live_entropy(&config.pep.entropy_sources).await;
         println!("Modtog {} bytes live entropi.", live_entropy.len());
 
         println!("Modtager via Passive Entropy Parasitism (PEP)...");
-        println!("Indlæser dækhistorie-filer og rekonstruerer...");
-        
-        let anchor = FieldElement::new(config.crypto.stealth_anchor);
-        let whitening = FieldElement::new(config.crypto.stealth_whitening_factor);
-        let stealth = StealthIdentity::new(anchor, whitening);
+        println!("Scanner simulerede steganografiske kanaler efter attesterede shards...");
 
-        // Reconstruct from mock PEP shards using the live entropy fetched
-        let mut mock_shares = Vec::new();
-        let mock_pep_data = vec![150, 160, 170];
-        let mut data_points = Vec::new();
-        for (idx, &x_val) in mock_pep_data.iter().enumerate() {
-            let x = FieldElement::new(x_val);
-            let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
-            let recovered_whitened = stealth.transpose(x, FieldElement::new(entropy_byte as u32));
-            let s_recovered = stealth.shard_unwhiten(recovered_whitened);
-            data_points.push(s_recovered);
+        let anchor = FieldElement::new(config.crypto.stealth_anchor);
+
+        // Derive/Initialize StateRatchet for Bob
+        let seed = if let Some(ref pwd) = password {
+            let salt: &[u8] = if duress { b"scpst-pep-decoy-salt" } else { b"scpst-pep-true-salt" };
+            println!("Deriverer seed fra password vha. PBKDF2-HMAC-SHA256...");
+            StateRatchet::derive_seed(pwd, salt, 1000)
+        } else {
+            let mut s = [0u8; 32];
+            s[0..4].copy_from_slice(&config.crypto.stealth_anchor.to_be_bytes());
+            s[4..8].copy_from_slice(&config.crypto.stealth_whitening_factor.to_be_bytes());
+            s
+        };
+        let ratchet = StateRatchet::new(seed);
+
+        if duress {
+            println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
+            println!("Only scanning and extracting decoy cover-messages.");
         }
-        mock_shares.push(HydraShare {
-            id: FieldElement::new(1),
-            data_points,
-        });
-        println!("PEP-transposition fuldført vha. live entropi-strøm.");
-        return;
+
+        // We simulate reading the stego texts from the 5 public channels.
+        // Let's generate a real message to extract, matching our password/duress state.
+        let target_msg = if duress {
+            "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes."
+        } else {
+            "Top Secret!"
+        };
+
+        let mut temp_rng = CliRng;
+        let mock_shares = fragment_data(target_msg.as_bytes(), config.crypto.threshold_k, config.crypto.total_shares_n, &mut temp_rng)
+            .expect("Kunne ikke generere fragmenter");
+
+        let channels = [
+            PepChannel::Wikipedia,
+            PepChannel::GitHubGists,
+            PepChannel::DnsTxt,
+            PepChannel::Reddit,
+            PepChannel::NasaTelemetry,
+            PepChannel::DomesticNews,
+            PepChannel::SneakernetFile,
+        ];
+
+        let mut stego_inputs = Vec::new();
+        for share in mock_shares.iter() {
+            let share_idx = share.id.value() as u64;
+            let mut share_ratchet = ratchet.clone();
+            share_ratchet.counter = share_idx;
+            let (k_pool, k_mac, nonce) = share_ratchet.step().unwrap();
+            let stealth = StealthIdentity::new(anchor, k_pool);
+
+            let mut x_points = Vec::new();
+            let mut tags = Vec::new();
+            for (idx, &s) in share.data_points.iter().enumerate() {
+                let s_whitened = stealth.shard_whiten(s);
+                let m = stealth.impose(s_whitened);
+                let entropy_byte = live_entropy.get(idx % live_entropy.len()).cloned().unwrap_or(42);
+                let entropy_fe = FieldElement::new(entropy_byte as u32);
+                let x = stealth.inject(m, entropy_fe);
+                let tag = stealth.generate_attestation(m, k_mac, nonce);
+                x_points.push(x.value());
+                tags.push(tag.value());
+            }
+
+            let block = PepBlock {
+                share_id: share.id.value(),
+                x_points,
+                tags,
+            };
+            let channel = channels[(share.id.value() as usize - 1) % channels.len()];
+            stego_inputs.push((channel, channel.stego_encode(&block)));
+        }
+
+        if continuous {
+            println!("\nStarter kontinuerlig scheduled winnowing-loop...");
+            println!("Scanner kanaler i faste intervaller á {} ms.", config.traffic.tick_rate_ms);
+            let mut tick = 0u64;
+
+            loop {
+                tokio::time::sleep(tokio::time::Duration::from_millis(config.traffic.tick_rate_ms)).await;
+                tick += 1;
+
+                if tick == 2 {
+                    println!("\n--- [TICK {}]: RECEIVED REAL STEGO BLOCKS (WINNOWING ACTIVE) ---", tick);
+                    // To make the simulation extremely realistic, we let Eve tamper/block some of the channels!
+                    println!("\n[EVE ATTACK]: Eve blocks GitHubGists & NasaTelemetry, and tampers with the Reddit comment!");
+
+                    let mut received_shares = Vec::new();
+
+                    for &(channel, ref text) in stego_inputs.iter() {
+                        // 1. Check if blocked
+                        if channel == PepChannel::GitHubGists || channel == PepChannel::NasaTelemetry {
+                            println!("- Channel {}: BLOCKED by Eve. Skipping.", channel.name());
+                            continue;
+                        }
+
+                        // 2. Check if tampered
+                        let mut text_to_decode = text.clone();
+                        if channel == PepChannel::Reddit {
+                            println!("- Channel {}: TAMPERED by Eve (modifying coordinate values).", channel.name());
+                            text_to_decode = text_to_decode.replace("points=[", "points=[99999, ");
+                        }
+
+                        // 3. Try to decode and verify in constant-time
+                        if let Some(block) = channel.stego_decode(&text_to_decode) {
+                            let mut share_ratchet = ratchet.clone();
+                            share_ratchet.counter = block.share_id as u64;
+                            let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Kunne ikke trække ratchet");
+
+                            let stealth = StealthIdentity::new(anchor, k_pool);
+                            let mut data_points = Vec::new();
+                            let mut all_points_valid = true;
+
+                            for (p_idx, &x_val) in block.x_points.iter().enumerate() {
+                                let x = FieldElement::new(x_val);
+                                let tag = FieldElement::new(block.tags[p_idx]);
+                                let entropy_byte = live_entropy.get(p_idx % live_entropy.len()).cloned().unwrap_or(42);
+                                let entropy_fe = FieldElement::new(entropy_byte as u32);
+                                let m = x - entropy_fe;
+
+                                let is_valid = stealth.verify_attestation(m, k_mac, nonce, tag);
+                                if bool::from(is_valid) {
+                                    let recovered_whitened = stealth.transpose(x, entropy_fe);
+                                    let s_recovered = stealth.shard_unwhiten(recovered_whitened);
+                                    data_points.push(s_recovered);
+                                } else {
+                                    all_points_valid = false;
+                                    break;
+                                }
+                            }
+
+                            if all_points_valid {
+                                println!("- Channel {}: VERIFIED (Wegman-Carter OTM tag valid!). Extracting share.", channel.name());
+                                received_shares.push(HydraShare {
+                                    id: FieldElement::new(block.share_id),
+                                    data_points,
+                                });
+                            } else {
+                                println!("- Channel {}: TAMPERED/INVALID tag detected! Discarding share.", channel.name());
+                            }
+                        }
+                    }
+
+                    // 4. Try to reconstruct
+                    println!("\nForsøger at rekonstruere klassificeret besked fra de verificerede kanaler...");
+                    if received_shares.len() >= config.crypto.threshold_k {
+                        match reconstruct_data(&received_shares, config.crypto.threshold_k) {
+                            Ok(msg_bytes) => {
+                                let secured = ZeroizedBuffer::new(msg_bytes);
+                                if let Ok(msg_str) = String::from_utf8(secured.data.clone()) {
+                                    println!("Succes! Rekonstrueret klassificeret besked: \"{}\"", msg_str);
+                                }
+                            }
+                            Err(_) => {
+                                println!("Fejl: Kunne ikke genskabe besked.");
+                            }
+                        }
+                    } else {
+                        println!("Fejl: For få gyldige shares. Har {}, skal bruge {}.", received_shares.len(), config.crypto.threshold_k);
+                    }
+                } else {
+                    println!("\n--- [TICK {}]: RECEIVED CHAFF DECOY BLOCKS (WINNOWING ACTIVE) ---", tick);
+                    println!("- All incoming blocks failed Wegman-Carter attestation. Silently discarded in constant-time.");
+                }
+
+                if tick >= 3 {
+                    println!("\nContinuous scheduled loops fuldført for simulation.");
+                    break;
+                }
+            }
+            return;
+        } else {
+            // Non-continuous single receipt
+            println!("\n[EVE ATTACK]: Eve controls the infrastructure. She blocks GitHubGists & NasaTelemetry, and tampers with the Reddit comment!");
+
+            let mut received_shares = Vec::new();
+
+            for &(channel, ref text) in stego_inputs.iter() {
+                if channel == PepChannel::GitHubGists || channel == PepChannel::NasaTelemetry {
+                    println!("- Channel {}: BLOCKED by Eve. Skipping.", channel.name());
+                    continue;
+                }
+
+                let mut text_to_decode = text.clone();
+                if channel == PepChannel::Reddit {
+                    println!("- Channel {}: TAMPERED by Eve (modifying coordinate values).", channel.name());
+                    text_to_decode = text_to_decode.replace("points=[", "points=[99999, ");
+                }
+
+                if let Some(block) = channel.stego_decode(&text_to_decode) {
+                    let mut share_ratchet = ratchet.clone();
+                    share_ratchet.counter = block.share_id as u64;
+                    let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Kunne ikke trække ratchet");
+
+                    let stealth = StealthIdentity::new(anchor, k_pool);
+                    let mut data_points = Vec::new();
+                    let mut all_points_valid = true;
+
+                    for (p_idx, &x_val) in block.x_points.iter().enumerate() {
+                        let x = FieldElement::new(x_val);
+                        let tag = FieldElement::new(block.tags[p_idx]);
+                        let entropy_byte = live_entropy.get(p_idx % live_entropy.len()).cloned().unwrap_or(42);
+                        let entropy_fe = FieldElement::new(entropy_byte as u32);
+                        let m = x - entropy_fe;
+
+                        let is_valid = stealth.verify_attestation(m, k_mac, nonce, tag);
+                        if bool::from(is_valid) {
+                            let recovered_whitened = stealth.transpose(x, entropy_fe);
+                            let s_recovered = stealth.shard_unwhiten(recovered_whitened);
+                            data_points.push(s_recovered);
+                        } else {
+                            all_points_valid = false;
+                            break;
+                        }
+                    }
+
+                    if all_points_valid {
+                        println!("- Channel {}: VERIFIED (Wegman-Carter OTM tag valid!). Extracting share.", channel.name());
+                        received_shares.push(HydraShare {
+                            id: FieldElement::new(block.share_id),
+                            data_points,
+                        });
+                    } else {
+                        println!("- Channel {}: TAMPERED/INVALID tag detected! Discarding share.", channel.name());
+                    }
+                }
+            }
+
+            println!("\nForsøger at rekonstruere klassificeret besked fra de verificerede kanaler...");
+            if received_shares.len() >= config.crypto.threshold_k {
+                match reconstruct_data(&received_shares, config.crypto.threshold_k) {
+                    Ok(msg_bytes) => {
+                        let secured = ZeroizedBuffer::new(msg_bytes);
+                        if let Ok(msg_str) = String::from_utf8(secured.data.clone()) {
+                            println!("Succes! Rekonstrueret klassificeret besked: \"{}\"", msg_str);
+                        }
+                    }
+                    Err(_) => {
+                        println!("Fejl: Kunne ikke genskabe besked.");
+                    }
+                }
+            } else {
+                println!("Fejl: For få gyldige shares. Har {}, skal bruge {}.", received_shares.len(), config.crypto.threshold_k);
+            }
+            return;
+        }
     }
 
     println!("Lytter efter indkommende SSS-shares på port {}...", config.node.port);
@@ -632,7 +1195,8 @@ async fn run_client_receive(config: Config, pep: bool) {
                 if shares.len() >= config.crypto.threshold_k {
                     println!("Tærskel nået! Rekonstruerer besked...");
                     if let Ok(msg_bytes) = reconstruct_data(&shares, config.crypto.threshold_k) {
-                        if let Ok(msg_str) = String::from_utf8(msg_bytes) {
+                        let secured = ZeroizedBuffer::new(msg_bytes);
+                        if let Ok(msg_str) = String::from_utf8(secured.data.clone()) {
                             println!("Rekonstrueret besked: {}", msg_str);
                         }
                     }
