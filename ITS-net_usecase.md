@@ -24,9 +24,16 @@ The `its_net_cli` daemon (executable name: `its-net`) implements the active-tran
 * **Mechanism:** High-density structured QR codes and visual VSSS sheets.
 * **Deployment:** The offline client exports shares as high-density visual QR codes. These QR codes are printed or displayed on optical terminals and captured using offline cameras. This optical visual link completely bypasses standard IP routing and ISP hardware.
 
+### Tactical Scenario 4: Air-Gapped Document Time-Lock (Dead-Man Custody)
+* **Objective:** Encrypt a sensitive local document so it cannot be read until a fixed amount of sequential CPU work has elapsed, with perfect deniability if the operator is coerced.
+* **Mechanism:** `ITS-self_enclosed_timelock` via `its-net time-lock`, `time-unlock`, and `time-deny`.
+* **Deployment:** On an air-gapped terminal, run `its-net time-lock --file secret.pdf --epochs 1000000 --out secret.its`, then securely erase the plaintext. After the delay, `its-net time-unlock --puzzle secret.its --out secret.pdf` recovers the document. Under duress, `its-net time-deny` produces an alternative `.its` file that decrypts to a harmless cover story.
+
 ---
 
 ## 2. Network Integration Guide
+
+`its_net_cli` depends on the standalone crate **`ITS-self_enclosed_timelock`** for all hybrid time-lock operations (`time-lock`, `time-unlock`, `time-deny`). Routing, onion mixing, and SSS fragmentation continue to use `ITS` (`core_logic`).
 
 The CLI client (`its-net`) can be integrated alongside other local desktop and mobile applications (such as a local chat app, a secure email client, or an administrative dashboard) to serve as their secure transport hub.
 

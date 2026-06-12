@@ -5,7 +5,7 @@ _its_net_completions() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --version --config -c start-node client-send client-receive status-audit verify-path list-peers"
+    opts="--help --version --config -c start-node client-send client-receive status-audit verify-path list-peers time-lock time-unlock time-deny client-export-share client-import-share"
 
     case "$prev" in
         --config|-c)
@@ -26,6 +26,18 @@ _its_net_completions() {
             ;;
         verify-path)
             COMPREPLY=( $(compgen -f -- "$cur") )
+            return 0
+            ;;
+        time-lock)
+            COMPREPLY=( $(compgen -W "-f --file -e --epochs -o --out" -- "$cur") )
+            return 0
+            ;;
+        time-unlock)
+            COMPREPLY=( $(compgen -W "-p --puzzle -o --out" -- "$cur") )
+            return 0
+            ;;
+        time-deny)
+            COMPREPLY=( $(compgen -W "-p --puzzle -d --decoy -o --out" -- "$cur") )
             return 0
             ;;
         *)

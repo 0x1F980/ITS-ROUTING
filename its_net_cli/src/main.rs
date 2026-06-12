@@ -14,9 +14,22 @@ use core_logic::routing::{create_onion_packet, MorphicMixingNode, MorphicOnionPa
 use core_logic::hydra_sss::{fragment_data, reconstruct_data, SssPackedShare};
 use core_logic::stealth_identity::StealthIdentity;
 use core_logic::ratchet::StateRatchet;
-use core_logic::time_lock::SssTimeLock;
 use core_logic::SecureRandom;
+use its_self_enclosed_timelock::field_arith::FieldElement as TlFieldElement;
+use its_self_enclosed_timelock::{GenerateError, SssTimeLock};
 use zeroize::{Zeroize, ZeroizeOnDrop};
+
+/// Bridges `/dev/urandom` into the standalone time-lock crate's RNG trait.
+struct TimelockRng;
+
+impl its_self_enclosed_timelock::SecureRandom for TimelockRng {
+    type Error = std::io::Error;
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
+        use std::io::Read;
+        std::fs::File::open("/dev/urandom")?.read_exact(dest)
+    }
+}
 
 /// A memory-secured container that zeroizes its contents upon drop to protect RAM state.
 #[derive(Zeroize, ZeroizeOnDrop, Default)]
@@ -147,10 +160,10 @@ impl TimeLockText {
             x: self.x,
             m: self.m,
             t: self.t,
-            initial_share_1: self.initial_share_1.iter().map(|&v| FieldElement::new(v)).collect(),
-            transitions_1: self.transitions_1.iter().map(|v| v.iter().map(|&v| FieldElement::new(v)).collect()).collect(),
-            transitions_2: self.transitions_2.iter().map(|v| v.iter().map(|&v| FieldElement::new(v)).collect()).collect(),
-            encrypted_payload: self.encrypted_payload.iter().map(|&v| FieldElement::new(v)).collect(),
+            initial_share_1: self.initial_share_1.iter().map(|&v| TlFieldElement::new(v)).collect(),
+            transitions_1: self.transitions_1.iter().map(|v| v.iter().map(|&v| TlFieldElement::new(v)).collect()).collect(),
+            transitions_2: self.transitions_2.iter().map(|v| v.iter().map(|&v| TlFieldElement::new(v)).collect()).collect(),
+            encrypted_payload: self.encrypted_payload.iter().map(|&v| TlFieldElement::new(v)).collect(),
         }
     }
 
@@ -1819,7 +1832,7 @@ fn run_client_receive(
 // ==============================================================================
 
 fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
-    let mut rng = its_hardware::CliRng;
+    let mut rng = TimelockRng;
     println!("Indlæser dokument til tidslåsning: {:?}", file_path);
 
     let message_bytes = match std::fs::read(&file_path) {
@@ -1849,8 +1862,11 @@ fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
             println!("- Gemt i: {:?}", out_path);
             println!("Du kan nu sikkert slette det originale dokument.");
         }
-        Err(_) => {
-            println!("Fejl under generering af tidslåsen.");
+        Err(GenerateError::InvalidInput) => {
+            println!("Fejl: Ugyldige parametre (tom fil eller epochs=0).");
+        }
+        Err(GenerateError::Rng(e)) => {
+            println!("Fejl under entropi-indsamling: {:?}", e);
         }
     }
 }
@@ -1946,7 +1962,7 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     let mut current_share_2 = Vec::with_capacity(puzzle.initial_share_1.len());
     for idx in 0..puzzle.initial_share_1.len() {
         let s2_0_raw = ((y as u128 + idx as u128) % 2147483647) as u32;
-        current_share_2.push(FieldElement::new(s2_0_raw));
+        current_share_2.push(TlFieldElement::new(s2_0_raw));
     }
     for j in 0..puzzle.t {
         let trans_2 = &puzzle.transitions_2[j];
@@ -1959,8 +1975,8 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     for idx in 0..puzzle.initial_share_1.len() {
         let s2_t = current_share_2[idx];
         let d_byte = padded_decoy[idx];
-        let secret_t = puzzle.encrypted_payload[idx] - FieldElement::new(d_byte as u32);
-        let s1_t = (secret_t + s2_t) * FieldElement::new(2).invert();
+        let secret_t = puzzle.encrypted_payload[idx] - TlFieldElement::new(d_byte as u32);
+        let s1_t = (secret_t + s2_t) * TlFieldElement::new(2).invert();
         decoy_shares_1_t.push(s1_t);
     }
 

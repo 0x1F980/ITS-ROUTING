@@ -15,6 +15,9 @@ complete -c its-net -n "__fish_use_subcommand" -a client-receive -d "Receive and
 complete -c its-net -n "__fish_use_subcommand" -a status-audit -d "Run diagnostic telemetry"
 complete -c its-net -n "__fish_use_subcommand" -a verify-path -d "Verify homomorphic routing path"
 complete -c its-net -n "__fish_use_subcommand" -a list-peers -d "Show current finite field routing table"
+complete -c its-net -n "__fish_use_subcommand" -a time-lock -d "Generate a hybrid deniable time-lock puzzle"
+complete -c its-net -n "__fish_use_subcommand" -a time-unlock -d "Solve a time-lock puzzle sequentially"
+complete -c its-net -n "__fish_use_subcommand" -a time-deny -d "Build a decoy puzzle for deniability"
 
 # Subcommand-specific arguments
 # start-node
@@ -31,3 +34,17 @@ complete -c its-net -n "__fish_seen_subcommand_from client-send" -l aeh -d "Enab
 complete -c its-net -n "__fish_seen_subcommand_from client-receive" -l source -r -d "Filter incoming shares by sender ID"
 complete -c its-net -n "__fish_seen_subcommand_from client-receive" -l aeh -d "Use Ambient Entropy Harvesting mode"
 complete -c its-net -n "__fish_seen_subcommand_from client-receive" -l unwrap -d "Attempt SSS-trapdoor decapsulation"
+
+# time-lock
+complete -c its-net -n "__fish_seen_subcommand_from time-lock" -s f -l file -r -F -d "Document to lock"
+complete -c its-net -n "__fish_seen_subcommand_from time-lock" -s e -l epochs -r -d "Sequential squaring rounds (default 1000)"
+complete -c its-net -n "__fish_seen_subcommand_from time-lock" -s o -l out -r -F -d "Output .its puzzle file"
+
+# time-unlock
+complete -c its-net -n "__fish_seen_subcommand_from time-unlock" -s p -l puzzle -r -F -d "Input .its puzzle file"
+complete -c its-net -n "__fish_seen_subcommand_from time-unlock" -s o -l out -r -F -d "Decrypted output file"
+
+# time-deny
+complete -c its-net -n "__fish_seen_subcommand_from time-deny" -s p -l puzzle -r -F -d "Input .its puzzle file"
+complete -c its-net -n "__fish_seen_subcommand_from time-deny" -s d -l decoy -r -d "Decoy message of equal length"
+complete -c its-net -n "__fish_seen_subcommand_from time-deny" -s o -l out -r -F -d "Alternative .its puzzle file"

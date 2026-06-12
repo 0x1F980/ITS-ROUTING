@@ -40,6 +40,25 @@ Perform timing diagnostics, cache-flushes, and check for active routing anomalie
 .TP
 .B verify\-path
 Perform Lagrange interpolation at x=0 on homomorphic probe-shares to algebraically verify the route integrity without decrypting the payload.
+.TP
+.B time\-lock
+Generate a local hybrid SSS-Chained Time-Lock puzzle over a document using the standalone
+.BR ITS\-self_enclosed_timelock
+crate. Accepts
+.BR \-f ", " \-\-file ", " \-e ", " \-\-epochs ", " and
+.BR \-o ", " \-\-out .
+.TP
+.B time\-unlock
+Sequentially solve the RSW96 squaring chain and decrypt a
+.B .its
+puzzle file. Accepts
+.BR \-p ", " \-\-puzzle " and "
+.BR \-o ", " \-\-out .
+.TP
+.B time\-deny
+Construct an alternative puzzle that decrypts to a decoy message of equal length, demonstrating perfect deniability. Accepts
+.BR \-p ", " \-\-puzzle ", " \-d ", " \-\-decoy ", " and
+.BR \-o ", " \-\-out .
 .SH MATHEMATICAL PROOF OF IMPREGNABILITY
 The system uses Shamir's Secret Sharing over the prime field Z_{2^31-1}.
 A polynomial of degree at most K-1 requires K points (shares) to reconstruct. Any observer (Eve) possessing K-1 or fewer shares has absolute zero-knowledge of the underlying secret.

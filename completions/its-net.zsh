@@ -18,7 +18,10 @@ _its_net() {
                 'client-receive[Receive, reconstruct and verify packets]' \
                 'status-audit[Run local telemetry and check for timing anomalies]' \
                 'verify-path[Interpolate and verify the homomorphic routing path]' \
-                'list-peers[Show current peers in the local finite field routing table]'
+                'list-peers[Show current peers in the local finite field routing table]' \
+                'time-lock[Generate a hybrid deniable time-lock puzzle over a file]' \
+                'time-unlock[Sequentially solve and decrypt a .its puzzle]' \
+                'time-deny[Build an alternative decoy puzzle for deniability]'
             ;;
         args)
             case $line[1] in
@@ -43,6 +46,23 @@ _its_net() {
                 verify-path)
                     _arguments \
                         '--probes[JSON/CSV file containing received probe shares]:file:_files'
+                    ;;
+                time-lock)
+                    _arguments \
+                        '(-f --file)'{-f,--file}'[Document to lock]:file:_files' \
+                        '(-e --epochs)'{-e,--epochs}'[Sequential squaring rounds]:count:' \
+                        '(-o --out)'{-o,--out}'[Output .its puzzle file]:file:_files'
+                    ;;
+                time-unlock)
+                    _arguments \
+                        '(-p --puzzle)'{-p,--puzzle}'[Input .its puzzle file]:file:_files' \
+                        '(-o --out)'{-o,--out}'[Decrypted output file]:file:_files'
+                    ;;
+                time-deny)
+                    _arguments \
+                        '(-p --puzzle)'{-p,--puzzle}'[Input .its puzzle file]:file:_files' \
+                        '(-d --decoy)'{-d,--decoy}'[Decoy message of equal length]:text:' \
+                        '(-o --out)'{-o,--out}'[Alternative .its puzzle file]:file:_files'
                     ;;
             esac
             ;;
