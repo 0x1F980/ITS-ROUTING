@@ -37,10 +37,13 @@ To prevent Eve from filtering dummy packets based on periodic timing analysis, t
 ### 3. Faraday Cages & Physical Shielding:
 To defeat physical SDR-based TEMPEST surveillance near the terminal, Bob must house his terminal inside a Faraday cage. This blocks all electromagnetic emissions from escaping the physical zone, preventing physical timing correlation.
 
-### 4. Air-Gapping & Visual / Steganographic Transmission:
-Under extreme requirements, Bob must completely decouple his terminal from any physical network cable. By operating in a 100% air-gapped terminal room, SSS shares are generated offline and manually transported.
+### 4. Air-Gapping, QR Codes & Offline Operation:
+Under extreme requirements, Bob must completely decouple his terminal from any physical network cable. By operating in a 100% air-gapped terminal room, SSS shares are generated offline and manually transported. The system operates fully offline, generating, packing, and parsing shares as high-density, structured QR codes. These QR codes are read directly from physical screens or printed paper using air-gapped camera sensors, establishing an optical visual link that completely bypasses any copper or wireless connection to online infrastructure.
 
-### 5. Duress Ratchets:
+### 5. Hermetic Prebuilt Binaries:
+To guarantee absolute, untampered runtime execution in offline zones, the system provides precompiled, cryptographically hashed, static prebuilt binaries. Generated through our hermetic Nix and Docker reproducible build pipelines, these binaries can be audited and signed on verified master devices, distributed via write-once physical media (e.g., optical CD-Rs), and executed on offline nodes without requiring external compilers, internet links, or dynamically linked package caches. This eliminates any possibility of compiler-inserted backdoors or dynamic-link interception.
+
+### 6. Duress Ratchets:
 To survive physical coercion, the system utilizes a Dual-Seed Duress Ratchet. If Bob is forced to input his password, entering a decoy password derives a decoy seed that unlocks completely benign files, while immediately purging the master key registers.
 
 ### 6. Heartbeat Self-Wipe:
