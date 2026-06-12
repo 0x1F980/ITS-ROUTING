@@ -1,10 +1,10 @@
 # ==============================================================================
 # HYDRA-ITS SHADOW NETWORK CONFIGURATION TEMPLATE
-# Modulus Z_251 - Information-Theoretic Secrecy (ITS)
+# Modulus Z_{2^31-1} (Mersenne-31) - Information-Theoretic Secrecy (ITS)
 # ==============================================================================
 
 [node]
-# Unique identifier of this node in the finite field Z_251 (1..=250)
+# Unique identifier of this node in the finite field Z_{2^31-1} (1..=2147483646)
 id = 1
 
 # Listening port for bare-metal UDP sockets
@@ -18,7 +18,7 @@ bind_address = "0.0.0.0"
 threshold_k = 3
 total_shares_n = 5
 
-# Local private trapdoor point (x, y) modulo 251.
+# Local private trapdoor point (x, y) modulo 2147483647.
 # Only known to this node's administrator.
 trapdoor_x = 2
 trapdoor_y = 11

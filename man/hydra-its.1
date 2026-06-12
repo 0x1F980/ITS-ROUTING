@@ -11,7 +11,7 @@ hydra-its \- Information-Theoretic Secrecy (ITS) Onion Routing & Passive Entropy
 is a bare-metal, high-performance, and mathematically impregnable shadow network tool designed for Information-Theoretic Secrecy (ITS) routing.
 Unlike traditional networks (Tor, Nym) which rely on computationally hard problems (RSA, ECC, AES),
 .B hydra-its
-guarantees perfect secrecy (unbreakable even with infinite computational power) by utilizing Shamir's Secret Sharing (SSS) chained over a finite field modulus of Z_251.
+guarantees perfect secrecy (unbreakable even with infinite computational power) by utilizing Shamir's Secret Sharing (SSS) chained over a finite field modulus of Z_{2^31-1}.
 .PP
 The application supports Morphic Network Coding (MNC), Homomorphic Path Attestation, Onion-chaff routing, and Passive Entropy Parasitism (PEP).
 .SH OPTIONS
@@ -41,7 +41,7 @@ Perform timing diagnostics, cache-flushes, and check for active routing anomalie
 .B verify\-path
 Perform Lagrange interpolation at x=0 on homomorphic probe-shares to algebraically verify the route integrity without decrypting the payload.
 .SH MATHEMATICAL PROOF OF IMPREGNABILITY
-The system uses Shamir's Secret Sharing over the prime field Z_251.
+The system uses Shamir's Secret Sharing over the prime field Z_{2^31-1}.
 A polynomial of degree at most K-1 requires K points (shares) to reconstruct. Any observer (Eve) possessing K-1 or fewer shares has absolute zero-knowledge of the underlying secret.
 Under Claude Shannon's Perfect Secrecy theorem, for any ciphertext C and any candidate message M:
 .PP

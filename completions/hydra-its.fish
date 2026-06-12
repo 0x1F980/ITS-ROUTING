@@ -24,7 +24,7 @@ complete -c hydra-its -n "__fish_seen_subcommand_from start-node" -l daemonize -
 
 # client-send
 complete -c hydra-its -n "__fish_seen_subcommand_from client-send" -l msg -r -d "The secret message to fragment and encrypt"
-complete -c hydra-its -n "__fish_seen_subcommand_from client-send" -l dest -r -d "The recipient ID in Z_251"
+complete -c hydra-its -n "__fish_seen_subcommand_from client-send" -l dest -r -d "The recipient ID in Z_{2^31-1}"
 complete -c hydra-its -n "__fish_seen_subcommand_from client-send" -l pep -d "Enable Passive Entropy Parasitism mode"
 
 # client-receive

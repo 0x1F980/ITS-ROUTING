@@ -31,7 +31,7 @@ _hydra_its() {
                 client-send)
                     _arguments \
                         '--msg[The secret payload string to transmit]:message:' \
-                        '--dest[The destination Node ID in Z_251]:node_id:' \
+                        '--dest[The destination Node ID in Z_{2^31-1}]:node_id:' \
                         '--pep[Inject packet into external public entropy stream]'
                     ;;
                 client-receive)
