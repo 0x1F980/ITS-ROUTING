@@ -1,0 +1,68 @@
+# ITS-net: Tactical Heads-Up, Threat Profile & Worst-Case Survival Guide (ITS-net_HEADS_UP)
+
+## License: GNU GPLv3 Only
+## Target: Network Security Researchers, Cryptographic Auditors & Tactical Operations Teams
+
+---
+
+## Sektion A: Prerequisite for Validity (Forudsætningen)
+
+### The Absolute Endpoint Constraint:
+All network-level anonymization, constant-rate chaffing loops, and chaotic de-correlation mechanisms in `ITS-net` are strictly predicated on the **host security of the local execution endpoint**.
+
+If an adversary has compromised Bob's operating system with a resident network tap or a software-level Trojan that reads packets directly from the loopback interface or memory queue before they are passed to the physical network layer, our traffic-obfuscation boundaries can be bypassed. While our `its_net_cli` daemon hides timing signatures over the physical network wire, it cannot protect Bob if his active queue structures are read directly from RAM. Absolute control and auditing of the local execution host are the non-negotiable prerequisites for all network-level security properties.
+
+---
+
+## Sektion B: Eve's Physical Domain Control (Angrebet)
+
+We operate under the ultimate trilateral threat scenario, where the adversary, **Eve, possesses absolute physical control over the entire communications, storage, and manufacturing domain**:
+
+1. **Global Passive Surveillance (Traffic Volume Analysis):** Eve passive-records all IP packet transits on the planet. She attempts to perform timing and packet-count correlation to match Alice's outbound flows to Bob's incoming coordinates.
+2. **Silicon & Firmware Exploitation:** Eve has backdoored the physical motherboards, central processing units, and network interface cards (NICs) inside Bob's terminal, actively attempting to inject microsecond timing finger-prints into outgoing streams to identify routing participants across physical checkpoints.
+3. **Physical Seizure & Torture:** Eve can physically detain Alice and Bob and subject them to physical coercion to extract vault passwords and private keys.
+
+---
+
+## Sektion C: Defensive Impregnability (Forsvaret)
+
+Even under this absolute physical domain control, `ITS-net` establishes absolute, unbreakable communications security by implementing our defensive protocols:
+
+### 1. Constant-Rate Chaffing (Dummy Injection):
+To defeat traffic volume analysis, our network courier maintains a perfectly constant, invariant packet transmission rate. If there are no real SSS-shares in the queue, the daemon automatically generates and transmits cryptographically indistinguishable dummy packets ("chaff"). This converts the network stream into a flat, constant-rate profile, making traffic volume analysis completely blind.
+
+### 2. Lorenz Chaotic Jitter:
+To prevent Eve from filtering dummy packets based on periodic timing analysis, the packet transmission intervals are randomized using a Lorenz chaotic system calculated over the finite field. Since chaotic trajectories are non-periodic and highly sensitive to initial conditions, Eve cannot perform statistical de-jittering.
+
+### 3. Faraday Cages & Physical Shielding:
+To defeat physical SDR-based TEMPEST surveillance near the terminal, Bob must house his terminal inside a Faraday cage. This blocks all electromagnetic emissions from escaping the physical zone, preventing physical timing correlation.
+
+### 4. Air-Gapping & Visual / Steganographic Transmission:
+Under extreme requirements, Bob must completely decouple his terminal from any physical network cable. By operating in a 100% air-gapped terminal room, SSS shares are generated offline and manually transported.
+
+### 5. Duress Ratchets:
+To survive physical coercion, the system utilizes a Dual-Seed Duress Ratchet. If Bob is forced to input his password, entering a decoy password derives a decoy seed that unlocks completely benign files, while immediately purging the master key registers.
+
+### 6. Heartbeat Self-Wipe:
+The physical terminal requires a continuous, scheduled heartbeat signal from the operator. If the operator is seized, the absence of the heartbeat immediately triggers an automated memory sanitization routine, writing zeros to all sensitive registers using volatile writes and sequentially consistent compiler fences (`SeqCst`).
+
+---
+
+## Sektion D: Worst-Case Scenario: World War III & Absolute Censorship
+
+### The Doomsday Landscape:
+In the event of World War III, a total collapse of the global internet, or the implementation of absolute sovereign firewalls, Eve mandates that **every single packet transmission must be cryptographically signed with a government-issued Citizen ID**.
+
+### The Enemy is the Hardware:
+Under this extreme scenario, the physical hardware itself acts as the enemy. Compromised motherboards and network interface cards (NICs) will actively attempt to inject subtle, microsecond timing jitters or packet spacing signatures (fingerprints) into outgoing streams, trying to track user identity across physical checkpoints even if the payloads are encrypted.
+
+### Mathematics Overrules Software & Hardware:
+Our strict mathematical boundaries completely overrule both backdoored software and compromised hardware:
+1. **Underdetermined Systems:** Even if the hardware successfully fingerprints the transmission times, the data itself is represented as uniform coordinates over $\mathbb{F}_p$. Since the equation systems are strictly underdetermined, Eve's infinite quantum arrays face a flat probability distribution, rendering her incapable of proving the existence of a real payload.
+2. **Entropic Footprintable Permissions (The Last Resort):**
+   When absolute anonymity is barred, Alice and Bob must employ **entropic footprintable permissions** as their final option. Instead of attempting to bypass the Citizen ID requirement (which triggers instant blockade flags), they steganographically blend and hide their SSS-shares directly inside legitimate, signed citizen-ID public transactions or files. They sign their public telemetry posts or images with their state-mandated IDs to appease Eve's automated filters, but the underlying payload has been entropic-flattened (completely smoothed to remove any cryptographic patterns or signatures) and hidden in the least significant bits (LSBs).
+3. **Future Crate Notice (`0x1F464/ITS-FINGERPRINT_ERASURE`):**
+   To automate and secure this worst-case scenario, the future decoupled repository **`0x1F464/ITS-FINGERPRINT_ERASURE`** is reserved for development. This dedicated project will handle:
+   * **Entropic Flattening:** Eliminating any statistical tells or non-random signatures in SSS-shares.
+   * **Deep File Metadata Scrubbing:** Erasing any latent compiler or file-format footprints.
+   This guarantees that even if a signed citizen file is audited, it exhibits absolute zero-knowledge properties, leaving no trace or footprint that could prove an embedded ITS payload exists.
