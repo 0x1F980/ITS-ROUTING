@@ -264,7 +264,7 @@ impl TimeLockText {
 }
 
 // ==============================================================================
-// PASSIVE ENTROPY PARASITISM (PEP) ADAPTERS (ZERO DEPENDENCY / NO JSON)
+// AMBIENT ENTROPY HARVESTING (AEH) ADAPTERS (ZERO DEPENDENCY / NO JSON)
 // ==============================================================================
 
 #[derive(Debug, Clone)]

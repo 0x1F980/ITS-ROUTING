@@ -1,10 +1,10 @@
-# Hydra-ITS: Shadow Network Manual, Documentation, and Mathematical Proofs
+# Morphic Routing Network (ITS/SCPST): Shadow Network Manual, Documentation, and Mathematical Proofs
 ### Modulus $\mathbb{Z}_{2^{31}-1}$ (8th Mersenne Prime) — Information-Theoretic Secrecy (ITS) Reference
 
 ---
 
 ## 1. System Architecture & Overview
-Hydra-ITS is a high-performance, pure bare-metal shadow network designed to deliver **Information-Theoretic Secrecy (ITS)**. Unlike conventional networks (such as Tor or Nym), which are vulnerable to future quantum computers, global timing correlation, and brute-force traffic volume analysis, Hydra-ITS is protected by the unyielding laws of pure algebra, probability theory, and steganographic passive parasitism.
+Morphic Routing Network (ITS/SCPST) is a high-performance, pure bare-metal shadow network designed to deliver **Information-Theoretic Secrecy (ITS)**. Unlike conventional networks (such as Tor or Nym), which are vulnerable to future quantum computers, global timing correlation, and brute-force traffic volume analysis, Morphic Routing Network (ITS/SCPST) is protected by the unyielding laws of pure algebra, probability theory, and steganographic passive parasitism.
 
 The system is structured as five modular, tightly integrated cryptographic and transport layers:
 
@@ -79,7 +79,7 @@ Since all combinations are equally valid, the system is **algebraically underdet
 ---
 
 ### Proof 3: Wegman-Carter OTM Integretity (Modulus $2^{31}-1$)
-In `stealth_identity.rs`, the integrity of our Passive Entropy Parasitism injection is authenticated using a Wegman-Carter One-Time MAC tag $T$ over the static contribution $M = X - E$:
+In `stealth_identity.rs`, the integrity of our Ambient Entropy Harvesting (AEH) injection is authenticated using a Wegman-Carter One-Time MAC tag $T$ over the static contribution $M = X - E$:
 $$T = K_{\text{mac}} \cdot M + Nonce \pmod{2147483647}$$
 where $K_{\text{mac}}$ and $Nonce$ are one-time key elements derived from the `StateRatchet`.
 
@@ -95,7 +95,7 @@ This represents an **absolute mathematical upper bound** on forgery probability,
 
 ## 3. Threat Model & Security Audit: Eve's Global Surveillance
 
-If Eve owns **all transit routers, internet backbones, and public web platforms**, can she break Hydra-ITS? The system is designed specifically to withstand an omnipotent infrastructure owner. Here is the security audit of her attacks and how our multi-layered defenses defeat them:
+If Eve owns **all transit routers, internet backbones, and public web platforms**, can she break Morphic Routing Network (ITS/SCPST)? The system is designed specifically to withstand an omnipotent infrastructure owner. Here is the security audit of her attacks and how our multi-layered defenses defeat them:
 
 ```mermaid
 graph TD
@@ -128,8 +128,28 @@ graph TD
 ### Attack 1: Timing and Traffic Volume Correlation
 *   **Eve's Threat:** Eve monitors raw volume and timing packet peaks. When Alice uploads shares, Eve correlates her network spikes with Bob's simultaneous download spikes.
 *   **The Defense:** 
-    1.  **Continuous Scheduled Chaffing:** Alice's client runs a permanent background scheduler loop, uploading steganographically camouflaged mock blocks (chaff) at rigid, deterministic intervals of `tick_rate_ms`. When sending a real message, the client replaces decoy chaff with real, authenticated blocks. There is **0% metadata volume or timing deviation**.
-    2.  **Receiver Anonymity via PMP:** Bob never requests or pulls data from public endpoints. Under **Passive Multicast Parasitism (PMP)**, Bob passively ingests high-volume continuous global streams (such as satellite feeds or IP multicast broadcasts). Because Bob is purely reading, his network card sends **0 bits** to the internet, rendering him completely untraceable.
+    1.  **Constant-Rate Chaffing (Dummy Traffic):** Alice's client runs a permanent background scheduler loop, uploading steganographically camouflaged mock blocks (chaff) at rigid, deterministic intervals. When sending a real message, the client replaces decoy chaff with real, authenticated blocks. There is **0% metadata volume or timing deviation**.
+    2.  **Lorenz Chaotic Timing Jitter:** To prevent Eve from performing statistical de-jittering or filtering out dummy packets based on periodic timing analysis, the packet transmission intervals are randomized using a Lorenz chaotic system.
+    3.  **Receiver Anonymity via PMP:** Bob never requests or pulls data from public endpoints. Under **Passive Multicast Parasitism (PMP)**, Bob passively ingests high-volume continuous global streams (such as satellite feeds or IP multicast broadcasts). Because Bob is purely reading, his network card sends **0 bits** to the internet, rendering him completely untraceable.
+
+#### Mathematical Proof of Defense Against Timing-Correlation:
+Under standard onion routing, an active or passive global adversary (Eve) can perform timing correlation by matching packet arrival times at different nodes. If the packet rate is $R(t)$, Eve can compute the cross-correlation function $R_{xy}(\tau)$ between the incoming traffic $X(t)$ at the entry node and the outgoing traffic $Y(t)$ at the exit node:
+$$R_{xy}(\tau) = \lim_{T \to \infty} \frac{1}{T} \int_0^T X(t) Y(t + \tau) \, dt$$
+If $R_{xy}(\tau)$ exhibits a non-zero peak at some delay $\tau$, Eve can correlate the sender and receiver with high statistical confidence.
+
+To completely prevent this, Morphic Routing Network (ITS/SCPST) combines **Constant-Rate Chaffing** with **Lorenz Chaotic Timing Jitter**:
+1. **Constant-Rate Chaffing:** By maintaining a continuous stream of dummy packets (chaff) when no real payload is being transmitted, the overall packet rate $R(t) = R_{\text{const}}$ is kept as a flat, constant vector.
+2. **Lorenz Chaotic Timing Jitter:** To prevent Eve from filtering out dummy packets based on periodic timing analysis (de-jittering), the packet transmission intervals are randomized using a Lorenz chaotic system. The Lorenz system is defined by three non-linear differential equations:
+$$\frac{dx}{dt} = \sigma(y - x), \quad \frac{dy}{dt} = x(\rho - z) - y, \quad \frac{dz}{dt} = xy - \beta z$$
+The chaotic trajectory is extremely sensitive to initial conditions (the butterfly effect). Any two trajectories starting with an infinitesimally small difference $\delta$ diverge exponentially over time:
+$$|\Delta(t)| \approx e^{\lambda t} |\delta|$$
+where $\lambda > 0$ is the positive Lyapunov exponent.
+
+Because the chaotic intervals are non-periodic and deterministic but statistically indistinguishable from white noise without knowing the exact initial parameters (which are derived from the private key/ratchet), the output stream appears to Eve as a completely flat, invariant white noise vector:
+$$S(f) = \text{constant}$$
+This mathematically guarantees that the cross-correlation $R_{xy}(\tau)$ between any two nodes is zero for all non-trivial delays $\tau$:
+$$R_{xy}(\tau) = 0 \quad \forall \tau$$
+Thus, Eve is mathematically incapable of performing statistical timing correlation or de-jittering, rendering her global surveillance completely blind.
 
 ### Attack 2: Endpoint RAM Dumping and Side-Channels
 *   **Eve's Threat:** Eve exploits a browser or hardware zero-day vulnerability to dump Bob's computer memory (RAM) in order to extract active master keys or the reconstructed plaintext.
@@ -147,8 +167,8 @@ graph TD
 
 ### Attack 4: Total Geopolitical Firewall and Whitelisting Blockade
 *   **Eve's Threat:** Eve blocks all foreign IP addresses and whitelists only state-approved servers, cutting Bob off from foreign endpoints.
-*   **The Defense:**
-    1.  **ALT Domestic Channels:** `PepChannel` supports domestic channels (`DomesticNews`) disguised as municipal announcements or local infrastructure logs, which Eve cannot block without collapsing her own internal economy.
+*   **The Defense:** 
+    1.  **ALT Domestic Channels:** `AehChannel` supports domestic channels (`DomesticNews`) disguised as municipal announcements or local infrastructure logs, which Eve cannot block without collapsing her own internal economy.
     2.  **Physical Sneakernet SSS:** Shamir shares can be exported as offline steganographic files (`SneakernetFile`) or local QR codes. As long as Bob receives at least $k$ shares from *any* combination of physical media (USB keys), local Wi-Fi meshes, or domestic channels, he can perfectly recover the document.
 
 ---
@@ -180,7 +200,7 @@ When hosting resources over the shadow network, latency is dictated by scheduled
 
 ## 6. Setup & Complete CLI Reference
 
-Hydra-ITS is managed via a single, cohesive binary interface.
+Morphic Routing Network (ITS/SCPST) is managed via a single, cohesive binary interface.
 
 ### Command 1: Start an Active Routing Node
 Starts an active onion router node on a VPS or bare-metal host:
@@ -270,7 +290,7 @@ The configuration file dictates the node ports, cryptographic security threshold
 
 ```toml
 # ==============================================================================
-# HYDRA-ITS SHADOW NETWORK CONFIGURATION TEMPLATE
+# MORPHIC ROUTING NETWORK CONFIGURATION TEMPLATE
 # Modulus Z_2147483647 (8th Mersenne Prime)
 # ==============================================================================
 
@@ -315,5 +335,5 @@ For a detailed academic proof of the system's **Information-Theoretic Secrecy (I
 
 Additionally, the guide outlines:
 *   **Asymmetric ITS Key-less Bootstrapping:** How to securely exchange SSS fragments and establish perfect secret channels over hostile networks with **zero prior secret or pre-shared keys**.
-*   **The Transition Optional (Active vs. Parasitic Culpability):** The tactical comparison between running active Onion nodes (Option A) and transitioning asynchronously to completely stealth, zero-port Passive Entropy Parasitism (Option B) to diffuse operational culpability across millions of ordinary internet users.
+*   **The Transition Optional (Active vs. Parasitic Culpability):** The tactical comparison between running active Onion nodes (Option A) and transitioning asynchronously to completely stealth, zero-port Ambient Entropy Harvesting (AEH) (Option B) to diffuse operational culpability across millions of ordinary internet users.
 
