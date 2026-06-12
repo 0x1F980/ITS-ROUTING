@@ -29,11 +29,16 @@ The `its_net_cli` daemon (executable name: `its-net`) implements the active-tran
 * **Mechanism:** `ITS-self_enclosed_timelock` via `its-net time-lock`, `time-unlock`, and `time-deny`.
 * **Deployment:** On an air-gapped terminal, run `its-net time-lock --file secret.pdf --epochs 1000000 --out secret.its`, then securely erase the plaintext. After the delay, `its-net time-unlock --puzzle secret.its --out secret.pdf` recovers the document. Under duress, `its-net time-deny` produces an alternative `.its` file that decrypts to a harmless cover story.
 
+### Tactical Scenario 5: Public OTM Integrity Audit
+* **Objective:** Allow any third party to verify AEH/sneakernet share integrity without access to the signer's ratchet or trapdoor.
+* **Mechanism:** `ITS-OTM_public_attestation` public bundles + `its_otm verify`.
+* **Deployment:** Signer publishes attestation bundles alongside stego payloads. Auditors run standalone verification without forging capability for future messages.
+
 ---
 
 ## 2. Network Integration Guide
 
-`its_net_cli` depends on the standalone crate **`ITS-self_enclosed_timelock`** for all hybrid time-lock operations (`time-lock`, `time-unlock`, `time-deny`). Routing, onion mixing, and SSS fragmentation continue to use `ITS` (`core_logic`).
+`its_net_cli` depends on **`ITS-self_enclosed_timelock`** for time-lock operations and **`ITS-OTM_public_attestation`** for Wegman-Carter OTM verification in AEH receive paths. Routing, onion mixing, and SSS fragmentation continue to use `ITS` (`core_logic`, which re-exports `core_logic::otm::*`).
 
 The CLI client (`its-net`) can be integrated alongside other local desktop and mobile applications (such as a local chat app, a secure email client, or an administrative dashboard) to serve as their secure transport hub.
 

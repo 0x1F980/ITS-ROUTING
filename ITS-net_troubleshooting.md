@@ -89,3 +89,15 @@ Fejl: Kunne ikke dekryptere tidslåsen (muligvis korrupt data).
 
 ### Symptom: `cargo build` cannot fetch git dependencies
 **Recovery:** Ensure [`.cargo/config.toml`](.cargo/config.toml) contains `git-fetch-with-cli = true` and SSH access to GitHub deploy keys.
+
+---
+
+## 5. OTM Public Attestation (`ITS-OTM_public_attestation`)
+
+AEH and sneakernet OTM verification uses the external crate **`ITS-OTM_public_attestation`**. See upstream [ITS-OTM_public_attestation_troubleshooting.md](https://github.com/0x1F464/ITS-OTM_public_attestation/blob/main/ITS-OTM_public_attestation_troubleshooting.md).
+
+### Symptom: Tag validation failed on receive
+**Recovery:** Confirm ratchet counter matches `share_id`. For **public audit**, verify published `.otm` bundles with `its_otm verify --bundle FILE` (one-time keys must be included in the bundle).
+
+### Symptom: Modulus mismatch between signer and verifier
+**Recovery:** Build `its-net` and `ITS-OTM_public_attestation` with the same `m61` feature flag.

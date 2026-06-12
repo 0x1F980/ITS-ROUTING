@@ -32,9 +32,15 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
                          │  ITS-self_enclosed_timelock  │
                          │ Hybrid SSS-Chained Time-Lock │
                          └──────────────────────────────┘
+                         ┌──────────────────────────────┐
+                         │ ITS-OTM_public_attestation   │
+                         │ Public Wegman-Carter OTM     │
+                         └──────────────────────────────┘
 ```
 
-**Upstream crate:** [`git@github.com:0x1F464/ITS-self_enclosed_timelock.git`](https://github.com/0x1F464/ITS-self_enclosed_timelock) — used by `its-net time-lock`, `time-unlock`, and `time-deny`.
+**Upstream crates:**
+* [`ITS-self_enclosed_timelock`](https://github.com/0x1F464/ITS-self_enclosed_timelock) — `its-net time-lock`, `time-unlock`, `time-deny`
+* [`ITS-OTM_public_attestation`](https://github.com/0x1F464/ITS-OTM_public_attestation) — AEH/sneakernet OTM verify via `verify_public_otm_tag`; standalone `its_otm` CLI for public bundles
 
 ---
 

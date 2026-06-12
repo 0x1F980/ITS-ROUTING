@@ -18,6 +18,7 @@ use core_logic::SecureRandom;
 use its_self_enclosed_timelock::field_arith::FieldElement as TlFieldElement;
 use its_self_enclosed_timelock::field_arith::MODULUS as TL_MODULUS;
 use its_self_enclosed_timelock::{GenerateError, SssTimeLock};
+use core_logic::otm::verify_tag as verify_public_otm_tag;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// Bridges `/dev/urandom` into the standalone time-lock crate's RNG trait.
@@ -30,6 +31,11 @@ impl its_self_enclosed_timelock::SecureRandom for TimelockRng {
         use std::io::Read;
         std::fs::File::open("/dev/urandom")?.read_exact(dest)
     }
+}
+
+/// Constant-time OTM verify via `ITS-OTM_public_attestation` (public attestation crate).
+fn verify_aeh_otm(m: FieldElement, k_mac: FieldElement, nonce: FieldElement, tag: FieldElement) -> bool {
+    bool::from(verify_public_otm_tag(k_mac, m, nonce, tag))
 }
 
 /// A memory-secured container that zeroizes its contents upon drop to protect RAM state.
@@ -1659,7 +1665,7 @@ fn run_client_receive(
                                 let entropy_fe = entropy_points[p_idx];
                                 let m = x - entropy_fe;
 
-                                let is_valid = stealth.verify_attestation(m, k_mac, nonce, tag);
+                                let is_valid = verify_aeh_otm(m, k_mac, nonce, tag);
                                 if bool::from(is_valid) {
                                     let recovered_whitened = stealth.transpose(x, entropy_fe);
                                     let s_recovered = stealth.shard_unwhiten(recovered_whitened);
@@ -1746,7 +1752,7 @@ fn run_client_receive(
                         let entropy_fe = entropy_points[p_idx];
                         let m = x - entropy_fe;
 
-                        let is_valid = stealth.verify_attestation(m, k_mac, nonce, tag);
+                        let is_valid = verify_aeh_otm(m, k_mac, nonce, tag);
                         if bool::from(is_valid) {
                             let recovered_whitened = stealth.transpose(x, entropy_fe);
                             let s_recovered = stealth.shard_unwhiten(recovered_whitened);

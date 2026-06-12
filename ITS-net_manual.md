@@ -30,10 +30,16 @@ its-net client-send --msg "Secret Intelligence" --dest 3 --aeh --continuous --co
 ```
 
 ### Command 4: Continuous Winnowing Loop (Bob)
-Runs Bob's receiver schedule, passively monitoring channels and verifying Wegman-Carter tags:
+Runs Bob's receiver schedule, passively monitoring channels and verifying Wegman-Carter tags (via **`ITS-OTM_public_attestation`**):
 ```bash
 its-net client-receive --aeh --continuous --config config.toml
 ```
+
+Standalone public bundle verification (air-gapped audit):
+```bash
+its_otm verify --bundle share_attestation.otm
+```
+See [ITS-OTM_public_attestation_manual.md](https://github.com/0x1F464/ITS-OTM_public_attestation/blob/main/ITS-OTM_public_attestation_manual.md).
 
 ### Command 5: Duress / Password Protected Decryption
 Unlocks the secure storage vault under coercion. If a duress password is used, the system decrypts harmless decoy records:
