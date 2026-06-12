@@ -61,3 +61,35 @@ Because the mathematics of Hydra-ITS are unconditionally secure, Eve's only viab
 3.  **Active MITM Alteration:** Tampering with coordinates or injecting fake entropy (completely detected and discarded by our **Wegman-Carter OTM Attestation**).
 
 Hydra-ITS provides a level of security that does not depend on the difficulty of mathematical assumptions, but rather on the logical laws of information itself.
+
+---
+
+## 5. Defensive Vision against Compromised / Malicious Hardware (Kleptography)
+
+If we assume the ultimate trilateral threat—that **Eve owns all transit routers, public endpoints, and all computing hardware (CPU, RAM, motherboard, TRNG)** except the raw abstract intentions of Alice and Bob—standard software isolation crashes. Future-proofing this project requires showing how we design software interfaces and mathematical structures to make corrupted physical hardware completely irrelevant.
+
+### Mitigation 1: Cryptographic Reverse Firewalls (CRF)
+If a backdoored hardware processor attempts to sneakily exfiltrate bits of our master keys or seed by subtly modulating the least significant bits of the public Wegman-Carter tags $T$ or coordinates $X$ (known as *Subliminal Kleptographic Leakage*), our software is designed to pass through a **Cryptographic Reverse Firewall (CRF)**. 
+- A CRF is a simple, physically clean, and formally verified hardware gate-array placed between the endpoint and the router.
+- Leveraging the homomorphic and linear properties of our finite field $\mathbb{Z}_{2^{31}-1}$, the CRF dynamically injects fresh, unmanipulated random scalar factors directly into the outgoing points $X$ and tags $T$ on-the-fly.
+- This process preserves the underlying mathematical consistency required for Bob's transposition but **completely destroys and overwrites any subliminal leakage channels**, neutralizing hardware trojans instantly.
+
+### Mitigation 2: Optical/Visual Shamir Secret Sharing (VSSS)
+If Bob's RAM and CPU are entirely backdoored and cannot be trusted with decryption, we can bypass silicon-level calculations entirely during final document recovery:
+- The SSS-shares are printed steganographically onto physical, transparent film overlays (transparencies).
+- To decrypt, Bob physically aligns and stacks these transparent overlays on top of each other.
+- The optical interference, polarization, and light passage of stacked sheets reconstructs the secret QR-code or text directly inside Bob's **biological retina and visual cortex**.
+- The decryption is performed entirely in the analog, optical world—completely bypassing any computer microprocessor or digital RAM.
+
+### Mitigation 3: TRNG Defeat via Forced Deterministic Noncing
+To prevent backdoored Hardware Random Number Generators (TRNGs) from generating "biased" or predictable nonces/polynomial coefficients designed to leak key bits over time:
+- The project enforces **100% Deterministic Noncing** (similar to RFC 6979 for signature structures).
+- Every polynomial coefficient, Wegman-Carter nonce, and whitening factor is deterministically derived using HKDF-SHA256 initialized by hashing the message contents together with our private `StateRatchet` master seed.
+- This strips the backdoored hardware of any freedom or choice during random number generation. If the hardware modifies even a single bit to introduce bias, the mathematical verification checks fail immediately, preventing silent key leakage.
+
+### Mitigation 4: Air-Gapped Manual Mechanical Entropies
+Under absolute extreme isolation requirements, the computer is treated solely as a "dumb network courier" that possesses zero access to cryptographic state:
+- Alice and Bob manually generate keys, nonces, and coordinates using mechanical dice, physical coin tosses, or a simple analog Geiger counter measuring background cosmic rays.
+- Calculations are performed manually or on an ancient air-gapped mechanical regnemaskine (like a Curta calculator).
+- The resulting digits are entered into the computer terminal only as a pre-computed ciphertext payload. Even if the CPU has hardware spyware, it only sees and transmits fully masked, indistinguishable coordinates.
+

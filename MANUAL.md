@@ -295,3 +295,9 @@ entropy_sources = [
 ]
 clue_offset = 12
 ```
+
+---
+
+## 8. Cryptographic Theory & Malicious Hardware Vision
+For a detailed academic proof of the system's **Information-Theoretic Secrecy (ITS)**, including mathematical derivations of Shannon's Perfect Secrecy, Morphic Blindness, and the full architectural vision to bypass/neutralize malicious or backdoored physical hardware (via **Cryptographic Reverse Firewalls, Optical Visual SSS, Deterministic Noncing**, and **Air-Gapped mechanical fallbacks**), please consult the accompanying [Theory Reference Guide](crypto_theory.md).
+
