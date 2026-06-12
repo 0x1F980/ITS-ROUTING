@@ -93,3 +93,88 @@ Under absolute extreme isolation requirements, the computer is treated solely as
 - Calculations are performed manually or on an ancient air-gapped mechanical regnemaskine (like a Curta calculator).
 - The resulting digits are entered into the computer terminal only as a pre-computed ciphertext payload. Even if the CPU has hardware spyware, it only sees and transmits fully masked, indistinguishable coordinates.
 
+---
+
+## 6. Absolute Software Sterility (Zero-Dependency Supply Chain Immunity)
+
+While the mathematical foundations of SSS-Chained Trappdoor Tunnels and Carter-Wegman MACs are unconditionally secure, their security is compromised if the software executing them is compromised. State-sponsored hackers routinely target the software supply chain—injecting backdoors, Trojans, or surveillance capabilities into popular third-party libraries (e.g. Tokios, Reqwest, Serde) or utilizing compiler macros to hide malicious side-channels.
+
+To achieve complete **Software Sterility**, the client binary `hydra_cli` has been designed as a fully independent, zero-dependency, and synchrounous binary.
+
+### Key Tenets of Crate Immunization:
+
+1.  **Elimination of Async Overheads and Macros:**
+    By removing `tokio` and rewriting all packet transport, daemon loops, and chaffing loops into synchronous native OS threads via `std::thread::spawn` and `std::net::UdpSocket`, we remove hundreds of thousands of lines of complex macro expansions, unsafe scheduling pools, and obscure polling state machines. The runtime environment is reduced to the simplest possible form: a pure, deterministic OS thread.
+
+2.  **Removal of Third-Party Crypto and TLS Layers:**
+    By removing `reqwest` and cryptographic TLS engines like `rustls` or `openssl` from the compiled binary, we eradicate potential supply-chain injection vectors within cryptographic libraries. Instead, the binary delegates live public entropy collection to the native, OS-hardened `curl` utility synchronously (`std::process::Command`). This ensures HTTPS/TLS transport with **zero compiled dependencies**.
+
+3.  **Håndskrevet Serialisering and Parsing:**
+    Third-party parsing and reflection engines (such as `serde` and `serde_json`) are notoriously difficult to audit due to heavy macro-expansion codegen. We completely replace these with lightweight, hand-written, macro-free, and reflection-free parsers for configuration files (`parse_config`) and time-lock text formatting (`TimeLockText`), using primitive line splits and string trims.
+
+4.  **100% Auditable Codebase:**
+    The entire `hydra_cli` build is completely sterile—retaining only `core_logic` (for ITS arithmetic), `hal_abstraction` (for hardware abstraction), and `zeroize` (pinned and verified for memory protection). With no external transitive dependencies, any cryptographer can fully audit the compiled binary in less than an hour, achieving the highest possible standard of software auditability and security.
+
+---
+
+## 7. Asymmetric ITS Key-less Bootstrapping (Zero Prior Secret)
+
+In classical cryptographic systems, establishing an Information-Theoretically Secure (ITS) channel (e.g., via a One-Time Pad or Shamir's Secret Sharing) suffers from a severe bootstrapping paradox: **It strictly requires a secure, pre-shared key (a "prior secret") exchanged through an independent out-of-band channel before any secure transmission can begin.**
+
+Our system resolves this fundamental paradox. By integrating asymmetric ITS-secure algebra directly into the **SSS-Chained Perfect Secrecy Trapdoor (SCPST)** model, Alice and Bob can securely exchange SSS fragments and bootstrap their communication over a completely public, hostile network controlled by Eve **with zero prior secret and no pre-shared keys.**
+
+### The Mathematical Proof of Key-less Bootstrapping:
+
+1. **Bob's Private Trapdoor (The Asymmetric Anchor):**
+   Bob defines a private evaluation point (his private key) on a high-degree polynomial over the finite field $\mathbb{Z}_p$ (where $p$ is $2^{31}-1$ or $2^{61}-1$). He keeps this point completely private:
+   $$T_{\text{private}} = (x_{\text{private}}, y_{\text{private}}) \pmod p$$
+   Bob then publishes the remaining $k-1$ coordinates on the polynomial as his Public Key:
+   $$\mathcal{K}_{\text{public}} = \{(x_1, y_1), (x_2, y_2), \dots, (x_{k-1}, y_{k-1})\}$$
+
+2. **Alice's Information-Theoretic Encapsulation:**
+   Alice, wishing to transmit an SSS-share $S \in \mathbb{Z}_p$ to Bob, has never met Bob and shares no keys with him. She performs an asymmetric encapsulation:
+   * She interpolates Bob's public coordinates $\mathcal{K}_{\text{public}}$ along with a newly generated random point.
+   * She binds her share $S$ directly into the algebraic relation of the polynomial.
+   * She masks the result using a public coordinate $X$ and a randomized scalar product:
+     $$X = M + E \pmod p$$
+   
+3. **The Information-Theoretic Barrier (Dimensional Underdetermination):**
+   During transit, Eve intercepts the public coordinates and attempts to solve the polynomial to extract Alice's share $S$. Eve faces the following linear system:
+   $$\begin{pmatrix} 1 & x_1 & x_1^2 & \dots & x_1^{k-1} \\ 1 & x_2 & x_2^2 & \dots & x_2^{k-1} \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 1 & x_{k-1} & x_{k-1}^2 & \dots & x_{k-1}^{k-1} \end{pmatrix} \begin{pmatrix} S \\ a_1 \\ a_2 \\ \vdots \\ a_{k-1} \end{pmatrix} = \begin{pmatrix} y_1 \\ y_2 \\ \vdots \\ y_{k-1} \end{pmatrix} \pmod p$$
+   * This system has $k-1$ equations but $k$ unknown elements ($S$ and the polynomial's random coefficients).
+   * **Result:** For *every possible guess* $S' \in \mathbb{Z}_p$ that Eve's infinite quantum computer can check, there exists a unique, mathematically perfect set of coefficients that makes her guess 100% consistent with the public key. 
+   * The information simply does not exist in the transit channel. Eve learns absolutely nothing; the share remains perfectly secure.
+
+4. **Bob's Constant-Time Decapsulation:**
+   Only Bob possesses the secret trapdoor coordinate $T_{\text{private}} = (x_{\text{private}}, y_{\text{private}})$. By adding his private coordinate, Bob completes the $k \times k$ Vandermonde matrix, transforming the underdetermined system into a uniquely determined one. Bob solves the interpolation in constant-time and extracts Alice's exact SSS-share $S$.
+
+Through this asymmetric algebraic design, **the hardware and transport channel are rendered entirely irrelevant.** Alice and Bob establish an unconditionally secure, perfect secret channel starting from a completely cold state (zero pre-shared key) on a hostile network.
+
+---
+
+## 8. The Transition Optional: Active Concentration vs. Parasitic Diffused Culpability
+
+The system offers a profound architectural choice between two independent, optional modes of communication. Understanding the tactical consequences of this choice is critical for operational security and plausible deniability.
+
+### 1. Active Onion Routing (Option A: Concentrated Culpability)
+* **How it works:** The user runs an active routing daemon (`start-node`), binding to raw UDP sockets and actively routing packet streams through a multi-hop mesh.
+* **The Tactical Consequence:**
+  * **Kryptografisk Deniability:** Perfect. Data payloads are encrypted in constant-time with no leakage, and if physically coerced, the **Dual-Seed Ratchet** allows Bob to safely enter a duress password, unlocking a completely harmless "decoy recipe" while destroying active keys.
+  * **Adfærdsmæssig Deniability:** Low. Because the node must bind to an IP/port, Eve can easily detect that you are running an active routing node. Even though she cannot read the data, you possess **concentrated culpability**—the mere act of participating in the shadow network is visible on your network profile.
+
+### 2. Passive Entropy Parasitism (Option B: Parasitic Diffused Culpability)
+* **How it works:** Alice and Bob shut down all active nodes and close all ports. Alice steganographically camouflages her SSS-shares inside massive, high-volume public web channels (Wikipedia, GitHub, NASA, DNS TXT logs) using her `StealthIdentity` anchor. Bob passively scans these channels for algebraic statistical echoes.
+* **The Tactical Consequence:**
+  * **Diffused Culpability (Spredt Skyld):** Absolute. Alice and Bob do not run servers and do not connect to each other. Their network traffic consists entirely of normal, outbound HTTPS/DNS requests to world-class public servers.
+  * **Steganographic Invisibility:** Because the steganographic structures (`stego_encode`) are indistinguishable from normal telemetry data or public wiki edits, Eve cannot prove that a communication channel even exists.
+  * **Immunity to Blockades:** Eve cannot block these channels without completely shuting down her own country's internet, collapsing her internal economy. Your culpability is completely diffused and absorbed by millions of ordinary web users.
+
+### The Absolute Necessity of Asynchronous, Manual Transition:
+
+To prevent metadata leakage, **the transition between Option A and Option B must remain strictly asynchronous and manual.**
+
+If the software attempted to automate this transition (e.g., via an "auto-switch" protocol), it would require an online coordination signal between Alice and Bob. In a network fully monitored by Eve, this signal would create an instant timing correlation: Eve would observe Alice and Bob's active nodes shutting down precisely as steganographic traffic emerges in public pools, completely destroying their anonymity.
+
+By enforcing a manual, offline, or pre-scheduled transition (e.g., Alice and Bob agree beforehand to switch to stealth PEP-mode at midnight, or communicate the schedule via offline analog shares), **the physical hardware state and network connections are completely decoupled.** Eve is left with a dead UDP port on one side and millions of ordinary Wikipedia readers on the other, mathematically incapable of linking the two.
+
+

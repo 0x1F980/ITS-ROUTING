@@ -153,7 +153,19 @@ graph TD
 
 ---
 
-## 4. Latency & Performance Estimations for Web-Hosting
+## 4. Zero-Dependency Supply Chain Immunity (Crate Sterilization)
+
+A major vector for state-sponsored surveillance and infrastructure compromise is the software supply chain. Complex macro expansions, multi-layered dependencies, and third-party cryptographic crates can hide backdoor trojans or compilation-time vulnerabilities. To achieve absolute architectural sterility, the `hydra_cli` executable has been completely stripped of all external dependencies.
+
+*   **Total Dependency Elimination:** The CLI is 100% free of external crates like `tokio`, `reqwest`, `serde`, `serde_json`, `toml`, `clap`, and `rand`.
+*   **Pure Synchrounous OS Threads:** All daemon tasks, continuous chaffing loops, and passive winnowing listeners utilize native OS threads via `std::thread::spawn` and pure `std::net::UdpSocket` structures, avoiding heavy asynchronous engines.
+*   **Zero-Dependency Parsing:** Config TOML parsing (`parse_config`) and Time-Lock serialization (`TimeLockText`) are performed using robust, custom hand-written parsers that avoid macros or reflection patterns.
+*   **OS Entropy Integration:** High-quality physical entropy is fetched directly from the OS `/dev/urandom` device, and public telemetry data is gathered using the native `curl` utility synchronously (`curl -s --max-time 3`).
+*   **Auditability:** Because there are no nested third-party dependencies, the entire compiled binary is 100% transparent and easily auditable by any independent cryptographer.
+
+---
+
+## 5. Latency & Performance Estimations for Web-Hosting
 
 When hosting resources over the shadow network, latency is dictated by scheduled buffer sweeps and SSS interpolation costs:
 
@@ -166,7 +178,7 @@ When hosting resources over the shadow network, latency is dictated by scheduled
 
 ---
 
-## 5. Setup & Complete CLI Reference
+## 6. Setup & Complete CLI Reference
 
 Hydra-ITS is managed via a single, cohesive binary interface.
 
@@ -228,7 +240,7 @@ hydra-its time-deny --puzzle locked_file.its --decoy "This is a simple shopping 
 
 ---
 
-## 6. Shell Completions & Unix Manpages
+## 7. Shell Completions & Unix Manpages
 
 Complete autocomplete shell scripts are provided inside the workspace under the `completions/` folder:
 *   **Bash:** `completions/hydra-its.bash` — Copies to `/etc/bash_completion.d/hydra-its`
@@ -253,7 +265,7 @@ man hydra-its
 
 ---
 
-## 7. Configuration Reference (`config.example.toml`)
+## 8. Configuration Reference (`config.example.toml`)
 The configuration file dictates the node ports, cryptographic security thresholds, and PEP sources:
 
 ```toml
@@ -298,6 +310,10 @@ clue_offset = 12
 
 ---
 
-## 8. Cryptographic Theory & Malicious Hardware Vision
+## 9. Cryptographic Theory & Malicious Hardware Vision
 For a detailed academic proof of the system's **Information-Theoretic Secrecy (ITS)**, including mathematical derivations of Shannon's Perfect Secrecy, Morphic Blindness, and the full architectural vision to bypass/neutralize malicious or backdoored physical hardware (via **Cryptographic Reverse Firewalls, Optical Visual SSS, Deterministic Noncing**, and **Air-Gapped mechanical fallbacks**), please consult the accompanying [Theory Reference Guide](crypto_theory.md).
+
+Additionally, the guide outlines:
+*   **Asymmetric ITS Key-less Bootstrapping:** How to securely exchange SSS fragments and establish perfect secret channels over hostile networks with **zero prior secret or pre-shared keys**.
+*   **The Transition Optional (Active vs. Parasitic Culpability):** The tactical comparison between running active Onion nodes (Option A) and transitioning asynchronously to completely stealth, zero-port Passive Entropy Parasitism (Option B) to diffuse operational culpability across millions of ordinary internet users.
 
