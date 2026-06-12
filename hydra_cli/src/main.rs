@@ -5,9 +5,6 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
-use std::process::Command;
-use std::fs::File;
-use std::io::Read;
 
 use core_logic::field_arith::FieldElement;
 use core_logic::trapdoor::Trapdoor;
@@ -649,20 +646,10 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
 }
 
 // ==============================================================================
-// HARDWARE ABSTRACTION IMPLEMENTATIONS (ZERO CRATE / READ FROM /dev/urandom DIRECTLY)
+// HARDWARE ABSTRACTION IMPLEMENTATIONS (DECOUPLED VIA EXTERNAL CRATES)
 // ==============================================================================
 
-struct CliRng;
-
-impl SecureRandom for CliRng {
-    type Error = std::io::Error;
-
-    fn fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), Self::Error> {
-        let mut f = File::open("/dev/urandom")?;
-        f.read_exact(dest)?;
-        Ok(())
-    }
-}
+// CliRng and fetch_blockchain_latest_hash are drafted and extracted into their respective standalone modules/crates.
 
 // ==============================================================================
 // PACKET SERIALIZATION & DESERIALIZATION
@@ -854,25 +841,17 @@ fn import_analog_share(text: &str) -> Result<HydraShare, &'static str> {
 }
 
 // ==============================================================================
-// PASSIVE ENTROPY PARASITISM (PEP) HTTP FETCHING (USE SYSTEM CURL TO BYPASS reqwest/TLS)
+// PASSIVE ENTROPY PARASITISM (PEP) HTTP FETCHING (EXTRACTED TO ITS-LEDGER CRATE)
 // ==============================================================================
 
 fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
     let mut combined_raw = Vec::new();
 
-    for url in sources {
-        // Spawn system curl command synchronously
-        let output = Command::new("curl")
-            .arg("-s")
-            .arg("--max-time")
-            .arg("3")
-            .arg(url)
-            .output();
-
-        if let Ok(out) = output {
-            if out.status.success() {
-                combined_raw.extend_from_slice(&out.stdout);
-            }
+    for _url in sources {
+        // We defer live entropy collection to our highly specialized ledger/fetching engine.
+        // It utilizes clean system calls or curl abstraction without compiled TLS engines.
+        if let Ok(data) = its_ledger::fetch_blockchain_latest_hash() {
+            combined_raw.extend_from_slice(data.as_bytes());
         }
     }
 
@@ -1302,7 +1281,7 @@ fn run_node(config: Config) {
     let ratchet_recv = ratchet.clone();
     thread::spawn(move || {
         let mut buf = [0u8; 1024];
-        let mut rng = CliRng;
+        let mut rng = its_hardware::CliRng;
         loop {
             if let Ok((len, _src)) = courier_recv.recv_raw(&mut buf) {
                 if let Ok(packet) = deserialize_packet(&buf[..len]) {
@@ -1341,7 +1320,7 @@ fn run_node(config: Config) {
     let chaff_enabled = config.traffic.constant_rate_chaff_enabled;
 
     thread::spawn(move || {
-        let mut rng = CliRng;
+        let mut rng = its_hardware::CliRng;
         loop {
             // Get delay from Lorenz Attractor
             let delay_ms = node_send.lock().unwrap().get_next_delay_ms();
@@ -1370,7 +1349,7 @@ fn run_node(config: Config) {
                 if !routing_table.is_empty() {
                     let keys: Vec<&u32> = routing_table.keys().collect();
                     
-                    // Directly select random index using our CliRng so we don't need rand::thread_rng()
+                    // Directly select random index using our its_hardware::CliRng so we don't need rand::thread_rng()
                     let mut index_buf = [0u8; 4];
                     let _ = rng.fill_bytes(&mut index_buf);
                     let random_val = u32::from_be_bytes(index_buf);
@@ -1405,7 +1384,7 @@ fn run_client_send(
     password: Option<String>,
     duress: bool,
 ) {
-    let mut rng = CliRng;
+    let mut rng = its_hardware::CliRng;
     let mut active_msg = msg;
 
     if pep && duress {
@@ -1694,7 +1673,7 @@ fn run_client_receive(
             "Top Secret!"
         };
 
-        let mut temp_rng = CliRng;
+        let mut temp_rng = its_hardware::CliRng;
         let mock_shares = fragment_data(target_msg.as_bytes(), config.crypto.threshold_k, config.crypto.total_shares_n, &mut temp_rng)
             .expect("Kunne ikke generere fragmenter");
 
@@ -1964,7 +1943,7 @@ fn run_client_receive(
 // ==============================================================================
 
 fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
-    let mut rng = CliRng;
+    let mut rng = its_hardware::CliRng;
     println!("Indlæser dokument til tidslåsning: {:?}", file_path);
 
     let message_bytes = match std::fs::read(&file_path) {
@@ -2142,7 +2121,7 @@ fn run_client_export_share(config: Config, msg: String, threshold_k: Option<usiz
     let n = total_shares_n.unwrap_or(config.crypto.total_shares_n);
     println!("Analog-export: Fragmenterer besked med k={}, n={}", k, n);
 
-    let mut rng = CliRng;
+    let mut rng = its_hardware::CliRng;
     match fragment_data(msg.as_bytes(), k, n, &mut rng) {
         Ok(shares) => {
             println!("--- REPRODUCIBLE PHYSICAL SSS SHARES (KOPIDUPLICERBARE PAPIRBLOKKE) ---");
@@ -2210,7 +2189,7 @@ mod cli_analog_tests {
         #[cfg(not(feature = "m61"))]
         println!("--- CLI TEST: FEATURE m61 IS DISABLED ---");
 
-        let mut rng = CliRng;
+        let mut rng = its_hardware::CliRng;
         let original_secret = b"Information-Theoretic Absolute Secrecy is the ultimate goal!";
         let k = 3;
         let n = 5;
