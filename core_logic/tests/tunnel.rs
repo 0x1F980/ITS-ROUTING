@@ -26,14 +26,33 @@ impl SimpleRng {
         x
     }
 
+    #[allow(dead_code)]
+    fn next_u64(&mut self) -> u64 {
+        let low = self.next_u32() as u64;
+        let high = self.next_u32() as u64;
+        (high << 32) | low
+    }
+
     fn next_field_element(&mut self) -> FieldElement {
-        // Modulo 2147483647 reduktion for at få et uniformt felt-element
-        FieldElement::new(self.next_u32() % 2147483647)
+        #[cfg(not(feature = "m61"))]
+        {
+            FieldElement::new(self.next_u32() % 2147483647)
+        }
+        #[cfg(feature = "m61")]
+        {
+            FieldElement::from_u64(self.next_u64() % 2305843009213693951)
+        }
     }
 
     fn next_non_zero_field_element(&mut self) -> FieldElement {
-        // Genererer et element i Z_2147483647 \ {0}
-        FieldElement::new((self.next_u32() % 2147483646) + 1)
+        #[cfg(not(feature = "m61"))]
+        {
+            FieldElement::new((self.next_u32() % 2147483646) + 1)
+        }
+        #[cfg(feature = "m61")]
+        {
+            FieldElement::from_u64((self.next_u64() % 2305843009213693950) + 1)
+        }
     }
 }
 
@@ -69,7 +88,7 @@ fn test_pure_geometric_tunnel_1000_steps() {
     let mut rng = SimpleRng::new(0x1337_C0DE);
 
     // Buffer til statistisk ensartethedstest (Chi-i-anden)
-    let mut ciphertexts = [0u32; 1000];
+    let mut ciphertexts = [0 as core_logic::field_arith::FieldStorage; 1000];
 
     // Vi simulerer 1.000 kontinuerlige pakker over den rene geometriske tunnel
     for i in 1..=1000 {
@@ -197,7 +216,7 @@ fn test_pure_geometric_tunnel_1000_steps() {
     // Vi grupperer dem i 10 statistiske bøtter.
     let mut counts = [0u32; 10];
     for &c in ciphertexts.iter() {
-        let bin = ((c as u64) * 10 / 2147483647u64).min(9) as usize;
+        let bin = (((c as u128) * 10) / (core_logic::field_arith::MODULUS as u128)).min(9) as usize;
         counts[bin] += 1;
     }
 

@@ -56,7 +56,7 @@ impl<const K: usize> HydraNode<K> {
         header_mac_key: FieldElement,
         header_nonce: FieldElement,
     ) -> Self {
-        let seed = node_index.value() ^ header_mac_key.value() ^ 0x13370000;
+        let seed = (node_index.value() ^ header_mac_key.value() ^ 0x13370000) as u32;
         HydraNode {
             node_index,
             trapdoor,

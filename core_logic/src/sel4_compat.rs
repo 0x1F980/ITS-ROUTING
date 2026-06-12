@@ -47,17 +47,33 @@ pub struct Sel4SharedPage {
     ///
     /// Layout:
     /// - Bytes 0..32: 8 x 32-bit FieldElements (masked_point, forward_point, backward_point, tag, ciphertext)
+    #[cfg(not(feature = "m61"))]
     pub data: [u8; 32],
+    #[cfg(feature = "m61")]
+    pub data: [u8; 64],
     /// Padding to align the structure to a 4KB page boundary.
+    #[cfg(not(feature = "m61"))]
     pub padding: [u8; 4064],
+    #[cfg(feature = "m61")]
+    pub padding: [u8; 4032],
 }
 
 impl Sel4SharedPage {
     /// Creates a new, zeroed `Sel4SharedPage`.
     pub const fn new() -> Self {
-        Sel4SharedPage {
-            data: [0u8; 32],
-            padding: [0u8; 4064],
+        #[cfg(not(feature = "m61"))]
+        {
+            Sel4SharedPage {
+                data: [0u8; 32],
+                padding: [0u8; 4064],
+            }
+        }
+        #[cfg(feature = "m61")]
+        {
+            Sel4SharedPage {
+                data: [0u8; 64],
+                padding: [0u8; 4032],
+            }
         }
     }
 
@@ -73,41 +89,83 @@ impl Sel4SharedPage {
             packet.tag.value(),
             packet.ciphertext.value(),
         ];
-        for i in 0..8 {
-            let bytes = values[i].to_be_bytes();
-            self.data[i * 4] = bytes[0];
-            self.data[i * 4 + 1] = bytes[1];
-            self.data[i * 4 + 2] = bytes[2];
-            self.data[i * 4 + 3] = bytes[3];
+        #[cfg(not(feature = "m61"))]
+        {
+            for i in 0..8 {
+                let bytes = values[i].to_be_bytes();
+                self.data[i * 4] = bytes[0];
+                self.data[i * 4 + 1] = bytes[1];
+                self.data[i * 4 + 2] = bytes[2];
+                self.data[i * 4 + 3] = bytes[3];
+            }
+        }
+        #[cfg(feature = "m61")]
+        {
+            for i in 0..8 {
+                let bytes = values[i].to_be_bytes();
+                for b_idx in 0..8 {
+                    self.data[i * 8 + b_idx] = bytes[b_idx];
+                }
+            }
         }
     }
 
     /// Deserializes a `ScpstPacket` from this page-aligned buffer.
     pub fn deserialize_packet(&self) -> ScpstPacket {
-        let mut values = [0u32; 8];
-        for i in 0..8 {
-            values[i] = u32::from_be_bytes([
-                self.data[i * 4],
-                self.data[i * 4 + 1],
-                self.data[i * 4 + 2],
-                self.data[i * 4 + 3],
-            ]);
+        #[cfg(not(feature = "m61"))]
+        {
+            let mut values = [0u32; 8];
+            for i in 0..8 {
+                values[i] = u32::from_be_bytes([
+                    self.data[i * 4],
+                    self.data[i * 4 + 1],
+                    self.data[i * 4 + 2],
+                    self.data[i * 4 + 3],
+                ]);
+            }
+            ScpstPacket {
+                masked_point: (
+                    FieldElement::new(values[0]),
+                    FieldElement::new(values[1]),
+                ),
+                forward_point: (
+                    FieldElement::new(values[2]),
+                    FieldElement::new(values[3]),
+                ),
+                backward_point: (
+                    FieldElement::new(values[4]),
+                    FieldElement::new(values[5]),
+                ),
+                tag: FieldElement::new(values[6]),
+                ciphertext: FieldElement::new(values[7]),
+            }
         }
-        ScpstPacket {
-            masked_point: (
-                FieldElement::new(values[0]),
-                FieldElement::new(values[1]),
-            ),
-            forward_point: (
-                FieldElement::new(values[2]),
-                FieldElement::new(values[3]),
-            ),
-            backward_point: (
-                FieldElement::new(values[4]),
-                FieldElement::new(values[5]),
-            ),
-            tag: FieldElement::new(values[6]),
-            ciphertext: FieldElement::new(values[7]),
+        #[cfg(feature = "m61")]
+        {
+            let mut values = [0u64; 8];
+            for i in 0..8 {
+                let mut buf = [0u8; 8];
+                for b_idx in 0..8 {
+                    buf[b_idx] = self.data[i * 8 + b_idx];
+                }
+                values[i] = u64::from_be_bytes(buf);
+            }
+            ScpstPacket {
+                masked_point: (
+                    FieldElement::from_u64(values[0]),
+                    FieldElement::from_u64(values[1]),
+                ),
+                forward_point: (
+                    FieldElement::from_u64(values[2]),
+                    FieldElement::from_u64(values[3]),
+                ),
+                backward_point: (
+                    FieldElement::from_u64(values[4]),
+                    FieldElement::from_u64(values[5]),
+                ),
+                tag: FieldElement::from_u64(values[6]),
+                ciphertext: FieldElement::from_u64(values[7]),
+            }
         }
     }
 }
@@ -276,7 +334,7 @@ pub unsafe extern "C" fn scpst_bob_receive(
 
     match res {
         Ok(msg) => {
-            *decrypted_message_out = msg.value();
+            *decrypted_message_out = msg.value() as u32;
             0
         }
         Err(TunnelError::InvalidPacket) => -2,
