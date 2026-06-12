@@ -59,3 +59,33 @@ If the client's configuration or local key registry drifts out of synchronizatio
     [aeh]
     entropy_sources = [...]
     ```
+
+---
+
+## 4. Time-Lock CLI Recovery (`time-lock`, `time-unlock`, `time-deny`)
+
+Offline time-lock operations use the external crate **`ITS-self_enclosed_timelock`**. See upstream [ITS-self_enclosed_timelock_troubleshooting.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_troubleshooting.md) for crate-level errors.
+
+### Symptom: Generation fails immediately
+```
+Fejl: Ugyldige parametre (tom fil eller epochs=0).
+```
+**Recovery:** Use a non-empty `--file` and `--epochs` ≥ 1.
+
+### Symptom: Invalid puzzle file
+```
+Fejl: Ugyldigt tidslås-filformat
+```
+**Recovery:** Verify `.its` text format (see [ITS-net_manual.md](ITS-net_manual.md) commands 7–9). Each epoch needs `transitions_1_block_N` and `transitions_2_block_N` lines.
+
+### Symptom: Unlock fails after long CPU run
+```
+Fejl: Kunne ikke dekryptere tidslåsen (muligvis korrupt data).
+```
+**Recovery:** Do not hand-edit puzzle files. Regenerate with `time-lock`. Confirm `t` matches transition block count.
+
+### Symptom: Decoy length warning on `time-deny`
+**Recovery:** Pass `--decoy` with the same byte length as the original plaintext for predictable padding.
+
+### Symptom: `cargo build` cannot fetch git dependencies
+**Recovery:** Ensure [`.cargo/config.toml`](.cargo/config.toml) contains `git-fetch-with-cli = true` and SSH access to GitHub deploy keys.

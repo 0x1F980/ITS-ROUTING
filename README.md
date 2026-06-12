@@ -40,7 +40,7 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
 
 ## 2. High-Assurance Documentation Portal
 
-To satisfy strict academic peer-reviews and network-level security audits, the formal documentation suite of this repository is structured into five dedicated high-assurance documents in this directory:
+To satisfy strict academic peer-reviews and network-level security audits, the formal documentation suite of this repository is structured into six dedicated high-assurance documents in this directory:
 
 1.  **[ITS-net_vision.md](ITS-net_vision.md) (Network-Level Threat Model & Transition Strategy)**
     *   Defines the network threat landscape: global traffic analysis, passive router correlation, active packet injection, and the tactical choice between active onion routing (Option A) and passive entropy harvesting (Option B).
@@ -51,7 +51,11 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 3.  **[ITS-net_manual.md](ITS-net_manual.md) (Command-Line Reference, Configurations & Operations Guide)**
     *   Complete CLI guide for `its-net` daemon operations, time-lock puzzles, steganographic sending, and configuration file syntax.
 4.  **[ITS-net_troubleshooting.md](ITS-net_troubleshooting.md) (Anomaly Detection, Anonymity Drifts & Recovery Procedures)**
-    *   Details active network anomaly detection algorithms, out-of-order counter synchronization, UDP packet drops, and automatic node rerouting.
+    *   Details active network anomaly detection algorithms, out-of-order counter synchronization, UDP packet drops, automatic node rerouting, and time-lock CLI recovery.
+5.  **[ITS-net_usecase.md](ITS-net_usecase.md) (Transport Use-Cases & Integration Guide)**
+    *   Tactical deployment scenarios including air-gapped time-lock custody via `ITS-self_enclosed_timelock`.
+6.  **[ITS-net_HEADS_UP.md](ITS-net_HEADS_UP.md) (Tactical Threat Profile & Worst-Case Survival Guide)**
+    *   Physical-layer constraints, duress protocols, and offline time-lock workflow.
 
 ---
 

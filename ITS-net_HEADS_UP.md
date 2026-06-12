@@ -49,6 +49,15 @@ To survive physical coercion, the system utilizes a Dual-Seed Duress Ratchet. If
 ### 6. Heartbeat Self-Wipe:
 The physical terminal requires a continuous, scheduled heartbeat signal from the operator. If the operator is seized, the absence of the heartbeat immediately triggers an automated memory sanitization routine, writing zeros to all sensitive registers using volatile writes and sequentially consistent compiler fences (`SeqCst`).
 
+### 7. Offline Time-Lock Custody (`ITS-self_enclosed_timelock`):
+For documents that must remain unreadable until sequential CPU work completes:
+1. On an air-gapped host: `its-net time-lock --file secret.pdf --epochs N --out secret.its`
+2. Securely erase the plaintext original.
+3. After the delay: `its-net time-unlock --puzzle secret.its --out secret.pdf`
+4. Under coercion: `its-net time-deny --puzzle secret.its --decoy "Cover story" --out decoy.its` — hand Eve the decoy puzzle file.
+
+CPU thermal and TEMPEST guidance for long squaring runs: [ITS-self_enclosed_timelock_HEADS_UP.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_HEADS_UP.md).
+
 ---
 
 ## Sektion D: Worst-Case Scenario: World War III & Absolute Censorship

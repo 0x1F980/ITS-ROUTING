@@ -16,6 +16,7 @@ use core_logic::stealth_identity::StealthIdentity;
 use core_logic::ratchet::StateRatchet;
 use core_logic::SecureRandom;
 use its_self_enclosed_timelock::field_arith::FieldElement as TlFieldElement;
+use its_self_enclosed_timelock::field_arith::MODULUS as TL_MODULUS;
 use its_self_enclosed_timelock::{GenerateError, SssTimeLock};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -1956,12 +1957,12 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     }
     let y = cur as u64;
 
-    // S_T = 2 * s_{1, T} - s_{2, T} mod 2147483647
+    // S_T = 2 * s_{1, T} - s_{2, T} mod TL_MODULUS — builds alternative puzzle file (not SssTimeLock::deny plaintext)
     // Since S_T = encrypted_payload - decoy
     // We can run the decryption backwards to find alternative s1_T, and then back-transition to find s1_0
     let mut current_share_2 = Vec::with_capacity(puzzle.initial_share_1.len());
     for idx in 0..puzzle.initial_share_1.len() {
-        let s2_0_raw = ((y as u128 + idx as u128) % 2147483647) as u32;
+        let s2_0_raw = ((y as u128 + idx as u128) % (TL_MODULUS as u128)) as u32;
         current_share_2.push(TlFieldElement::new(s2_0_raw));
     }
     for j in 0..puzzle.t {
