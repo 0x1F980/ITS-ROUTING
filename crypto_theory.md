@@ -113,7 +113,7 @@ To achieve complete **Software Sterility**, the client binary `hydra_cli` has be
     Third-party parsing and reflection engines (such as `serde` and `serde_json`) are notoriously difficult to audit due to heavy macro-expansion codegen. We completely replace these with lightweight, hand-written, macro-free, and reflection-free parsers for configuration files (`parse_config`) and time-lock text formatting (`TimeLockText`), using primitive line splits and string trims.
 
 4.  **100% Auditable Codebase:**
-    The entire `hydra_cli` build is completely sterile—retaining only `core_logic` (for ITS arithmetic), `hal_abstraction` (for hardware abstraction), and `zeroize` (pinned and verified for memory protection). With no external transitive dependencies, any cryptographer can fully audit the compiled binary in less than an hour, achieving the highest possible standard of software auditability and security.
+    The entire `hydra_cli` build is completely sterile—retaining only `core_logic` (imported as a secure standalone Git crate for ITS arithmetic) and `zeroize` (pinned and verified for memory protection). With no external transitive dependencies, any cryptographer can fully audit the compiled binary in less than an hour, achieving the highest possible standard of software auditability and security.
 
 ---
 
