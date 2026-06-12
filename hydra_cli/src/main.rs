@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
 
-pub mod anomality;
+pub mod anomaly_detection;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -10,8 +10,8 @@ use std::time::Duration;
 
 use core_logic::field_arith::FieldElement;
 use core_logic::trapdoor::Trapdoor;
-use core_logic::routing::{create_onion_packet, HydraNode, HydraOnionPacket, PAYLOAD_SIZE};
-use core_logic::hydra_sss::{fragment_data, reconstruct_data, HydraShare};
+use core_logic::routing::{create_onion_packet, MorphicMixingNode, MorphicOnionPacket, PAYLOAD_SIZE};
+use core_logic::hydra_sss::{fragment_data, reconstruct_data, SssPackedShare};
 use core_logic::stealth_identity::StealthIdentity;
 use core_logic::ratchet::StateRatchet;
 use core_logic::time_lock::SssTimeLock;
@@ -81,7 +81,7 @@ struct Config {
     crypto: CryptoConfig,
     traffic: TrafficConfig,
     routing_table: HashMap<u32, String>,
-    pep: PepConfig,
+    aeh: AehConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -109,7 +109,7 @@ struct TrafficConfig {
 }
 
 #[derive(Debug, Clone, Default)]
-struct PepConfig {
+struct AehConfig {
     entropy_sources: Vec<String>,
     clue_offset: usize,
 }
@@ -268,14 +268,14 @@ impl TimeLockText {
 // ==============================================================================
 
 #[derive(Debug, Clone)]
-struct PepBlock {
+struct AehBlock {
     share_id: u32,
     x_points: Vec<u32>,
     tags: Vec<u32>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum PepChannel {
+enum AehChannel {
     Wikipedia,
     GitHubGists,
     DnsTxt,
@@ -285,23 +285,23 @@ enum PepChannel {
     SneakernetFile,
 }
 
-impl PepChannel {
+impl AehChannel {
     fn name(&self) -> &'static str {
         match self {
-            PepChannel::Wikipedia => "Wikipedia API (Simulated)",
-            PepChannel::GitHubGists => "GitHub Gists API (Simulated)",
-            PepChannel::DnsTxt => "DNS TXT Records (Simulated)",
-            PepChannel::Reddit => "Reddit Comments API (Simulated)",
-            PepChannel::NasaTelemetry => "NASA Seismology API (Simulated)",
-            PepChannel::DomesticNews => "State-Approved Domestic News Board (Simulated ALT)",
-            PepChannel::SneakernetFile => "Sneakernet Local File / QR (Simulated ALT)",
+            AehChannel::Wikipedia => "Wikipedia API (Simulated)",
+            AehChannel::GitHubGists => "GitHub Gists API (Simulated)",
+            AehChannel::DnsTxt => "DNS TXT Records (Simulated)",
+            AehChannel::Reddit => "Reddit Comments API (Simulated)",
+            AehChannel::NasaTelemetry => "NASA Seismology API (Simulated)",
+            AehChannel::DomesticNews => "State-Approved Domestic News Board (Simulated ALT)",
+            AehChannel::SneakernetFile => "Sneakernet Local File / QR (Simulated ALT)",
         }
     }
 
-    /// Encodes a PepBlock into simulated steganographic camouflage text
-    fn stego_encode(&self, block: &PepBlock) -> String {
+    /// Encodes a AehBlock into simulated steganographic camouflage text
+    fn stego_encode(&self, block: &AehBlock) -> String {
         match self {
-            PepChannel::Wikipedia => {
+            AehChannel::Wikipedia => {
                 let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
                 let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
@@ -309,7 +309,7 @@ impl PepChannel {
                     block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
-            PepChannel::GitHubGists => {
+            AehChannel::GitHubGists => {
                 let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
                 let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
@@ -317,7 +317,7 @@ impl PepChannel {
                     block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
-            PepChannel::DnsTxt => {
+            AehChannel::DnsTxt => {
                 let points_str = block.x_points.iter().map(|v| v.to_string()).collect::<Vec<_>>().join("-");
                 let tags_str = block.tags.iter().map(|v| v.to_string()).collect::<Vec<_>>().join("-");
                 format!(
@@ -325,7 +325,7 @@ impl PepChannel {
                     block.share_id, points_str, tags_str
                 )
             }
-            PepChannel::Reddit => {
+            AehChannel::Reddit => {
                 let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
                 let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
@@ -333,7 +333,7 @@ impl PepChannel {
                     block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
-            PepChannel::NasaTelemetry => {
+            AehChannel::NasaTelemetry => {
                 let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
                 let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
@@ -341,7 +341,7 @@ impl PepChannel {
                     block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
-            PepChannel::DomesticNews => {
+            AehChannel::DomesticNews => {
                 let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
                 let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
@@ -349,7 +349,7 @@ impl PepChannel {
                     block.share_id, x_str.join(","), tag_str.join(",")
                 )
             }
-            PepChannel::SneakernetFile => {
+            AehChannel::SneakernetFile => {
                 let x_str: Vec<String> = block.x_points.iter().map(|v| v.to_string()).collect();
                 let tag_str: Vec<String> = block.tags.iter().map(|v| v.to_string()).collect();
                 format!(
@@ -360,10 +360,10 @@ impl PepChannel {
         }
     }
 
-    /// Decodes a stego-encoded string back into a PepBlock
-    fn stego_decode(&self, text: &str) -> Option<PepBlock> {
+    /// Decodes a stego-encoded string back into a AehBlock
+    fn stego_decode(&self, text: &str) -> Option<AehBlock> {
         match self {
-            PepChannel::Wikipedia => {
+            AehChannel::Wikipedia => {
                 let text = text.trim();
                 let main_part = text.strip_prefix("WIKI_STEGO:enwiki;")?;
                 let mut share_id = 0;
@@ -385,9 +385,9 @@ impl PepChannel {
                         }
                     }
                 }
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
-            PepChannel::GitHubGists => {
+            AehChannel::GitHubGists => {
                 let text = text.trim();
                 let main_part = text.strip_prefix("GIST_STEGO:")?;
                 let mut share_id = 0;
@@ -409,17 +409,17 @@ impl PepChannel {
                         }
                     }
                 }
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
-            PepChannel::DnsTxt => {
+            AehChannel::DnsTxt => {
                 let share_id = text.split("its_id=").nth(1)?.split(' ').next()?.trim().parse::<u32>().ok()?;
                 let points_str = text.split("points=").nth(1)?.split(' ').next()?;
                 let x_points = points_str.split('-').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
                 let tags_str = text.split("tags=").nth(1)?.split(' ').next()?;
                 let tags = tags_str.split('-').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
-            PepChannel::Reddit => {
+            AehChannel::Reddit => {
                 let text = text.trim();
                 let main_part = text.strip_prefix("REDDIT_STEGO:")?;
                 let mut share_id = 0;
@@ -441,9 +441,9 @@ impl PepChannel {
                         }
                     }
                 }
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
-            PepChannel::NasaTelemetry => {
+            AehChannel::NasaTelemetry => {
                 let text = text.trim();
                 let mut share_id = 0;
                 let mut x_points = Vec::new();
@@ -464,23 +464,23 @@ impl PepChannel {
                         }
                     }
                 }
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
-            PepChannel::DomesticNews => {
+            AehChannel::DomesticNews => {
                 let share_id = text.split("(Event ID ").nth(1)?.split(')').next()?.trim().parse::<u32>().ok()?;
                 let points_str = text.split("points=[").nth(1)?.split(']').next()?;
                 let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
                 let tags_str = text.split("checksums=[").nth(1)?.split(']').next()?;
                 let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
-            PepChannel::SneakernetFile => {
+            AehChannel::SneakernetFile => {
                 let share_id = text.split("SHARE_ID=").nth(1)?.split(';').next()?.trim().parse::<u32>().ok()?;
                 let points_str = text.split("COORDS=[").nth(1)?.split(']').next()?;
                 let x_points = points_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
                 let tags_str = text.split("OTM_TAGS=[").nth(1)?.split(']').next()?;
                 let tags = tags_str.split(',').map(|s| s.trim().parse::<u32>()).collect::<Result<Vec<_>, _>>().ok()?;
-                Some(PepBlock { share_id, x_points, tags })
+                Some(AehBlock { share_id, x_points, tags })
             }
         }
     }
@@ -599,7 +599,7 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
         } else if current_section == "routing_table" {
             let key_num = key.parse::<u32>().map_err(|_| "Failed to parse routing key")?;
             routing_table.insert(key_num, val_no_quotes.to_string());
-        } else if current_section == "pep" {
+        } else if current_section == "aeh" {
             if key == "entropy_sources" {
                 if val_raw.starts_with('[') && val_raw.ends_with(']') {
                     let trimmed = val_raw.trim_start_matches('[').trim_end_matches(']');
@@ -640,7 +640,7 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
             payload_size_elements,
         },
         routing_table,
-        pep: PepConfig {
+        aeh: AehConfig {
             entropy_sources,
             clue_offset,
         },
@@ -657,7 +657,7 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
 // PACKET SERIALIZATION & DESERIALIZATION
 // ==============================================================================
 
-fn serialize_packet(packet: &HydraOnionPacket) -> Vec<u8> {
+fn serialize_packet(packet: &MorphicOnionPacket) -> Vec<u8> {
     let mut bytes = Vec::with_capacity(100); // 25 elements * 4 bytes = 100 bytes
     for i in 0..3 {
         bytes.extend_from_slice(&(packet.header_points[i].0.value() as u32).to_be_bytes());
@@ -672,7 +672,7 @@ fn serialize_packet(packet: &HydraOnionPacket) -> Vec<u8> {
     bytes
 }
 
-fn deserialize_packet(bytes: &[u8]) -> Result<HydraOnionPacket, &'static str> {
+fn deserialize_packet(bytes: &[u8]) -> Result<MorphicOnionPacket, &'static str> {
     if bytes.len() < 100 { // 25 elements * 4 bytes = 100 bytes
         return Err("Packet too short");
     }
@@ -698,7 +698,7 @@ fn deserialize_packet(bytes: &[u8]) -> Result<HydraOnionPacket, &'static str> {
         offset += 4;
     }
 
-    Ok(HydraOnionPacket {
+    Ok(MorphicOnionPacket {
         header_points,
         header_tags,
         payload,
@@ -717,7 +717,7 @@ use its_hardware::analog_shares::{export_analog_share, import_analog_share};
 
 
 // ==============================================================================
-// PASSIVE ENTROPY PARASITISM (PEP) HTTP FETCHING (EXTRACTED TO ITS-LEDGER CRATE)
+// AMBIENT ENTROPY HARVESTING (AEH) HTTP FETCHING (EXTRACTED TO ITS-LEDGER CRATE)
 // ==============================================================================
 
 fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
@@ -741,7 +741,7 @@ fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
 
 /// Keyed Carter-Wegman Universal Polynomial Hash (100% ITS-Secure)
 /// Maps raw public telemetry bytes directly to N distinct FieldElements.
-fn universal_pep_hash(raw_data: &[u8], key: FieldElement, n: usize) -> Vec<FieldElement> {
+fn universal_aeh_hash(raw_data: &[u8], key: FieldElement, n: usize) -> Vec<FieldElement> {
     // 1. Group raw bytes into u32 and reduce to FieldElements to form our coefficients
     let mut coeffs = Vec::new();
     let mut chunks = raw_data.chunks_exact(4);
@@ -835,7 +835,7 @@ fn main() {
             2 = "127.0.0.1:8181"
             3 = "127.0.0.1:8182"
 
-            [pep]
+            [aeh]
             entropy_sources = [
                 "https://api.nasa.gov/planetary/apod",
                 "https://blockchain.info/q/latesthash"
@@ -875,7 +875,7 @@ fn main() {
         "client-send" => {
             let mut msg = String::new();
             let mut dest = 1;
-            let mut pep = false;
+            let mut aeh = false;
             let mut continuous = false;
             let mut password = None;
             let mut duress = false;
@@ -888,8 +888,8 @@ fn main() {
                 } else if (command_args[s_idx] == "-d" || command_args[s_idx] == "--dest") && s_idx + 1 < command_args.len() {
                     dest = command_args[s_idx + 1].parse::<u32>().unwrap_or(1);
                     s_idx += 2;
-                } else if command_args[s_idx] == "--pep" {
-                    pep = true;
+                } else if command_args[s_idx] == "--aeh" {
+                    aeh = true;
                     s_idx += 1;
                 } else if command_args[s_idx] == "--continuous" {
                     continuous = true;
@@ -904,18 +904,18 @@ fn main() {
                     s_idx += 1;
                 }
             }
-            run_client_send(config, msg, dest, pep, continuous, password, duress);
+            run_client_send(config, msg, dest, aeh, continuous, password, duress);
         }
         "client-receive" => {
-            let mut pep = false;
+            let mut aeh = false;
             let mut continuous = false;
             let mut password = None;
             let mut duress = false;
 
             let mut s_idx = 1;
             while s_idx < command_args.len() {
-                if command_args[s_idx] == "--pep" {
-                    pep = true;
+                if command_args[s_idx] == "--aeh" {
+                    aeh = true;
                     s_idx += 1;
                 } else if command_args[s_idx] == "--continuous" {
                     continuous = true;
@@ -930,7 +930,7 @@ fn main() {
                     s_idx += 1;
                 }
             }
-            run_client_receive(config, pep, continuous, password, duress);
+            run_client_receive(config, aeh, continuous, password, duress);
         }
         "time-lock" => {
             let mut file = PathBuf::new();
@@ -1047,7 +1047,7 @@ fn main() {
                     Ok(content) => {
                         for line in content.lines() {
                             let trimmed = line.trim();
-                            if trimmed.starts_with("HYDRA-SHARE:") {
+                            if trimmed.starts_with("SSS-SHARE:") {
                                 shares_input.push(trimmed.to_string());
                             }
                         }
@@ -1073,22 +1073,22 @@ fn main() {
 }
 
 fn print_usage() {
-    println!("Hydra-ITS Shadow Network CLI (Sterilized Synkron Version)");
+    println!("Morphic Routing Shadow Network CLI (Sterilized Synkron Version)");
     println!("Anvendelse:");
     println!("  hydra-its [subcommand] [valg]");
     println!("\nSubcommands:");
     println!("  start-node      Starts an active onion routing daemon node");
     println!("                  -p, --port <port>       Port to bind the listener to");
     println!("                  -r, --chaff-rate <ms>   Continuous dummy chaff loop timing");
-    println!("  client-send     Sends encrypted onion packet or dispatches steganographic PEP channels");
+    println!("  client-send     Sends encrypted onion packet or dispatches steganographic AEH channels");
     println!("                  -m, --msg <text>        Document contents/message string to send");
     println!("                  -d, --dest <id>         Destination Node Field Element ID");
-    println!("                  --pep                   Use Passive Entropy Parasitism instead of Onion Tunnel");
+    println!("                  --aeh                   Use Ambient Entropy Harvesting instead of Onion Tunnel");
     println!("                  --continuous            Enable continuous background decoy chaffing schedule loop");
     println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
     println!("                  --duress                Trigger Duress Mode to send plausible decoy recipe");
-    println!("  client-receive  Monitors port for incoming SSS-shares or scans PEP channels");
-    println!("                  --pep                   Scan steganographic public PEP channels");
+    println!("  client-receive  Monitors port for incoming SSS-shares or scans AEH channels");
+    println!("                  --aeh                   Scan steganographic public AEH channels");
     println!("                  --continuous            Enable continuous background winnowing scheduler loop");
     println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
     println!("                  --duress                Trigger Duress Mode to decrypt cover recipe only");
@@ -1121,9 +1121,9 @@ fn run_node(config: Config) {
     let bind_addr = format!("{}:{}", config.node.bind_address, config.node.port);
     let socket = UdpSocket::bind(&bind_addr).expect("Kunne ikke binde UDP socket");
     let courier: Arc<dyn PacketCourier + Send + Sync> = Arc::new(UdpCourier::new(socket));
-    println!("Hydra-ITS Node {} kører på {} via abstract PacketCourier", config.node.id, bind_addr);
+    println!("Morphic Routing Node {} kører på {} via abstract PacketCourier", config.node.id, bind_addr);
 
-    // Setup HydraNode
+    // Setup MorphicMixingNode
     let public_point = (FieldElement::new(1), FieldElement::new(8));
     let trapdoor = Trapdoor::<2>::new([
         (FieldElement::new(config.crypto.trapdoor_x), FieldElement::new(config.crypto.trapdoor_y)),
@@ -1140,7 +1140,7 @@ fn run_node(config: Config) {
     // Step the ratchet to get the first set of keys
     let (_k_pool, mac_key, nonce) = ratchet.lock().unwrap().step().expect("Kunne ikke initiere ratchet");
 
-    let node = Arc::new(Mutex::new(HydraNode::new(
+    let node = Arc::new(Mutex::new(MorphicMixingNode::new(
         FieldElement::new(config.node.id),
         trapdoor,
         mac_key,
@@ -1148,7 +1148,7 @@ fn run_node(config: Config) {
     )));
 
     // Active packet queue for constant-rate transmission
-    let queue = Arc::new(Mutex::new(Vec::<(FieldElement, HydraOnionPacket)>::new()));
+    let queue = Arc::new(Mutex::new(Vec::<(FieldElement, MorphicOnionPacket)>::new()));
 
     // 1. RECEIVER TASK (OS Thread)
     let courier_recv = courier.clone();
@@ -1255,7 +1255,7 @@ fn run_client_send(
     config: Config,
     msg: String,
     dest: u32,
-    pep: bool,
+    aeh: bool,
     continuous: bool,
     password: Option<String>,
     duress: bool,
@@ -1263,7 +1263,7 @@ fn run_client_send(
     let mut rng = its_hardware::CliRng;
     let mut active_msg = msg;
 
-    if pep && duress {
+    if aeh && duress {
         println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
         println!("Initializing decoy cover-channels with plausible harmless content.");
         active_msg = "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes.".to_string();
@@ -1271,12 +1271,12 @@ fn run_client_send(
 
     let msg_bytes = active_msg.as_bytes();
 
-    if pep {
+    if aeh {
         let anchor = FieldElement::new(config.crypto.stealth_anchor);
 
         // Derive/Initialize StateRatchet
         let seed = if let Some(ref pwd) = password {
-            let salt: &[u8] = if duress { b"scpst-pep-decoy-salt" } else { b"scpst-pep-true-salt" };
+            let salt: &[u8] = if duress { b"scpst-aeh-decoy-salt" } else { b"scpst-aeh-true-salt" };
             println!("Deriverer seed fra password vha. PBKDF2-HMAC-SHA256...");
             StateRatchet::derive_seed(pwd, salt, 1000)
         } else {
@@ -1288,13 +1288,13 @@ fn run_client_send(
 
         let ratchet = StateRatchet::new(seed);
         let channels = [
-            PepChannel::Wikipedia,
-            PepChannel::GitHubGists,
-            PepChannel::DnsTxt,
-            PepChannel::Reddit,
-            PepChannel::NasaTelemetry,
-            PepChannel::DomesticNews,
-            PepChannel::SneakernetFile,
+            AehChannel::Wikipedia,
+            AehChannel::GitHubGists,
+            AehChannel::DnsTxt,
+            AehChannel::Reddit,
+            AehChannel::NasaTelemetry,
+            AehChannel::DomesticNews,
+            AehChannel::SneakernetFile,
         ];
 
         if continuous {
@@ -1306,7 +1306,7 @@ fn run_client_send(
                 thread::sleep(Duration::from_millis(config.traffic.tick_rate_ms));
                 tick += 1;
 
-                let live_entropy = fetch_live_entropy(&config.pep.entropy_sources);
+                let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
 
                 if tick == 2 {
                     // Send real message
@@ -1326,7 +1326,7 @@ fn run_client_send(
                         let mut tags = Vec::with_capacity(share.data_points.len());
 
                         // Generate ITS-secure universal polynomial entropy points
-                        let entropy_points = universal_pep_hash(&live_entropy, k_pool, share.data_points.len());
+                        let entropy_points = universal_aeh_hash(&live_entropy, k_pool, share.data_points.len());
 
                         for (idx, &s) in share.data_points.iter().enumerate() {
                             let s_whitened = stealth.shard_whiten(s);
@@ -1339,7 +1339,7 @@ fn run_client_send(
                             tags.push(tag.value() as u32);
                         }
 
-                        let block = PepBlock {
+                        let block = AehBlock {
                             share_id: share.id.value() as u32,
                             x_points,
                             tags,
@@ -1374,7 +1374,7 @@ fn run_client_send(
                             tags.push(random_val2 % 2147483647);
                         }
 
-                        let block = PepBlock {
+                        let block = AehBlock {
                             share_id: share.id.value() as u32,
                             x_points,
                             tags,
@@ -1396,13 +1396,13 @@ fn run_client_send(
             return;
         } else {
             // Non-continuous single transmission
-            let live_entropy = fetch_live_entropy(&config.pep.entropy_sources);
+            let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
             println!("Modtog {} bytes live entropi.", live_entropy.len());
             let msg_bytes = active_msg.as_bytes();
             let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
                 .expect("Kunne ikke fragmentere data");
 
-            println!("PEP-shards genereret, attesteret og steganografisk camoufleret:");
+            println!("AEH-shards genereret, attesteret og steganografisk camoufleret:");
 
             for share in shares.iter() {
                 let share_idx = share.id.value() as u64;
@@ -1417,7 +1417,7 @@ fn run_client_send(
                 let mut tags = Vec::with_capacity(share.data_points.len());
 
                 // Generate ITS-secure universal polynomial entropy points
-                let entropy_points = universal_pep_hash(&live_entropy, k_pool, share.data_points.len());
+                let entropy_points = universal_aeh_hash(&live_entropy, k_pool, share.data_points.len());
 
                 for (idx, &s) in share.data_points.iter().enumerate() {
                     let s_whitened = stealth.shard_whiten(s);
@@ -1431,7 +1431,7 @@ fn run_client_send(
                     tags.push(tag.value() as u32);
                 }
 
-                let block = PepBlock {
+                let block = AehBlock {
                     share_id: share.id.value() as u32,
                     x_points,
                     tags,
@@ -1443,7 +1443,7 @@ fn run_client_send(
                 println!("\n--- [ {} ] ---", channel.name());
                 println!("{}", stego_text);
             }
-            println!("\nPEP-transmission fuldført med fuld steganografisk sløring og Wegman-Carter OTM-attestering.");
+            println!("\nAEH-transmission fuldført med fuld steganografisk sløring og Wegman-Carter OTM-attestering.");
             return;
         }
     }
@@ -1508,24 +1508,24 @@ fn run_client_send(
 
 fn run_client_receive(
     config: Config,
-    pep: bool,
+    aeh: bool,
     continuous: bool,
     password: Option<String>,
     duress: bool,
 ) {
-    if pep {
+    if aeh {
         println!("Henter live entropi fra offentlige kilder til transposition...");
-        let live_entropy = fetch_live_entropy(&config.pep.entropy_sources);
+        let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
         println!("Modtog {} bytes live entropi.", live_entropy.len());
 
-        println!("Modtager via Passive Entropy Parasitism (PEP)...");
+        println!("Modtager via Ambient Entropy Harvesting (AEH)...");
         println!("Scanner simulerede steganografiske kanaler efter attesterede shards...");
 
         let anchor = FieldElement::new(config.crypto.stealth_anchor);
 
         // Derive/Initialize StateRatchet for Bob
         let seed = if let Some(ref pwd) = password {
-            let salt: &[u8] = if duress { b"scpst-pep-decoy-salt" } else { b"scpst-pep-true-salt" };
+            let salt: &[u8] = if duress { b"scpst-aeh-decoy-salt" } else { b"scpst-aeh-true-salt" };
             println!("Deriverer seed fra password vha. PBKDF2-HMAC-SHA256...");
             StateRatchet::derive_seed(pwd, salt, 1000)
         } else {
@@ -1554,13 +1554,13 @@ fn run_client_receive(
             .expect("Kunne ikke generere fragmenter");
 
         let channels = [
-            PepChannel::Wikipedia,
-            PepChannel::GitHubGists,
-            PepChannel::DnsTxt,
-            PepChannel::Reddit,
-            PepChannel::NasaTelemetry,
-            PepChannel::DomesticNews,
-            PepChannel::SneakernetFile,
+            AehChannel::Wikipedia,
+            AehChannel::GitHubGists,
+            AehChannel::DnsTxt,
+            AehChannel::Reddit,
+            AehChannel::NasaTelemetry,
+            AehChannel::DomesticNews,
+            AehChannel::SneakernetFile,
         ];
 
         let mut stego_inputs = Vec::new();
@@ -1575,7 +1575,7 @@ fn run_client_receive(
             let mut tags = Vec::new();
 
             // Generate ITS-secure universal polynomial entropy points
-            let entropy_points = universal_pep_hash(&live_entropy, k_pool, share.data_points.len());
+            let entropy_points = universal_aeh_hash(&live_entropy, k_pool, share.data_points.len());
 
             for (idx, &s) in share.data_points.iter().enumerate() {
                 let s_whitened = stealth.shard_whiten(s);
@@ -1587,7 +1587,7 @@ fn run_client_receive(
                 tags.push(tag.value() as u32);
             }
 
-            let block = PepBlock {
+            let block = AehBlock {
                 share_id: share.id.value() as u32,
                 x_points,
                 tags,
@@ -1614,14 +1614,14 @@ fn run_client_receive(
 
                     for &(channel, ref text) in stego_inputs.iter() {
                         // 1. Check if blocked
-                        if channel == PepChannel::GitHubGists || channel == PepChannel::NasaTelemetry {
+                        if channel == AehChannel::GitHubGists || channel == AehChannel::NasaTelemetry {
                             println!("- Channel {}: BLOCKED by Eve. Skipping.", channel.name());
                             continue;
                         }
 
                         // 2. Check if tampered
                         let mut text_to_decode = text.clone();
-                        if channel == PepChannel::Reddit {
+                        if channel == AehChannel::Reddit {
                             println!("- Channel {}: TAMPERED by Eve (modifying coordinate values).", channel.name());
                             text_to_decode = text_to_decode.replace("points=[", "points=[99999, ");
                         }
@@ -1637,7 +1637,7 @@ fn run_client_receive(
                             let mut all_points_valid = true;
 
                             // Generate ITS-secure universal polynomial entropy points for Bob
-                            let entropy_points = universal_pep_hash(&live_entropy, k_pool, block.x_points.len());
+                            let entropy_points = universal_aeh_hash(&live_entropy, k_pool, block.x_points.len());
 
                             for (p_idx, &x_val) in block.x_points.iter().enumerate() {
                                 let x = FieldElement::new(x_val);
@@ -1658,7 +1658,7 @@ fn run_client_receive(
 
                             if all_points_valid {
                                 println!("- Channel {}: VERIFIED (Wegman-Carter OTM tag valid!). Extracting share.", channel.name());
-                                received_shares.push(HydraShare {
+                                received_shares.push(SssPackedShare {
                                     id: FieldElement::new(block.share_id),
                                     data_points,
                                 });
@@ -1703,13 +1703,13 @@ fn run_client_receive(
             let mut received_shares = Vec::new();
 
             for &(channel, ref text) in stego_inputs.iter() {
-                if channel == PepChannel::GitHubGists || channel == PepChannel::NasaTelemetry {
+                if channel == AehChannel::GitHubGists || channel == AehChannel::NasaTelemetry {
                     println!("- Channel {}: BLOCKED by Eve. Skipping.", channel.name());
                     continue;
                 }
 
                 let mut text_to_decode = text.clone();
-                if channel == PepChannel::Reddit {
+                if channel == AehChannel::Reddit {
                     println!("- Channel {}: TAMPERED by Eve (modifying coordinate values).", channel.name());
                     text_to_decode = text_to_decode.replace("points=[", "points=[99999, ");
                 }
@@ -1724,7 +1724,7 @@ fn run_client_receive(
                     let mut all_points_valid = true;
 
                     // Generate ITS-secure universal polynomial entropy points for Bob
-                    let entropy_points = universal_pep_hash(&live_entropy, k_pool, block.x_points.len());
+                    let entropy_points = universal_aeh_hash(&live_entropy, k_pool, block.x_points.len());
 
                     for (p_idx, &x_val) in block.x_points.iter().enumerate() {
                         let x = FieldElement::new(x_val);
@@ -1745,7 +1745,7 @@ fn run_client_receive(
 
                     if all_points_valid {
                         println!("- Channel {}: VERIFIED (Wegman-Carter OTM tag valid!). Extracting share.", channel.name());
-                        received_shares.push(HydraShare {
+                        received_shares.push(SssPackedShare {
                             id: FieldElement::new(block.share_id),
                             data_points,
                         });
@@ -1779,7 +1779,7 @@ fn run_client_receive(
     let bind_addr = format!("{}:{}", config.node.bind_address, config.node.port);
     let socket = UdpSocket::bind(&bind_addr).expect("Kunne ikke binde UDP socket");
 
-    let mut shares = Vec::<HydraShare>::new();
+    let mut shares = Vec::<SssPackedShare>::new();
     let mut buf = [0u8; 1024];
 
     loop {
@@ -1797,7 +1797,7 @@ fn run_client_receive(
                     }
                 }
                 println!("Modtog Share ID: {}", id.value());
-                shares.push(HydraShare { id, data_points });
+                shares.push(SssPackedShare { id, data_points });
 
                 if shares.len() >= config.crypto.threshold_k {
                     println!("Tærskel nået! Rekonstruerer besked...");

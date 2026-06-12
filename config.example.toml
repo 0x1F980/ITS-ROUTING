@@ -23,7 +23,7 @@ total_shares_n = 5
 trapdoor_x = 2
 trapdoor_y = 11
 
-# Public anchor point used for Passive Entropy Parasitism (PEP)
+# Public anchor point used for Ambient Entropy Harvesting (AEH)
 stealth_anchor = 13
 stealth_whitening_factor = 7
 
@@ -38,8 +38,8 @@ tick_rate_ms = 100
 # The static payload size (must match compile-time constant PAYLOAD_SIZE)
 payload_size_elements = 16
 
-[pep]
-# Passive Entropy Parasitism sources
+[aeh]
+# Ambient Entropy Harvesting sources
 entropy_sources = [
     "https://api.nasa.gov/planetary/apod", # Public telemetry
     "https://blockchain.info/q/latesthash", # Block hash source

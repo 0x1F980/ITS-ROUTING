@@ -18,7 +18,7 @@ This repository and all associated sub-modules are released under the terms of t
 ┌──────────────────┐          ┌──────────────────┐          ┌──────────────────┐
 │ spec/mathematics │          │  spec/systems_   │          │  spec/hardware_  │
 │      .md         │          │   software.md    │          │  sidechannel.md  │
-│  ITS proofs &    │          │ Hukommelsessikker│          │ CRF, PEP, Lorenz │
+│  ITS proofs &    │          │ Hukommelsessikker│          │ CRF, AEH, Lorenz │
 │ Field algebra    │          │ hed & seL4 pages │          │  & Jitter models │
 └──────────────────┘          └──────────────────┘          └──────────────────┘
 ```
@@ -44,7 +44,7 @@ The specification suite is divided into three distinct technical domains:
 
 3.  **[spec/hardware_sidechannel.md](hardware_sidechannel.md) (Domain: Hardware, TEMPEST & Analog Interfaces)**
     *   Defines Cryptographic Reverse Firewalls (CRF) to neutralize subliminal kleptographic leakage on backdoored processors.
-    *   Specifies Passive Entropy Parasitism (PEP) immunity under hostile external source injection.
+    *   Specifies Ambient Entropy Harvesting (AEH) immunity under hostile external source injection.
     *   Models TEMPEST electromagnetic and power slurring via Lorenz chaos-based timing jitter.
     *   Details the analog hex format with Adler-32 checksums for air-gapped physical share transfers.
 

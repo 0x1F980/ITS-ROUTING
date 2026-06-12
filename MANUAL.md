@@ -10,7 +10,7 @@ The system is structured as five modular, tightly integrated cryptographic and t
 
 ```
 +------------------------------------------------------------+
-|            Passive Entropy Parasitism (PEP)                |  <- Receiver anonymity and zero sender-traceability
+|            Ambient Entropy Harvesting (AEH)                |  <- Receiver anonymity and zero sender-traceability
 +------------------------------------------------------------+
                              |
 +------------------------------------------------------------+
@@ -188,38 +188,38 @@ Starts an active onion router node on a VPS or bare-metal host:
 hydra-its start-node --config config.toml --port 8180 --chaff-rate 100
 ```
 
-### Command 2: Single-Shot PEP Transmission
+### Command 2: Single-Shot AEH Transmission
 Dispatches a single authenticated, steganographically-camouflaged message across our diverse channels:
 ```bash
-hydra-its client-send --msg "Secret Classified Message" --dest 3 --pep --config config.toml
+hydra-its client-send --msg "Secret Classified Message" --dest 3 --aeh --config config.toml
 ```
 
 ### Command 3: Continuous Decoy Chaffing Loop (Alice)
 Starts a permanent background schedule loop, uploading mock blocks and substitute real blocks securely:
 ```bash
-hydra-its client-send --msg "Secret Intelligence" --dest 3 --pep --continuous --config config.toml
+hydra-its client-send --msg "Secret Intelligence" --dest 3 --aeh --continuous --config config.toml
 ```
 
 ### Command 4: Continuous Winnowing Loop (Bob)
 Runs Bob's receiver schedule, passively monitoring channels and verifying Wegman-Carter tags:
 ```bash
-hydra-its client-receive --pep --continuous --config config.toml
+hydra-its client-receive --aeh --continuous --config config.toml
 ```
 
 ### Command 5: Duress / Password Protected Communication
 Launches sending or receiving under duress password derivation:
 ```bash
 # Alice sends a password-derived share (True Seed)
-hydra-its client-send --msg "Top Secret Payload" --dest 3 --pep --password "TruePassword123" --config config.toml
+hydra-its client-send --msg "Top Secret Payload" --dest 3 --aeh --password "TruePassword123" --config config.toml
 
 # Alice sends under physical duress (creates a decoy "recipe" payload)
-hydra-its client-send --msg "Top Secret Payload" --dest 3 --pep --password "DecoyPassword456" --duress --config config.toml
+hydra-its client-send --msg "Top Secret Payload" --dest 3 --aeh --password "DecoyPassword456" --duress --config config.toml
 
 # Bob receives using his true credentials
-hydra-its client-receive --pep --password "TruePassword123" --config config.toml
+hydra-its client-receive --aeh --password "TruePassword123" --config config.toml
 
 # Bob unlocks under coercion (reveals only the decoy recipe safely)
-hydra-its client-receive --pep --password "DecoyPassword456" --duress --config config.toml
+hydra-its client-receive --aeh --password "DecoyPassword456" --duress --config config.toml
 ```
 
 ### Command 6: Local Hybrid Time-Lock Puzzle
@@ -266,7 +266,7 @@ man hydra-its
 ---
 
 ## 8. Configuration Reference (`config.example.toml`)
-The configuration file dictates the node ports, cryptographic security thresholds, and PEP sources:
+The configuration file dictates the node ports, cryptographic security thresholds, and AEH sources:
 
 ```toml
 # ==============================================================================
@@ -289,7 +289,7 @@ total_shares_n = 5
 trapdoor_x = 2
 trapdoor_y = 11
 
-# Public anchor point used for Passive Entropy Parasitism (PEP)
+# Public anchor point used for Ambient Entropy Harvesting (AEH)
 stealth_anchor = 13
 stealth_whitening_factor = 7
 
@@ -299,8 +299,8 @@ constant_rate_chaff_enabled = true
 tick_rate_ms = 100
 payload_size_elements = 16
 
-[pep]
-# Passive Entropy Parasitism sources (simulated public telemetry and block headers)
+[aeh]
+# Ambient Entropy Harvesting sources (simulated public telemetry and block headers)
 entropy_sources = [
     "https://api.nasa.gov/planetary/apod",
     "https://blockchain.info/q/latesthash"

@@ -32,12 +32,12 @@ _hydra_its() {
                     _arguments \
                         '--msg[The secret payload string to transmit]:message:' \
                         '--dest[The destination Node ID in Z_{2^31-1}]:node_id:' \
-                        '--pep[Inject packet into external public entropy stream]'
+                        '--aeh[Inject packet into external public entropy stream]'
                     ;;
                 client-receive)
                     _arguments \
                         '--source[Source Node ID to filter]:node_id:' \
-                        '--pep[Extract message using Passive Entropy Parasitism]' \
+                        '--aeh[Extract message using Ambient Entropy Harvesting]' \
                         '--unwrap[Force decryption using local SSS trapdoor]'
                     ;;
                 verify-path)

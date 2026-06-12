@@ -10,7 +10,7 @@
 use std::vec::Vec;
 use core_logic::field_arith::FieldElement;
 use core_logic::trapdoor::lagrange_interpolate;
-use core_logic::hydra_sss::HydraShare;
+use core_logic::hydra_sss::SssPackedShare;
 use core_logic::SecureRandom;
 use subtle::Choice;
 
@@ -54,7 +54,7 @@ impl AnomalyDetector {
         let mut anomaly_detected = false;
 
         // 1. Timing Anomaly Check
-        // In Hydra-ITS, traffic must be 100% constant-rate. Any timing jitter indicates
+        // In Morphic Routing, traffic must be 100% constant-rate. Any timing jitter indicates
         // active network jamming, traffic shaping, or a DDoS attack.
         if self.last_received_tick > 0 {
             let delay = current_tick.saturating_sub(self.last_received_tick);
@@ -79,7 +79,7 @@ impl AnomalyDetector {
     }
 }
 
-/// Manages active self-healing, rerouting, and share regeneration in the Hydra-ITS network.
+/// Manages active self-healing, rerouting, and share regeneration in the Morphic Routing network.
 #[derive(Clone, Debug)]
 pub struct SelfHealingRouter {
     /// Directory of active nodes and their status monitors.
@@ -135,9 +135,9 @@ impl SelfHealingRouter {
         }
     }
 
-    /// Hydra Self-Healing Share Regeneration:
+    /// Morphic Self-Healing Share Regeneration:
     ///
-    /// If Node `failed_node_id` goes offline, the remaining healthy nodes can reconstruct
+    /// If a Node goes offline, the remaining healthy nodes can reconstruct
     /// the webpage/data and distribute a new share to a fresh backup node `new_node_id`
     /// to restore the (k, n) threshold state.
     ///
@@ -145,12 +145,12 @@ impl SelfHealingRouter {
     /// Here, we demonstrate the mathematical reconstruction and new share generation.
     pub fn regenerate_share_for_new_node<R: SecureRandom>(
         &self,
-        active_shares: &[HydraShare],
+        active_shares: &[SssPackedShare],
         _failed_node_id: FieldElement,
         new_node_id: FieldElement,
         k: usize,
         _rng: &mut R,
-    ) -> Result<HydraShare, ()> {
+    ) -> Result<SssPackedShare, ()> {
         if active_shares.len() < k {
             return Err(()); // Not enough shares to reconstruct
         }
@@ -176,7 +176,7 @@ impl SelfHealingRouter {
             data_points.push(val);
         }
 
-        Ok(HydraShare {
+        Ok(SssPackedShare {
             id: new_node_id,
             data_points,
         })
@@ -319,11 +319,11 @@ mod tests {
     }
 
     #[test]
-    fn test_hydra_share_regeneration() {
+    fn test_sss_share_regeneration() {
         let mut rng = MockRng { state: 1337 };
         let router = SelfHealingRouter::new();
 
-        let webpage_data = b"Welcome to the Hydra-ITS Darknet!";
+        let webpage_data = b"Welcome to the Morphic Routing network!";
         let k = 3;
 
         // Generate initial shares for nodes 1..=5
@@ -348,14 +348,16 @@ mod tests {
 
         assert_eq!(regenerated_share.id.value(), 6);
 
-        // Now reconstruct webpage using Node 1, Node 2, and new Node 6 (3 shares)
-        let final_shares = vec![
-            initial_shares[0].clone(), // Node 1
+        // Reconstruct from 2, 4, 6 to verify it matches
+        let mut sub_shares = vec![
             initial_shares[1].clone(), // Node 2
-            regenerated_share,         // Node 6
+            initial_shares[3].clone(), // Node 4
+            regenerated_share,         // Node 6 (regenerated)
         ];
+        // Sort shares by id to be safe
+        sub_shares.sort_by_key(|s| s.id.value());
 
-        let reconstructed_data = reconstruct_data(&final_shares, k).unwrap();
-        assert_eq!(reconstructed_data, webpage_data);
+        let reconstructed = reconstruct_data(&sub_shares, k).unwrap();
+        assert_eq!(reconstructed, webpage_data);
     }
 }

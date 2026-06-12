@@ -17,14 +17,14 @@ Systemet implementerer det overordnede OS-niveau netværkslag og binder kryptola
 1. **`0x1F464/ITS` (Kryptolag)**: Sterile, `no_std` matematiske formler og krystallografiske felter.
 2. **`0x1F464/ITS-net` (Transport/CLI - Dette Depot)**: Netværks-I/O, UDP-courier, aktiv anomali-detektion og CLI-kommandoer.
 3. **`0x1F464/ITS-hardware` (HAL)**: Fysiske TRNG-integrationer, seL4-compat, analog share-eksport og sidekanals-blinding.
-4. **`0x1F464/ITS-ledger` (Consensus/Vault)**: Sikker offline nøgle-lagring, peer-kontakter (Registry) og PEP blok-synkronisering.
+4. **`0x1F464/ITS-ledger` (Consensus/Vault)**: Sikker offline nøgle-lagring, peer-kontakter (Registry) og AEH blok-synkronisering.
 
 ---
 
 ## 2. Nøglemekanismer i ITS-net
 
 ### 2.1 Aktiv Trafikanalyse-Mitigering & Anomali Detektion
-`hydra_cli/src/anomality.rs`
+`hydra_cli/src/anomaly_detection.rs`
 - **Trafikmønster-Overvågning**: Overvåger løbende indgående og udgående pakkehastigheder, tidsmæssige intervaller og latens.
 - **Automatisk Rerouting**: Hvis der detekteres en statistisk afvigelse (anomali) i netværksadfærden (f.eks. Eve forsøger timing-korrelation), afbrydes den eksisterende tunnel øjeblikkeligt, og der rutes asymmetrisk udenom de mistænkte noder.
 
@@ -41,7 +41,7 @@ Den formelle specifikation og akademiske dokumentation til peer-review og uafhæ
 *   **[spec/README.md](spec/README.md)**: Introduktion til specifikations-rammeværket.
 *   **[spec/mathematics.md](spec/mathematics.md)**: Formelle matematiske beviser for uigennemtrængelighed og fejlgrænser.
 *   **[spec/systems_software.md](spec/systems_software.md)**: Systemsikkerhed, konstant-tid kørsel og compiler-barrierer.
-*   **[spec/hardware_sidechannel.md](spec/hardware_sidechannel.md)**: Cryptographic Reverse Firewalls (CRF), Passive Entropy Parasitism (PEP) og Lorenz-jitter modeller.
+*   **[spec/hardware_sidechannel.md](spec/hardware_sidechannel.md)**: Cryptographic Reverse Firewalls (CRF), Ambient Entropy Harvesting (AEH) og Lorenz-jitter modeller.
 
 For en komplet brugervejledning og dybdegående teoridokumentation, se rod-filerne **`MANUAL.md`** og **`crypto_theory.md`**.
 

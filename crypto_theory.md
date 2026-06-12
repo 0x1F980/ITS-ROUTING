@@ -175,6 +175,6 @@ To prevent metadata leakage, **the transition between Option A and Option B must
 
 If the software attempted to automate this transition (e.g., via an "auto-switch" protocol), it would require an online coordination signal between Alice and Bob. In a network fully monitored by Eve, this signal would create an instant timing correlation: Eve would observe Alice and Bob's active nodes shutting down precisely as steganographic traffic emerges in public pools, completely destroying their anonymity.
 
-By enforcing a manual, offline, or pre-scheduled transition (e.g., Alice and Bob agree beforehand to switch to stealth PEP-mode at midnight, or communicate the schedule via offline analog shares), **the physical hardware state and network connections are completely decoupled.** Eve is left with a dead UDP port on one side and millions of ordinary Wikipedia readers on the other, mathematically incapable of linking the two.
+By enforcing a manual, offline, or pre-scheduled transition (e.g., Alice and Bob agree beforehand to switch to stealth AEH-mode at midnight, or communicate the schedule via offline analog shares), **the physical hardware state and network connections are completely decoupled.** Eve is left with a dead UDP port on one side and millions of ordinary Wikipedia readers on the other, mathematically incapable of linking the two.
 
 

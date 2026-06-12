@@ -20,12 +20,12 @@ To neutralize this threat, our software architecture is designed to pass public 
 
 ---
 
-## 2. Passive Entropy Parasitism (PEP) Immunity
+## 2. Ambient Entropy Harvesting (AEH) Immunity
 
 If an adversary poisons the system's local TRNG (Entropy Poisoning), standard pseudo-random generators will output predictable key streams, destroying all cryptographic security.
 
-### External Entropy Parasitism:
-To defeat local TRNG poisoning, our system implements **Passive Entropy Parasitism (PEP)**. The daemon passively monitors external, high-velocity public data streams (such as live stock market tickers, weather sensors, or blockchain hash feeds).
+### Ambient Entropy Harvesting:
+To defeat local TRNG poisoning, our system implements **Ambient Entropy Harvesting (AEH)**. The daemon passively monitors external, high-velocity public data streams (such as live stock market tickers, weather sensors, or blockchain hash feeds).
 *   **Universal Chaining Blend:** This external public data is blended with our local entropy pool using our **ITS-Secure Universal Polynomial Chaining** algorithm (rather than traditional hashes like SHA256).
 *   **Mathematical Boundary:** The blending is designed such that even if Eve fully controls and poisons the external public source, she cannot bias the resulting pool unless she also possesses Alice and Bob's private trapdoor. The external source is treated as a pure, high-entropy noise source, and the mathematical boundaries guarantee that any malicious bias is immediately neutralized.
 

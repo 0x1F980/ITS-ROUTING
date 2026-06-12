@@ -17,11 +17,11 @@ _hydra_its_completions() {
             return 0
             ;;
         client-send)
-            COMPREPLY=( $(compgen -W "--msg --dest --pep" -- "$cur") )
+            COMPREPLY=( $(compgen -W "--msg --dest --aeh" -- "$cur") )
             return 0
             ;;
         client-receive)
-            COMPREPLY=( $(compgen -W "--source --pep --unwrap" -- "$cur") )
+            COMPREPLY=( $(compgen -W "--source --aeh --unwrap" -- "$cur") )
             return 0
             ;;
         verify-path)
