@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
+
+pub mod anomality;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -707,138 +709,12 @@ fn deserialize_packet(bytes: &[u8]) -> Result<HydraOnionPacket, &'static str> {
 // PHYSICAL/ANALOG SHARE STANDARDIZATION (OFFLINE SSS & CHARACTER STRINGS)
 // ==============================================================================
 
-fn adler32(data: &[u8]) -> u32 {
-    let mut a: u32 = 1;
-    let mut b: u32 = 0;
-    for &byte in data {
-        a = (a + byte as u32) % 65521;
-        b = (b + a) % 65521;
-    }
-    (b << 16) | a
-}
+// ==============================================================================
+// PHYSICAL/ANALOG SHARE STANDARDIZATION (OFFLINE SSS & CHARACTER STRINGS)
+// ==============================================================================
 
-fn export_analog_share(share: &HydraShare) -> String {
-    let mut payload = Vec::new();
-    // 1. Share ID (4 bytes)
-    payload.extend_from_slice(&(share.id.value() as u32).to_be_bytes());
-    // 2. Number of data points (2 bytes)
-    payload.extend_from_slice(&(share.data_points.len() as u16).to_be_bytes());
-    // 3. Data points (each 4 or 8 bytes depending on features)
-    #[cfg(not(feature = "m61"))]
-    {
-        for point in &share.data_points {
-            payload.extend_from_slice(&(point.value() as u32).to_be_bytes());
-        }
-    }
-    #[cfg(feature = "m61")]
-    {
-        for point in &share.data_points {
-            payload.extend_from_slice(&(point.value() as u64).to_be_bytes());
-        }
-    }
-    // 4. Compute Adler32 checksum of the payload
-    let checksum = adler32(&payload);
-    payload.extend_from_slice(&checksum.to_be_bytes());
+use its_hardware::analog_shares::{export_analog_share, import_analog_share};
 
-    // 5. Convert to upper-case hex
-    let hex_str = payload.iter().map(|b| format!("{:02X}", b)).collect::<String>();
-
-    // 6. Group into blocks of 4 separated by dashes
-    let mut formatted = String::from("HYDRA-SHARE:");
-    for (i, c) in hex_str.chars().enumerate() {
-        if i > 0 && i % 4 == 0 {
-            formatted.push('-');
-        }
-        formatted.push(c);
-    }
-    formatted
-}
-
-fn import_analog_share(text: &str) -> Result<HydraShare, &'static str> {
-    let cleaned = text.trim();
-    if !cleaned.starts_with("HYDRA-SHARE:") {
-        return Err("Ugyldigt format: Skal starte med 'HYDRA-SHARE:'");
-    }
-    let hex_part = cleaned.trim_start_matches("HYDRA-SHARE:").replace('-', "");
-    if hex_part.len() < 20 { // 4 bytes ID + 2 bytes len + 4 bytes checksum = 10 bytes = 20 hex characters minimum
-        return Err("Ugyldig længde: Delen er for kort");
-    }
-    let mut bytes = Vec::new();
-    for i in (0..hex_part.len()).step_by(2) {
-        if i + 1 >= hex_part.len() {
-            return Err("Ugyldig hex-streng (ulige antal tegn)");
-        }
-        let byte_str = &hex_part[i..i+2];
-        let byte = u8::from_str_radix(byte_str, 16).map_err(|_| "Ugyldig hex-karakter i strengen")?;
-        bytes.push(byte);
-    }
-
-    if bytes.len() < 10 {
-        return Err("Ugyldig datalængde");
-    }
-
-    // Extract checksum from the last 4 bytes
-    let checksum_offset = bytes.len() - 4;
-    let payload = &bytes[..checksum_offset];
-    let expected_checksum = u32::from_be_bytes([
-        bytes[checksum_offset],
-        bytes[checksum_offset + 1],
-        bytes[checksum_offset + 2],
-        bytes[checksum_offset + 3],
-    ]);
-
-    // Verify Adler32 checksum
-    let computed_checksum = adler32(payload);
-    if computed_checksum != expected_checksum {
-        return Err("Checksum-validering fejleder! Der er sandsynligvis en tastefejl i koden.");
-    }
-
-    // Parse payload
-    let share_id_val = u32::from_be_bytes([payload[0], payload[1], payload[2], payload[3]]);
-    let num_points = u16::from_be_bytes([payload[4], payload[5]]);
-
-    let mut data_points = Vec::with_capacity(num_points as usize);
-    let mut offset = 6;
-    for _ in 0..num_points {
-        #[cfg(not(feature = "m61"))]
-        {
-            if offset + 4 > payload.len() {
-                return Err("Data-del afkortet før tid");
-            }
-            let pt_val = u32::from_be_bytes([
-                payload[offset],
-                payload[offset + 1],
-                payload[offset + 2],
-                payload[offset + 3],
-            ]);
-            data_points.push(FieldElement::new(pt_val));
-            offset += 4;
-        }
-        #[cfg(feature = "m61")]
-        {
-            if offset + 8 > payload.len() {
-                return Err("Data-del afkortet før tid");
-            }
-            let pt_val = u64::from_be_bytes([
-                payload[offset],
-                payload[offset + 1],
-                payload[offset + 2],
-                payload[offset + 3],
-                payload[offset + 4],
-                payload[offset + 5],
-                payload[offset + 6],
-                payload[offset + 7],
-            ]);
-            data_points.push(FieldElement::from_u64(pt_val));
-            offset += 8;
-        }
-    }
-
-    Ok(HydraShare {
-        id: FieldElement::new(share_id_val),
-        data_points,
-    })
-}
 
 // ==============================================================================
 // PASSIVE ENTROPY PARASITISM (PEP) HTTP FETCHING (EXTRACTED TO ITS-LEDGER CRATE)
