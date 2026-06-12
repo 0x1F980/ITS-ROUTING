@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-core_logic = { path = "../core_logic" }
-hal_abstraction = { path = "../hal_abstraction" }
+core_logic = { git = "ssh://git@github.com/0x1F464/ITS.git", branch = "master" }
 zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
 
 [features]

@@ -16,7 +16,7 @@ use core_logic::hydra_sss::{fragment_data, reconstruct_data, HydraShare};
 use core_logic::stealth_identity::StealthIdentity;
 use core_logic::ratchet::StateRatchet;
 use core_logic::time_lock::SssTimeLock;
-use hal_abstraction::SecureRandom;
+use core_logic::SecureRandom;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// A memory-secured container that zeroizes its contents upon drop to protect RAM state.
