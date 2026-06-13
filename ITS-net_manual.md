@@ -3,6 +3,9 @@
 ## License: GNU GPLv3 Only
 ## Target: Systems Developers, Incident Responders & Field Engineers
 
+> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) — subcommand → scope table in §2.
+
+
 This document details the configuration formats, CLI commands, and deployment models managed by `ITS-net`.
 
 ---

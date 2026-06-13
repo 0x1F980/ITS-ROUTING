@@ -9,6 +9,8 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
 
 ## 1. Overview & Architecture
 
+**Read first:** **[ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md)** — maps subcommands to upstream ITS scope docs. Ecosystem master: [ITS_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS/blob/master/ITS_SECURITY_LAYERS.md).
+
 `ITS-net` (implementing the `its_net_cli` binary, formerly `hydra_cli`) is the system-level daemon and transport engine of the **Morphic Routing Network (ITS/SCPST)**. It binds the standalone cryptographic crate (`ITS`), hardware drivers (`ITS-hardware`), and distributed storage vaults (`ITS-ledger`) into an impenetrable, noise-immune communication network.
 
 ### 5-Tier Ecosystem Structure:
@@ -51,8 +53,10 @@ ITS-net is free software: you can redistribute it and/or modify it under the ter
 
 ## 2. High-Assurance Documentation Portal
 
-To satisfy strict academic peer-reviews and network-level security audits, the formal documentation suite of this repository is structured into six dedicated high-assurance documents in this directory:
+To satisfy strict academic peer-reviews and network-level security audits, the formal documentation suite of this repository is structured into dedicated high-assurance documents in this directory:
 
+0.  **[ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) (Security Layers & ITS Scope — read first)**
+    *   Subcommand → upstream crate scope map; default Γ + OTP + chaff stack; anti-AI FAQ.
 1.  **[ITS-net_vision.md](ITS-net_vision.md) (Network-Level Threat Model & Transition Strategy)**
     *   Defines the network threat landscape: global traffic analysis, passive router correlation, active packet injection, and the tactical choice between active onion routing (Option A) and passive entropy harvesting (Option B).
 2.  **[ITS-net_mathematics.md](ITS-net_mathematics.md) (Formally Proven Network & Traffic Obfuscation Proofs)**

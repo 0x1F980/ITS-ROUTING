@@ -3,6 +3,9 @@
 ## License: GNU GPLv3 Only
 ## Target: Mathematicians, Cryptographers & Traffic Analysis Auditors
 
+> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) — network proofs orchestrate upstream ITS layers.
+
+
 This document provides formal mathematical and information-theoretic proofs for the traffic obfuscation and packet-mixing mechanisms implemented in `ITS-net`.
 
 ---

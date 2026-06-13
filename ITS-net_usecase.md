@@ -3,6 +3,9 @@
 ## License: GNU GPLv3 Only
 ## Target: Network Security Engineers, Protocol Forkers & Tactical Node Operators
 
+> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md).
+
+
 ---
 
 ## 1. Real-World & Tactical Use-Cases

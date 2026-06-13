@@ -3,6 +3,9 @@
 ## License: GNU GPLv3 Only
 ## Target: Network Security Researchers, Cryptographic Auditors & Tactical Operations Teams
 
+> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md).
+
+
 This document details the network-level threat landscape and operational transitions managed by `ITS-net`.
 
 ---

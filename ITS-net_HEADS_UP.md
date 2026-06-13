@@ -3,6 +3,9 @@
 ## License: GNU GPLv3 Only
 ## Target: Network Security Researchers, Cryptographic Auditors & Tactical Operations Teams
 
+> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) — evaluate upstream crates per layer.
+
+
 ---
 
 ## Sektion A: Prerequisite for Validity (Forudsætningen)

@@ -3,6 +3,9 @@
 ## License: GNU GPLv3 Only
 ## Target: Systems Developers, Incident Responders & Field Engineers
 
+> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md).
+
+
 This document details the safeguards, validation procedures, and recovery steps for the `ITS-net` layer.
 
 ---
