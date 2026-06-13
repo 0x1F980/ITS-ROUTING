@@ -102,6 +102,7 @@ struct Config {
     traffic: TrafficConfig,
     routing_table: HashMap<u32, String>,
     aeh: AehConfig,
+    fingerprint_erasure: FingerprintErasureConfig,
 }
 
 #[derive(Debug, Clone)]
@@ -132,6 +133,25 @@ struct TrafficConfig {
 struct AehConfig {
     entropy_sources: Vec<String>,
     clue_offset: usize,
+}
+
+#[derive(Debug, Clone)]
+struct FingerprintErasureConfig {
+    default_pad: String,
+    require_otp: bool,
+    require_chaff: bool,
+    require_on_file_send: bool,
+}
+
+impl Default for FingerprintErasureConfig {
+    fn default() -> Self {
+        Self {
+            default_pad: String::new(),
+            require_otp: true,
+            require_chaff: true,
+            require_on_file_send: true,
+        }
+    }
 }
 
 // ==============================================================================
@@ -530,6 +550,11 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
     let mut entropy_sources = Vec::new();
     let mut clue_offset = 12;
 
+    let mut fe_default_pad = String::new();
+    let mut fe_require_otp = true;
+    let mut fe_require_chaff = true;
+    let mut fe_require_on_file_send = true;
+
     let mut current_section = "";
     let mut collecting_array_key: Option<String> = None;
 
@@ -641,6 +666,17 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
             } else if key == "clue_offset" {
                 clue_offset = val_raw.parse::<usize>().map_err(|_| "Failed to parse clue_offset")?;
             }
+        } else if current_section == "fingerprint_erasure" {
+            if key == "default_pad" {
+                fe_default_pad = val_raw.trim_matches('"').trim_matches('\'').to_string();
+            } else if key == "require_otp" {
+                fe_require_otp = val_raw.parse::<bool>().map_err(|_| "Failed to parse require_otp")?;
+            } else if key == "require_chaff" {
+                fe_require_chaff = val_raw.parse::<bool>().map_err(|_| "Failed to parse require_chaff")?;
+            } else if key == "require_on_file_send" {
+                fe_require_on_file_send =
+                    val_raw.parse::<bool>().map_err(|_| "Failed to parse require_on_file_send")?;
+            }
         }
     }
 
@@ -663,6 +699,12 @@ fn parse_config(content: &str) -> Result<Config, &'static str> {
         aeh: AehConfig {
             entropy_sources,
             clue_offset,
+        },
+        fingerprint_erasure: FingerprintErasureConfig {
+            default_pad: fe_default_pad,
+            require_otp: fe_require_otp,
+            require_chaff: fe_require_chaff,
+            require_on_file_send: fe_require_on_file_send,
         },
     })
 }
@@ -894,16 +936,21 @@ fn main() {
         }
         "client-send" => {
             let mut msg = String::new();
+            let mut file = PathBuf::new();
             let mut dest = 1;
             let mut aeh = false;
             let mut continuous = false;
             let mut password = None;
             let mut duress = false;
+            let mut fe = FingerprintErasureSendOptions::default();
 
             let mut s_idx = 1;
             while s_idx < command_args.len() {
                 if (command_args[s_idx] == "-m" || command_args[s_idx] == "--msg") && s_idx + 1 < command_args.len() {
                     msg = command_args[s_idx + 1].clone();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "-f" || command_args[s_idx] == "--file") && s_idx + 1 < command_args.len() {
+                    file = PathBuf::from(&command_args[s_idx + 1]);
                     s_idx += 2;
                 } else if (command_args[s_idx] == "-d" || command_args[s_idx] == "--dest") && s_idx + 1 < command_args.len() {
                     dest = command_args[s_idx + 1].parse::<u32>().unwrap_or(1);
@@ -920,11 +967,151 @@ fn main() {
                 } else if command_args[s_idx] == "--duress" {
                     duress = true;
                     s_idx += 1;
+                } else if command_args[s_idx] == "--fingerprint-erasure" || command_args[s_idx] == "--gamma" {
+                    fe.enabled = true;
+                    s_idx += 1;
+                } else if (command_args[s_idx] == "--fe-delta" || command_args[s_idx] == "--delta")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.delta = command_args[s_idx + 1].parse().ok();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-format" || command_args[s_idx] == "--format")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.output_format = parse_fe_output_format(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-pad" || command_args[s_idx] == "--pad")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.pad_path = PathBuf::from(&command_args[s_idx + 1]);
+                    fe.otp_wire = true;
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-mode" || command_args[s_idx] == "--mode")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.mode = parse_fe_mode(&command_args[s_idx + 1]);
+                    fe.explicit_mode = true;
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-lexicon" || command_args[s_idx] == "--lexicon")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.lexicon = parse_fe_lexicon(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-dct-q" || command_args[s_idx] == "--dct-q")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.dct_q_ac = command_args[s_idx + 1].parse().ok();
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--fe-no-midband-zero" {
+                    fe.dct_zero_midband = Some(false);
+                    s_idx += 1;
+                } else if (command_args[s_idx] == "--fe-sigma-delta" || command_args[s_idx] == "--sigma-delta")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.sigma_delta = command_args[s_idx + 1].parse().ok();
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-lab-delta-ab" || command_args[s_idx] == "--lab-delta-ab")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.lab_delta_ab = command_args[s_idx + 1].parse().ok();
+                    s_idx += 2;
+                } else if command_args[s_idx] == "--fe-strict" || command_args[s_idx] == "--strict" {
+                    fe.strict = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--fe-strict-stack"
+                    || command_args[s_idx] == "--strict-stack"
+                    || command_args[s_idx] == "--fe-uangribelig"
+                    || command_args[s_idx] == "--uangribelig"
+                {
+                    fe.strict_stack = true;
+                    fe.strict = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--fe-permissive" || command_args[s_idx] == "--permissive" {
+                    #[cfg(not(feature = "dev-permissive"))]
+                    {
+                        println!("Fejl: --fe-permissive kræver dev-permissive feature.");
+                        return;
+                    }
+                    #[cfg(feature = "dev-permissive")]
+                    {
+                        fe.permissive = true;
+                    }
+                    s_idx += 1;
+                } else if (command_args[s_idx] == "--fe-domain" || command_args[s_idx] == "--domain")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.declared_domain =
+                        its_fingerprint_erasure::parse_semantic_domain(&command_args[s_idx + 1]);
+                    s_idx += 2;
+                } else if (command_args[s_idx] == "--fe-kind" || command_args[s_idx] == "--kind")
+                    && s_idx + 1 < command_args.len()
+                {
+                    fe.declared_kind =
+                        its_fingerprint_erasure::parse_semantic_kind(&command_args[s_idx + 1]);
+                    s_idx += 2;
                 } else {
                     s_idx += 1;
                 }
             }
-            run_client_send(config, msg, dest, aeh, continuous, password, duress);
+            if fe.otp_wire && !fe.pad_path.as_os_str().is_empty() {
+                fe.enabled = true;
+            }
+            if fe.enabled && !fe.permissive {
+                fe.strict_stack = true;
+                fe.strict = true;
+                if !fe.explicit_mode {
+                    fe.mode = its_fingerprint_erasure::ErasureMode::Extended;
+                }
+                if fe.pad_path.as_os_str().is_empty()
+                    && !config.fingerprint_erasure.default_pad.is_empty()
+                {
+                    fe.pad_path = PathBuf::from(&config.fingerprint_erasure.default_pad);
+                }
+                if config.fingerprint_erasure.require_otp && fe.pad_path.as_os_str().is_empty() {
+                    println!(
+                        "Fejl: strict stack kræver --fe-pad (OTP) eller [fingerprint_erasure].default_pad i config."
+                    );
+                    return;
+                }
+                if !fe.pad_path.as_os_str().is_empty() {
+                    fe.otp_wire = true;
+                }
+                if config.fingerprint_erasure.require_chaff
+                    && !config.traffic.constant_rate_chaff_enabled
+                {
+                    println!(
+                        "Fejl: strict stack kræver constant_rate_chaff_enabled=true i config."
+                    );
+                    return;
+                }
+                if let Err(e) = its_fingerprint_erasure::validate_send_stack(
+                    !fe.pad_path.as_os_str().is_empty(),
+                    config.traffic.constant_rate_chaff_enabled,
+                ) {
+                    println!("Fejl: strict stack: {e}");
+                    return;
+                }
+            }
+            if (fe.strict || fe.strict_stack) && fe.declared_kind.is_none() && !file.as_os_str().is_empty() {
+                fe.declared_kind = its_fingerprint_erasure::kind_from_path(
+                    file.to_str().unwrap_or(""),
+                );
+            }
+            if (fe.strict || fe.strict_stack) && fe.declared_domain.is_none() && !file.as_os_str().is_empty() {
+                fe.declared_domain = its_fingerprint_erasure::domain_from_path(
+                    file.to_str().unwrap_or(""),
+                );
+            }
+            if config.fingerprint_erasure.require_on_file_send
+                && !file.as_os_str().is_empty()
+                && !fe.enabled
+            {
+                println!(
+                    "Fejl: client-send --file kræver --fingerprint-erasure (v0.8 strict stack)."
+                );
+                return;
+            }
+            run_client_send(config, msg, file, dest, aeh, continuous, password, duress, fe);
         }
         "client-receive" => {
             let mut aeh = false;
@@ -1137,8 +1324,24 @@ fn print_usage() {
     println!("                  -p, --port <port>       Port to bind the listener to");
     println!("                  -r, --chaff-rate <ms>   Continuous dummy chaff loop timing");
     println!("  client-send     Sends encrypted onion packet or dispatches steganographic AEH channels");
-    println!("                  -m, --msg <text>        Document contents/message string to send");
+    println!("                  -m, --msg <text>        Message string to send");
+    println!("                  -f, --file <path>       File payload to send (optional vs --msg)");
     println!("                  -d, --dest <id>         Destination Node Field Element ID");
+    println!("                  --fingerprint-erasure   Optional Γ v3/v4 universal CR-NF before send (max security default when enabled)");
+    println!("                  --fe-strict, --strict           Opt-in strict policy: explicit kind, deny Raw");
+    println!("                  --fe-strict-stack, --strict-stack  Extended preset (v0.8 default with --fingerprint-erasure)");
+    println!("                  --fe-permissive, --permissive     v5 permissive Γ escape (OTP optional)");
+    println!("                  --fe-domain, --domain   discrete|continuous (must match --fe-kind)");
+    println!("                  --fe-kind, --kind       text|image|audio|pdf|code (required in strict unless -f ext known)");
+    println!("                  --fe-delta, --delta <N> Pixel quantization threshold");
+    println!("                  --fe-mode, --mode       standard|extended|minimal (aliases: max, annihilator, balanced)");
+    println!("                  --fe-lexicon, --lexicon da-en|off (default da-en in max mode)");
+    println!("                  --fe-dct-q, --dct-q      DCT AC quantization (max mode)");
+    println!("                  --fe-sigma-delta        SVD sigma quantization (max mode)");
+    println!("                  --fe-lab-delta-ab       LAB chroma quantization (max mode)");
+    println!("                  --fe-no-midband-zero    Disable midband AC zeroing");
+    println!("                  --fe-format, --format   auto|sem1|png|txt|bin|wav|code");
+    println!("                  --fe-pad, --pad <path>  OTP wire payload on send (requires --fingerprint-erasure)");
     println!("                  --aeh                   Use Ambient Entropy Harvesting instead of Onion Tunnel");
     println!("                  --continuous            Enable continuous background decoy chaffing schedule loop");
     println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
@@ -1159,7 +1362,7 @@ fn print_usage() {
     println!("                  -p, --puzzle <path>     Target puzzle .its file");
     println!("                  -d, --decoy <text>      Harmless decoy message of equal length");
     println!("                  -o, --out <path>        Output alternative decrypted file path");
-    println!("  fingerprint-erasure  Γ then optional OTP (Extract→Q→C→Reconstruct→mask)");
+    println!("  fingerprint-erasure  Standalone offline Γ (+ optional OTP to files)");
     println!("                  -f, --file, --in <path> Input file");
     println!("                  -o, --out <path>        Normalized file for Bob (after otp-unmask)");
     println!("                  --pad <path>            Offline pad (required with --out-otp)");
@@ -1317,22 +1520,70 @@ fn run_node(config: Config) {
 fn run_client_send(
     config: Config,
     msg: String,
+    file_path: PathBuf,
     dest: u32,
     aeh: bool,
     continuous: bool,
     password: Option<String>,
     duress: bool,
+    fe: FingerprintErasureSendOptions,
 ) {
     let mut rng = its_hardware::CliRng;
-    let mut active_msg = msg;
 
-    if aeh && duress {
+    let raw_payload = if !file_path.as_os_str().is_empty() {
+        match std::fs::read(&file_path) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                println!("Fejl: Kunne ikke læse fil: {:?}", e);
+                return;
+            }
+        }
+    } else if duress {
+        "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes.".into()
+    } else if msg.is_empty() {
+        println!("Fejl: client-send kræver --msg eller --file.");
+        return;
+    } else {
+        msg.into_bytes()
+    };
+
+    if duress && !file_path.as_os_str().is_empty() {
+        println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
+    } else if duress {
         println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
         println!("Initializing decoy cover-channels with plausible harmless content.");
-        active_msg = "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes.".to_string();
     }
 
-    let msg_bytes = active_msg.as_bytes();
+    let payload = match prepare_send_payload(&raw_payload, &fe) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("Fejl under fingerprint-erasure: {e}");
+            return;
+        }
+    };
+
+    if fe.enabled {
+        if fe.otp_wire {
+            println!(
+                "Fingerprint-erasure v2: Γ(max) + OTP wire ({} bytes sendes).",
+                payload.len()
+            );
+        } else {
+            println!(
+                "Fingerprint-erasure v2: Γ({}) normaliseret ({} bytes sendes).",
+                if fe.mode == its_fingerprint_erasure::ErasureMode::Standard {
+                    "standard"
+                } else if fe.mode == its_fingerprint_erasure::ErasureMode::Extended {
+                    "extended"
+                } else {
+                    "minimal"
+                },
+                payload.len()
+            );
+        }
+    }
+
+    let msg_bytes = payload.as_slice();
 
     if aeh {
         let anchor = FieldElement::new(config.crypto.stealth_anchor);
@@ -1364,7 +1615,7 @@ fn run_client_send(
             println!("\nStarter kontinuerlig scheduled decoy chaffing-loop...");
             println!("Sender i faste intervaller á {} ms.", config.traffic.tick_rate_ms);
             let mut tick = 0u64;
-            // Let's send the active_msg on tick 2, and mock/dummy chaff on all other ticks
+            // Let's send the real payload on tick 2, and mock/dummy chaff on all other ticks
             loop {
                 thread::sleep(Duration::from_millis(config.traffic.tick_rate_ms));
                 tick += 1;
@@ -1374,7 +1625,7 @@ fn run_client_send(
                 if tick == 2 {
                     // Send real message
                     println!("\n--- [TICK {}]: SENDER REAL/AUTHENTICATED MESSAGE ---", tick);
-                    let msg_bytes = active_msg.as_bytes();
+                    let msg_bytes = payload.as_slice();
                     let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
                         .expect("Kunne ikke fragmentere");
 
@@ -1461,7 +1712,7 @@ fn run_client_send(
             // Non-continuous single transmission
             let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
             println!("Modtog {} bytes live entropi.", live_entropy.len());
-            let msg_bytes = active_msg.as_bytes();
+            let msg_bytes = payload.as_slice();
             let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
                 .expect("Kunne ikke fragmentere data");
 
@@ -1881,12 +2132,153 @@ fn run_client_receive(
 // LOCAL TIME-LOCK RUNNERS (HYBRID SSS-CHAINED DENIABLE TIME-LOCK)
 // ==============================================================================
 
+// ==============================================================================
+// FINGERPRINT ERASURE (Γ + optional OTP wire)
+// ==============================================================================
+
+#[derive(Clone)]
+struct FingerprintErasureSendOptions {
+    enabled: bool,
+    delta: Option<u32>,
+    output_format: its_fingerprint_erasure::OutputFormat,
+    pad_path: PathBuf,
+    otp_wire: bool,
+    mode: its_fingerprint_erasure::ErasureMode,
+    lexicon: its_fingerprint_erasure::LexiconMode,
+    dct_q_ac: Option<u32>,
+    dct_zero_midband: Option<bool>,
+    sigma_delta: Option<u32>,
+    lab_delta_ab: Option<u32>,
+    strict: bool,
+    strict_stack: bool,
+    permissive: bool,
+    explicit_mode: bool,
+    declared_kind: Option<its_fingerprint_erasure::SemanticKind>,
+    declared_domain: Option<its_fingerprint_erasure::SemanticDomain>,
+}
+
+impl Default for FingerprintErasureSendOptions {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            delta: None,
+            output_format: its_fingerprint_erasure::OutputFormat::Auto,
+            pad_path: PathBuf::new(),
+            otp_wire: false,
+            mode: its_fingerprint_erasure::ErasureMode::Standard,
+            lexicon: its_fingerprint_erasure::LexiconMode::DaEn,
+            dct_q_ac: None,
+            dct_zero_midband: None,
+            sigma_delta: None,
+            lab_delta_ab: None,
+            strict: false,
+            strict_stack: false,
+            permissive: false,
+            explicit_mode: false,
+            declared_kind: None,
+            declared_domain: None,
+        }
+    }
+}
+
+impl FingerprintErasureSendOptions {
+    fn to_erasure_options(&self) -> its_fingerprint_erasure::ErasureOptions {
+        if self.strict_stack {
+            let mode = if self.explicit_mode {
+                self.mode
+            } else {
+                its_fingerprint_erasure::ErasureMode::Extended
+            };
+            return its_fingerprint_erasure::ErasureOptions {
+                delta: self.delta,
+                output_format: self.output_format,
+                mode,
+                lexicon: self.lexicon,
+                dct_q_ac: self.dct_q_ac,
+                dct_zero_midband: self.dct_zero_midband,
+                sigma_delta: self.sigma_delta,
+                lab_delta_ab: self.lab_delta_ab,
+                declared_kind: self.declared_kind,
+                declared_domain: self.declared_domain,
+                ..its_fingerprint_erasure::ErasureOptions::strict_stack()
+            };
+        }
+        let (policy, allow_raw) = if self.strict {
+            (
+                its_fingerprint_erasure::ErasurePolicy::Strict,
+                false,
+            )
+        } else {
+            (
+                its_fingerprint_erasure::ErasurePolicy::Permissive,
+                true,
+            )
+        };
+        its_fingerprint_erasure::ErasureOptions {
+            delta: self.delta,
+            output_format: self.output_format,
+            mode: self.mode,
+            lexicon: self.lexicon,
+            dct_q_ac: self.dct_q_ac,
+            dct_zero_midband: self.dct_zero_midband,
+            sigma_delta: self.sigma_delta,
+            lab_delta_ab: self.lab_delta_ab,
+            policy,
+            declared_kind: self.declared_kind,
+            declared_domain: self.declared_domain,
+            allow_raw,
+        }
+    }
+}
+
+fn prepare_send_payload(
+    raw: &[u8],
+    fe: &FingerprintErasureSendOptions,
+) -> Result<Vec<u8>, its_fingerprint_erasure::FeError> {
+    if !fe.enabled {
+        return Ok(raw.to_vec());
+    }
+
+    if fe.otp_wire && fe.pad_path.as_os_str().is_empty() {
+        return Err(its_fingerprint_erasure::FeError::InvalidPad(
+            "pad path required for OTP wire send".into(),
+        ));
+    }
+
+    let gamma_out = its_fingerprint_erasure::erase_provenance(raw, fe.to_erasure_options())?;
+
+    if fe.otp_wire {
+        let mut pad = its_fingerprint_erasure::PadFile::open(&fe.pad_path)?;
+        its_fingerprint_erasure::otp_mask(&gamma_out.bytes, &mut pad)
+    } else {
+        Ok(gamma_out.bytes)
+    }
+}
+
+fn parse_fe_mode(s: &str) -> its_fingerprint_erasure::ErasureMode {
+    match s.to_ascii_lowercase().as_str() {
+        "minimal" | "balanced" => its_fingerprint_erasure::ErasureMode::Minimal,
+        "extended" | "annihilator" | "annihilate" => its_fingerprint_erasure::ErasureMode::Extended,
+        "standard" | "max" | "max-security" => its_fingerprint_erasure::ErasureMode::Standard,
+        _ => its_fingerprint_erasure::ErasureMode::Standard,
+    }
+}
+
+fn parse_fe_lexicon(s: &str) -> its_fingerprint_erasure::LexiconMode {
+    match s.to_ascii_lowercase().as_str() {
+        "off" => its_fingerprint_erasure::LexiconMode::Off,
+        _ => its_fingerprint_erasure::LexiconMode::DaEn,
+    }
+}
+
 fn parse_fe_output_format(s: &str) -> its_fingerprint_erasure::OutputFormat {
     match s.to_ascii_lowercase().as_str() {
         "sem1" => its_fingerprint_erasure::OutputFormat::Sem1,
         "png" => its_fingerprint_erasure::OutputFormat::Png,
         "txt" => its_fingerprint_erasure::OutputFormat::Txt,
         "bin" => its_fingerprint_erasure::OutputFormat::Bin,
+        "wav" => its_fingerprint_erasure::OutputFormat::Wav,
+        "code" => its_fingerprint_erasure::OutputFormat::Code,
         _ => its_fingerprint_erasure::OutputFormat::Auto,
     }
 }
@@ -1917,13 +2309,20 @@ fn run_fingerprint_erasure(
         }
     };
 
-    let gamma_out = match its_fingerprint_erasure::erase_provenance(
-        &input,
-        its_fingerprint_erasure::ErasureOptions {
-            delta,
-            output_format,
-        },
-    ) {
+    if pad_path.as_os_str().is_empty() && !want_otp {
+        println!("Advarsel: v0.8 anbefaler OTP — brug --pad og --out-otp for strict stack.");
+    }
+
+    let path_str = file_path.to_str().unwrap_or("");
+    let declared_kind = its_fingerprint_erasure::kind_from_path(path_str);
+    let declared_domain = its_fingerprint_erasure::domain_from_path(path_str);
+    let mut opts = its_fingerprint_erasure::ErasureOptions::strict_stack();
+    opts.delta = delta;
+    opts.output_format = output_format;
+    opts.declared_kind = declared_kind;
+    opts.declared_domain = declared_domain;
+
+    let gamma_out = match its_fingerprint_erasure::erase_provenance(&input, opts) {
         Ok(outp) => outp,
         Err(e) => {
             println!("Fejl under provenance erasure: {:?}", e);

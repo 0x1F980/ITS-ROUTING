@@ -19,4 +19,5 @@ zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
 
 [features]
 default = []
+dev-permissive = ["its_fingerprint_erasure/dev-permissive"]
 m61 = ["core_logic/m61", "its_hardware/m61", "its_ledger/m61", "its_self_enclosed_timelock/m61", "its_otm_public_attestation/m61"]

@@ -103,3 +103,34 @@ The daemon executes the send schedule at each discrete tick:
 **Observed Profile:**
 Eve records exactly 10 packets transiting the link during the 1.0 second window. The packet timing intervals are a non-correlated chaotic series $[95, 105, 102, 98, \dots]$, meaning Eve's cross-correlation function $R_{xy}(\tau) = 0$ for all non-trivial delays. Timing correlation is completely defeated.
 
+---
+
+## 4. Optional Γ (fingerprint erasure) — Eve channel matrix (v4 / v5)
+
+When `--fingerprint-erasure` is enabled on send, payloads pass through Church-Rosser normalization before morphic mixing. Default is **permissive** (v3 sniff); opt-in **`--fe-strict`** requires explicit kind and denies Raw fallback; **`--fe-strict-stack`** is strict policy + extended quantization (no Raw).
+
+**v5 two domains** (kinds are wire/implementation detail):
+
+| Domain | Formula | `--fe-kind` values |
+|--------|---------|-------------------|
+| **Discrete** | $\Gamma_d = \mathrm{serialize}(\alpha(\mathrm{parse}(\mathrm{nfc}(B))))$ | `text`, `code`, `pdf` |
+| **Continuous** | $\Gamma_c = \mathrm{template}^{-1}(\lfloor \mathcal{F}(\mathrm{decode}(B)) \rfloor_\Delta)$ | `image`, `audio` |
+
+Optional **`--fe-domain discrete|continuous`** validates declared domain matches kind. Image $\mathcal{F}$ = block-DCT pipeline; audio = time-domain 44100 Hz stereo template (not spectral).
+
+| Channel | v3 | v4 permissive | v4 strict | v5 strict stack + domain |
+|---------|-----|---------------|-----------|-------------------------|
+| Code identifiers | Yes | Yes | **No** (alpha-rename) | **No** |
+| Polyglot routing | Yes | Yes | **No** (explicit kind) | **No** (+ cross-domain reject) |
+| Audio encoding | Likely yes | Better resampler | **No** (44100 stereo) | **No** |
+| Raw unknown | Yes | Yes | **No** (opt-in deny) | **No** |
+| Confluence gap | Unknown | Fuzz tests | **Closed subset** (Lean) | Per-domain suites |
+| Semantic sabotage | Yes | Yes | **Yes** (requires signature) | **Yes** |
+| Hardware/timing | Yes | Yes | **Yes** (OTP/chaff/air-gap) | **Yes** (documented stack) |
+
+Formal spec: sibling crate `ITS-fingerprint_erasure/mathematics/cr/` (`Cr/Discrete.lean`, `Cr/Continuous.lean`). Full formula table: `ITS-fingerprint_erasure_FORMULAS.md`. Wire OTP layer: $I(X; F) = 0$ after $\Gamma(M)$; full send-stack protection requires OTP + chaff + air-gap.
+
+**v0.8 master stack:** $\mathcal{U}(M)=\text{Chaff}(\text{OTP}(\Gamma(M)))$. With `--fingerprint-erasure` (default strict stack): OTP pad + chaff required; `--fe-permissive` requires `dev-permissive` feature.
+
+**v0.8 additions:** `validate_kind_binding` (polyglot reject); `Discrete-StylometryNeutralize`; `Continuous-PrnuCorrelationFloor` + `Continuous-AudioSpectralNeutralize`; `require_on_file_send=true` for `--file` sends.
+

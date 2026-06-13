@@ -76,11 +76,20 @@ Our strict mathematical boundaries completely overrule both backdoored software 
 1. **Underdetermined Systems:** Even if the hardware successfully fingerprints the transmission times, the data itself is represented as uniform coordinates over $\mathbb{F}_p$. Since the equation systems are strictly underdetermined, Eve's infinite quantum arrays face a flat probability distribution, rendering her incapable of proving the existence of a real payload.
 2. **Entropic Footprintable Permissions (The Last Resort):**
    When absolute anonymity is barred, Alice and Bob must employ **entropic footprintable permissions** as their final option. Instead of attempting to bypass the Citizen ID requirement (which triggers instant blockade flags), they steganographically blend and hide their SSS-shares directly inside legitimate, signed citizen-ID public transactions or files. They sign their public telemetry posts or images with their state-mandated IDs to appease Eve's automated filters, but the underlying payload has been entropic-flattened (completely smoothed to remove any cryptographic patterns or signatures) and hidden in the least significant bits (LSBs).
-3. **Provenance Erasure (`ITS-FINGERPRINT_ERASURE`):**
-   Two layers: **Γ** (normalize, Bob-readable) then **OTP** (wire, I(X;F)=0):
+3. **Provenance Erasure (`ITS-FINGERPRINT_ERASURE` v6 / v0.7.0):**
+   Two layers: **Γ** (Church-Rosser universal NF — Bob accepts functional R, not Eve's bits) then **OTP** (wire, I(X;F)=0). **v0.8:** `--fingerprint-erasure` defaults to strict stack (extended mode) + requires OTP pad + chaff; escape `--fe-permissive`. Post-save: `its_fe watch --dir DIR --in-place`.
    ```bash
+   # Strict-stack send (strict policy + extended mode + domain; pair with --fe-pad + chaff daemon)
+   its-net client-send --file song.wav --dest 3 --fingerprint-erasure \
+     --fe-strict-stack --fe-kind audio --fe-domain continuous \
+     --fe-pad offline.pad --config config.toml
+
+   # Permissive Γ (requires --fe-permissive feature)
+   its-net client-send --file tainted.jpg --dest 3 --fingerprint-erasure --fe-permissive --config config.toml
+
+   # Standalone offline
    its-net fingerprint-erasure --file tainted.jpg --out clean.png --pad offline.pad --out-otp wire.bin
-   its_fe process --in tainted.jpg --out clean.png
+   its_fe process --in tainted.jpg --out clean.png --strict-stack --kind image --domain continuous
    its_fe otp-mask --in clean.png --pad offline.pad --out wire.bin
    ```
    Bob: `its_fe otp-unmask --in wire.bin --pad offline.pad --out clean.png` — opens directly.

@@ -48,3 +48,10 @@ entropy_sources = [
 
 # The candidate telemetry offset bob scans for shannon statistical clues
 clue_offset = 12
+
+[fingerprint_erasure]
+# Required when --fingerprint-erasure without --fe-pad (v0.8 strict stack)
+default_pad = "/path/to/offline.pad"
+require_otp = true
+require_chaff = true
+require_on_file_send = true

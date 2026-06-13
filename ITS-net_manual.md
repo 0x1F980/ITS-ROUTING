@@ -23,6 +23,50 @@ Dispatches a single authenticated, steganographically-camouflaged SSS share acro
 its-net client-send --msg "Secret Classified Message" --dest 3 --aeh --config config.toml
 ```
 
+Optional **Γ v3 Church-Rosser universal normalform** before send (off by default; **max security** when enabled — text/image/audio/PDF/code, DCT, lexicon, Δ=32/Δ=256 audio):
+
+```bash
+its-net client-send --file tainted.jpg --dest 3 --fingerprint-erasure --config config.toml
+its-net client-send --file song.wav --dest 3 --fingerprint-erasure --fe-format wav --config config.toml
+its-net client-send --file doc.pdf --dest 3 --fingerprint-erasure --fe-format txt --config config.toml
+its-net client-send --file main.rs --dest 3 --fingerprint-erasure --fe-format code --config config.toml
+```
+
+Balanced (v1-like) or custom spectral params:
+
+```bash
+its-net client-send --file tainted.jpg --dest 3 --fingerprint-erasure --fe-mode balanced --config config.toml
+its-net client-send --file note.txt --dest 3 --fingerprint-erasure --fe-lexicon da-en --config config.toml
+```
+
+Or Γ + OTP wire on the network path (Bob uses `its_fe otp-unmask` with the same pad):
+```bash
+its-net client-send --file tainted.jpg --dest 3 --fingerprint-erasure --fe-pad offline.pad --config config.toml
+```
+Flags: `--fingerprint-erasure` / `--gamma`, `--fe-strict` / `--strict`, `--fe-strict-stack` / `--strict-stack` (legacy: `--fe-uangribelig`), `--fe-permissive` / `--permissive` (v5 escape), `--fe-domain` / `--domain discrete|continuous`, `--fe-kind` / `--kind text|image|audio|pdf|code`, `--fe-mode` / `--mode standard|extended|minimal` (aliases: max, annihilator, balanced), `--fe-lexicon` / `--lexicon`, `--fe-delta` / `--delta`, `--fe-format` / `--format auto|sem1|png|txt|bin|wav|code`, `--fe-pad` / `--pad`, `--fe-dct-q`, `--fe-sigma-delta`, `--fe-lab-delta-ab`.
+
+**v0.8 default:** `--fingerprint-erasure` alone enables strict stack + requires `--fe-pad` and chaff in config. Use `--fe-permissive` for v5 permissive Γ.
+
+**Strict stack** (strict policy + extended mode + OTP + chaff):
+
+```bash
+its-net client-send --file song.wav --dest 3 --fingerprint-erasure \
+  --fe-strict-stack --fe-kind audio --fe-domain continuous \
+  --fe-pad offline.pad --config config.toml
+```
+
+Post-save automatic Γ (v0.8):
+
+```bash
+its_fe watch --dir ~/Documents --in-place --strict-stack
+```
+
+**Strict mode example** (explicit kind, Raw denied):
+
+```bash
+its-net client-send --file song.wav --dest 3 --fingerprint-erasure --fe-strict --fe-kind audio --config config.toml
+```
+
 ### Command 3: Continuous Decoy Chaffing Loop (Alice)
 Starts a permanent background schedule loop, uploading mock blocks and substituting real blocks:
 ```bash
@@ -76,6 +120,9 @@ its-net time-deny --puzzle secret.its --decoy "Cover story text" --out decoy.its
 ```
 
 ### Command 10: Provenance Erasure (Γ + optional OTP)
+**Inline send (optional):** add `--fingerprint-erasure` to `client-send --file` (see Command 2).
+
+**Standalone offline files:**
 ```bash
 its-net fingerprint-erasure --file tainted.jpg --out clean.png --pad offline.pad --out-otp wire.bin
 its_fe otp-unmask --in wire.bin --pad offline.pad --out clean.png   # Bob
