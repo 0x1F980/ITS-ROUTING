@@ -10,6 +10,19 @@ This document details the configuration formats, CLI commands, and deployment mo
 
 ---
 
+## 0. Pipe (stdin / stdout)
+
+Use `-` for **stdin** or **stdout** on selected subcommands. Same syntax in **bash**, **zsh**, and **fish**.
+
+```bash
+echo -n "payload" | its-net time-lock -f - -o - -e 30 | its-net time-unlock -p - -o -
+its-net fingerprint-erasure --in - --out - < input.bin > normalized.bin
+```
+
+Full guide: [ITS-net_PIPE.md](ITS-net_PIPE.md). Demo: `scripts/pipe_timelock.sh`.
+
+---
+
 ## 1. Complete CLI Reference
 
 `ITS-net` is executed via the unified binary `its-net` (formerly `morphic-its` / `hydra_cli`).

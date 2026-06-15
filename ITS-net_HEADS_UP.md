@@ -8,7 +8,7 @@
 
 ---
 
-## Sektion A: Prerequisite for Validity (Forudsætningen)
+## Section A: Prerequisite for Validity
 
 ### The Absolute Endpoint Constraint:
 All network-level anonymization, constant-rate chaffing loops, and chaotic de-correlation mechanisms in `ITS-net` are strictly predicated on the **host security of the local execution endpoint**.
@@ -17,7 +17,7 @@ If an adversary has compromised Bob's operating system with a resident network t
 
 ---
 
-## Sektion B: Eve's Physical Domain Control (Angrebet)
+## Section B: Eve's Physical Domain Control (The Attack)
 
 We operate under the ultimate trilateral threat scenario, where the adversary, **Eve, possesses absolute physical control over the entire communications, storage, and manufacturing domain**:
 
@@ -27,7 +27,7 @@ We operate under the ultimate trilateral threat scenario, where the adversary, *
 
 ---
 
-## Sektion C: Defensive Impregnability (Forsvaret)
+## Section C: Defensive Impregnability (The Defense)
 
 Even under this absolute physical domain control, `ITS-net` establishes absolute, unbreakable communications security by implementing our defensive protocols:
 
@@ -66,7 +66,7 @@ AEH receive paths verify Wegman-Carter tags via the standalone OTM crate. For th
 
 ---
 
-## Sektion D: Worst-Case Scenario: World War III & Absolute Censorship
+## Section D: Worst-Case Scenario: World War III & Absolute Censorship
 
 ### The Doomsday Landscape:
 In the event of World War III, a total collapse of the global internet, or the implementation of absolute sovereign firewalls, Eve mandates that **every single packet transmission must be cryptographically signed with a government-issued Citizen ID**.

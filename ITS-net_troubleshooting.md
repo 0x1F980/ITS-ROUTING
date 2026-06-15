@@ -71,19 +71,19 @@ Offline time-lock operations use the external crate **`ITS-self_enclosed_timeloc
 
 ### Symptom: Generation fails immediately
 ```
-Fejl: Ugyldige parametre (tom fil eller epochs=0).
+Error: Invalid parameters (empty file or epochs=0).
 ```
 **Recovery:** Use a non-empty `--file` and `--epochs` ≥ 1.
 
 ### Symptom: Invalid puzzle file
 ```
-Fejl: Ugyldigt tidslås-filformat
+Error: Invalid time-lock file format
 ```
 **Recovery:** Verify `.its` text format (see [ITS-net_manual.md](ITS-net_manual.md) commands 7–9). Each epoch needs `transitions_1_block_N` and `transitions_2_block_N` lines.
 
 ### Symptom: Unlock fails after long CPU run
 ```
-Fejl: Kunne ikke dekryptere tidslåsen (muligvis korrupt data).
+Error: Could not decrypt time-lock (possibly corrupt data).
 ```
 **Recovery:** Do not hand-edit puzzle files. Regenerate with `time-lock`. Confirm `t` matches transition block count.
 

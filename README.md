@@ -57,6 +57,10 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 
 0.  **[ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) (Security Layers & ITS Scope — read first)**
     *   Subcommand → upstream crate scope map; default Γ + OTP + chaff stack; anti-AI FAQ.
+0b. **[ITS-net_FORMAL_VERIFICATION.md](ITS-net_FORMAL_VERIFICATION.md) (Formal Verification & W6 Composition)**
+    *   Lean/Rust proof map for strict-stack send, OTM, timelock, fingerprint erasure; links to upstream ITS certificates.
+0c. **[ITS-net_PIPE.md](ITS-net_PIPE.md) (stdin/stdout piping)**
+    *   `-` paths for `time-lock`, `time-unlock`, `fingerprint-erasure`; demo `scripts/pipe_timelock.sh`.
 1.  **[ITS-net_vision.md](ITS-net_vision.md) (Network-Level Threat Model & Transition Strategy)**
     *   Defines the network threat landscape: global traffic analysis, passive router correlation, active packet injection, and the tactical choice between active onion routing (Option A) and passive entropy harvesting (Option B).
 2.  **[ITS-net_mathematics.md](ITS-net_mathematics.md) (Formally Proven Network & Traffic Obfuscation Proofs)**

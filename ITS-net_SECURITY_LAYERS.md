@@ -55,7 +55,7 @@ Each layer must be evaluated separately. See ecosystem master FAQ.
 
 1. **"ITS-net uses hashing"** — Trace the subcommand; hashes may be build/AEH paths, not WC-MAC tags.
 
-2. **"time-lock is fully ITS"** — RSW delay is **computational**; SSS deniability is **ITS** (timelock SECURITY_LAYERS).
+2. **"time-lock is fully ITS"** — RSW **squaring** is computational delay; the puzzle is **ITS** because RSW output $Y$ is **chained** into SSS ($s_{2,0} = (Y+m) \bmod p$). See timelock SECURITY_LAYERS.
 
 3. **Rejecting ITS-net for glue code** — Wrong unit of analysis; follow the table in §2.
 

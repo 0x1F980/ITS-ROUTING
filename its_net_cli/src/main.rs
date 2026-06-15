@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
 
 pub mod anomaly_detection;
+mod stdio;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -794,7 +795,7 @@ fn fetch_live_entropy(sources: &[String]) -> Vec<u8> {
     }
 
     if combined_raw.is_empty() {
-        println!("Advarsel: Alle eksterne entropi-kilder fejlede. Bruger lokal fallback-entropi.");
+        println!("Warning: All external entropy sources failed. Using local fallback entropy.");
         combined_raw.extend_from_slice(b"DEFAULT_FALLBACK_PUBLIC_TELEMETRY_DATA_FOR_ITS_SHADOW_NET");
     }
 
@@ -871,7 +872,7 @@ fn main() {
     let config_content = match std::fs::read_to_string(&config_path) {
         Ok(content) => content,
         Err(_) => {
-            println!("Kunne ikke læse konfigurationsfilen: {}. Bruger standardopsætning.", config_path);
+            println!("Could not read config file: {}. Using default configuration.", config_path);
             // Default config fallback
             r#"
             [node]
@@ -1029,7 +1030,7 @@ fn main() {
                 } else if command_args[s_idx] == "--fe-permissive" || command_args[s_idx] == "--permissive" {
                     #[cfg(not(feature = "dev-permissive"))]
                     {
-                        println!("Fejl: --fe-permissive kræver dev-permissive feature.");
+                        println!("Error: --fe-permissive requires dev-permissive feature.");
                         return;
                     }
                     #[cfg(feature = "dev-permissive")]
@@ -1069,7 +1070,7 @@ fn main() {
                 }
                 if config.fingerprint_erasure.require_otp && fe.pad_path.as_os_str().is_empty() {
                     println!(
-                        "Fejl: strict stack kræver --fe-pad (OTP) eller [fingerprint_erasure].default_pad i config."
+                        "Error: strict stack requires --fe-pad (OTP) or [fingerprint_erasure].default_pad in config."
                     );
                     return;
                 }
@@ -1080,7 +1081,7 @@ fn main() {
                     && !config.traffic.constant_rate_chaff_enabled
                 {
                     println!(
-                        "Fejl: strict stack kræver constant_rate_chaff_enabled=true i config."
+                        "Error: strict stack requires constant_rate_chaff_enabled=true in config."
                     );
                     return;
                 }
@@ -1088,7 +1089,7 @@ fn main() {
                     !fe.pad_path.as_os_str().is_empty(),
                     config.traffic.constant_rate_chaff_enabled,
                 ) {
-                    println!("Fejl: strict stack: {e}");
+                    println!("Error: strict stack: {e}");
                     return;
                 }
             }
@@ -1107,7 +1108,7 @@ fn main() {
                 && !fe.enabled
             {
                 println!(
-                    "Fejl: client-send --file kræver --fingerprint-erasure (v0.8 strict stack)."
+                    "Error: client-send --file requires --fingerprint-erasure (v0.8 strict stack)."
                 );
                 return;
             }
@@ -1258,7 +1259,7 @@ fn main() {
                 }
             }
             if msg.is_empty() {
-                println!("Fejl: Beskeden må ikke være tom. Brug -m, --msg <tekst>");
+                println!("Error: Message must not be empty. Use -m, --msg <text>");
                 return;
             }
             run_client_export_share(config, msg, threshold_k, total_shares_n);
@@ -1296,14 +1297,14 @@ fn main() {
                         }
                     }
                     Err(e) => {
-                        println!("Fejl: Kunne ikke læse filen {:?}: {:?}", fp, e);
+                        println!("Error: Could not read file {:?}: {:?}", fp, e);
                         return;
                     }
                 }
             }
 
             if shares_input.is_empty() {
-                println!("Fejl: Ingen analoge shares fundet. Angiv dem direkte som argumenter, eller indlæs med -f, --file <sti>");
+                println!("Error: No analog shares found. Pass them as arguments, or load with -f, --file <path>");
                 return;
             }
 
@@ -1316,9 +1317,10 @@ fn main() {
 }
 
 fn print_usage() {
-    println!("Morphic Routing Shadow Network CLI (Sterilized Synkron Version)");
-    println!("Anvendelse:");
-    println!("  its-net [subcommand] [valg]");
+    println!("Morphic Routing Shadow Network CLI (Sterilized Sync Version)");
+    println!("PATH \"-\" = stdin/stdout on time-lock and fingerprint-erasure (see ITS-net_PIPE.md).");
+    println!("Usage:");
+    println!("  its-net [subcommand] [options]");
     println!("\nSubcommands:");
     println!("  start-node      Starts an active onion routing daemon node");
     println!("                  -p, --port <port>       Port to bind the listener to");
@@ -1358,7 +1360,7 @@ fn print_usage() {
     println!("  time-unlock     Solves modular squarings sequentially on CPU to decrypt a puzzle");
     println!("                  -p, --puzzle <path>     Target puzzle .its file");
     println!("                  -o, --out <path>        Output decrypted file path");
-    println!("  time-deny       Asserts a decoy dækhistorie message to solve the puzzle to alternative 'truth'");
+    println!("  time-deny       Asserts a decoy cover-story message to solve the puzzle to alternative 'truth'");
     println!("                  -p, --puzzle <path>     Target puzzle .its file");
     println!("                  -d, --decoy <text>      Harmless decoy message of equal length");
     println!("                  -o, --out <path>        Output alternative decrypted file path");
@@ -1385,9 +1387,9 @@ fn print_usage() {
 
 fn run_node(config: Config) {
     let bind_addr = format!("{}:{}", config.node.bind_address, config.node.port);
-    let socket = UdpSocket::bind(&bind_addr).expect("Kunne ikke binde UDP socket");
+    let socket = UdpSocket::bind(&bind_addr).expect("Could not bind UDP socket");
     let courier: Arc<dyn PacketCourier + Send + Sync> = Arc::new(UdpCourier::new(socket));
-    println!("Morphic Routing Node {} kører på {} via abstract PacketCourier", config.node.id, bind_addr);
+    println!("Morphic Routing Node {} running on {} via abstract PacketCourier", config.node.id, bind_addr);
 
     // Setup MorphicMixingNode
     let public_point = (FieldElement::new(1), FieldElement::new(8));
@@ -1404,7 +1406,7 @@ fn run_node(config: Config) {
     let ratchet = Arc::new(Mutex::new(StateRatchet::new(seed)));
 
     // Step the ratchet to get the first set of keys
-    let (_k_pool, mac_key, nonce) = ratchet.lock().unwrap().step().expect("Kunne ikke initiere ratchet");
+    let (_k_pool, mac_key, nonce) = ratchet.lock().unwrap().step().expect("Could not initialize ratchet");
 
     let node = Arc::new(Mutex::new(MorphicMixingNode::new(
         FieldElement::new(config.node.id),
@@ -1432,7 +1434,7 @@ fn run_node(config: Config) {
                     for hop_index in 0..3 {
                         if let Ok((next_hop, forwarded_packet)) = n.process_packet(&packet, hop_index, &mut rng) {
                             if next_hop.value() as u32 != 0 {
-                                println!("Modtog gyldig pakke! Næste hop ID: {}", next_hop.value() as u32);
+                                println!("Received valid packet! Next hop ID: {}", next_hop.value() as u32);
                                 queue_recv.lock().unwrap().push((next_hop, forwarded_packet));
                                 processed = true;
 
@@ -1440,14 +1442,14 @@ fn run_node(config: Config) {
                                 if let Ok((_, next_mac, next_nonce)) = ratchet_recv.lock().unwrap().step() {
                                     n.header_mac_key = next_mac;
                                     n.header_nonce = next_nonce;
-                                    println!("StateRatchet trådte frem: Nøgler og noncer roteret.");
+                                    println!("StateRatchet stepped: keys and nonces rotated.");
                                 }
                                 break;
                             }
                         }
                     }
                     if !processed {
-                        println!("Modtog ugyldig pakke eller dummy-pakke. Ignorerer.");
+                        println!("Received invalid or dummy packet. Ignoring.");
                     }
                 }
             }
@@ -1482,7 +1484,7 @@ fn run_node(config: Config) {
                 if let Some(addr_str) = routing_table.get(&next_hop_val) {
                     let bytes = serialize_packet(&packet);
                     let _ = courier_send.send_raw(&bytes, addr_str);
-                    println!("Sendte real pakke til næste hop {} ({})", next_hop_val, addr_str);
+                    println!("Sent real packet to next hop {} ({})", next_hop_val, addr_str);
                 }
             } else if chaff_enabled {
                 // Generate and send a dummy packet to maintain constant rate
@@ -1534,14 +1536,14 @@ fn run_client_send(
         match std::fs::read(&file_path) {
             Ok(bytes) => bytes,
             Err(e) => {
-                println!("Fejl: Kunne ikke læse fil: {:?}", e);
+                println!("Error: Could not read file: {:?}", e);
                 return;
             }
         }
     } else if duress {
         "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes.".into()
     } else if msg.is_empty() {
-        println!("Fejl: client-send kræver --msg eller --file.");
+        println!("Error: client-send requires --msg or --file.");
         return;
     } else {
         msg.into_bytes()
@@ -1557,7 +1559,7 @@ fn run_client_send(
     let payload = match prepare_send_payload(&raw_payload, &fe) {
         Ok(p) => p,
         Err(e) => {
-            println!("Fejl under fingerprint-erasure: {e}");
+            println!("Error during fingerprint-erasure: {e}");
             return;
         }
     };
@@ -1591,7 +1593,7 @@ fn run_client_send(
         // Derive/Initialize StateRatchet
         let seed = if let Some(ref pwd) = password {
             let salt: &[u8] = if duress { b"scpst-aeh-decoy-salt" } else { b"scpst-aeh-true-salt" };
-            println!("Deriverer seed fra password vha. PBKDF2-HMAC-SHA256...");
+            println!("Deriving seed from password via PBKDF2-HMAC-SHA256...");
             StateRatchet::derive_seed(pwd, salt, 1000)
         } else {
             let mut s = [0u8; 32];
@@ -1612,8 +1614,8 @@ fn run_client_send(
         ];
 
         if continuous {
-            println!("\nStarter kontinuerlig scheduled decoy chaffing-loop...");
-            println!("Sender i faste intervaller á {} ms.", config.traffic.tick_rate_ms);
+            println!("\nStarting continuous scheduled decoy chaffing loop...");
+            println!("Sending at fixed intervals of {} ms.", config.traffic.tick_rate_ms);
             let mut tick = 0u64;
             // Let's send the real payload on tick 2, and mock/dummy chaff on all other ticks
             loop {
@@ -1627,7 +1629,7 @@ fn run_client_send(
                     println!("\n--- [TICK {}]: SENDER REAL/AUTHENTICATED MESSAGE ---", tick);
                     let msg_bytes = payload.as_slice();
                     let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
-                        .expect("Kunne ikke fragmentere");
+                        .expect("Could not fragment");
 
                     for share in shares.iter() {
                         let share_idx = share.id.value() as u64;
@@ -1670,7 +1672,7 @@ fn run_client_send(
                     // Use standard decoy coordinates and fake tags to keep format perfectly matched
                     let dummy_text = "Heartbeat telemetry data keeping connection flat";
                     let dummy_shares = fragment_data(dummy_text.as_bytes(), config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
-                        .expect("Kunne ikke fragmentere dummy");
+                        .expect("Could not fragment dummy");
 
                     for share in dummy_shares.iter() {
                         let mut x_points = Vec::with_capacity(share.data_points.len());
@@ -1703,7 +1705,7 @@ fn run_client_send(
 
                 // For simulation and test purposes, let's stop after tick 3
                 if tick >= 3 {
-                    println!("\nContinuous scheduled loops fuldført for simulation.");
+                    println!("\nContinuous scheduled loops completed for simulation.");
                     break;
                 }
             }
@@ -1711,18 +1713,18 @@ fn run_client_send(
         } else {
             // Non-continuous single transmission
             let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
-            println!("Modtog {} bytes live entropi.", live_entropy.len());
+            println!("Received {} bytes live entropy.", live_entropy.len());
             let msg_bytes = payload.as_slice();
             let shares = fragment_data(msg_bytes, config.crypto.threshold_k, config.crypto.total_shares_n, &mut rng)
-                .expect("Kunne ikke fragmentere data");
+                .expect("Could not fragment data");
 
-            println!("AEH-shards genereret, attesteret og steganografisk camoufleret:");
+            println!("AEH shards generated, attested, and steganographically camouflaged:");
 
             for share in shares.iter() {
                 let share_idx = share.id.value() as u64;
                 let mut share_ratchet = ratchet.clone();
                 share_ratchet.counter = share_idx;
-                let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Kunne ikke trække ratchet");
+                let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Could not step ratchet");
 
                 // Construct StealthIdentity using k_pool dynamically as the whitening factor
                 let stealth = StealthIdentity::new(anchor, k_pool);
@@ -1757,7 +1759,7 @@ fn run_client_send(
                 println!("\n--- [ {} ] ---", channel.name());
                 println!("{}", stego_text);
             }
-            println!("\nAEH-transmission fuldført med fuld steganografisk sløring og Wegman-Carter OTM-attestering.");
+            println!("\nAEH transmission completed with full steganographic concealment and Wegman-Carter OTM attestation.");
             return;
         }
     }
@@ -1806,13 +1808,13 @@ fn run_client_send(
 
     // Send to the first hop (Node 1)
     if let Some(addr_str) = config.routing_table.get(&1) {
-        let socket = UdpSocket::bind("0.0.0.0:0").expect("Kunne ikke binde klientsocket");
+        let socket = UdpSocket::bind("0.0.0.0:0").expect("Could not bind client socket");
         if let Ok(addr) = addr_str.parse::<SocketAddr>() {
             let _ = socket.send_to(&bytes, addr);
-            println!("Onion-pakke sendt til første hop {} ({})", 1, addr_str);
+            println!("Onion packet sent to first hop {} ({})", 1, addr_str);
         }
     } else {
-        println!("Fejl: Første hop (Node 1) blev ikke fundet i routingtabellen.");
+        println!("Error: First hop (Node 1) not found in routing table.");
     }
 }
 
@@ -1828,9 +1830,9 @@ fn run_client_receive(
     duress: bool,
 ) {
     if aeh {
-        println!("Henter live entropi fra offentlige kilder til transposition...");
+        println!("Fetching live entropy from public sources for transposition...");
         let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
-        println!("Modtog {} bytes live entropi.", live_entropy.len());
+        println!("Received {} bytes live entropy.", live_entropy.len());
 
         println!("Modtager via Ambient Entropy Harvesting (AEH)...");
         println!("Scanner simulerede steganografiske kanaler efter attesterede shards...");
@@ -1840,7 +1842,7 @@ fn run_client_receive(
         // Derive/Initialize StateRatchet for Bob
         let seed = if let Some(ref pwd) = password {
             let salt: &[u8] = if duress { b"scpst-aeh-decoy-salt" } else { b"scpst-aeh-true-salt" };
-            println!("Deriverer seed fra password vha. PBKDF2-HMAC-SHA256...");
+            println!("Deriving seed from password via PBKDF2-HMAC-SHA256...");
             StateRatchet::derive_seed(pwd, salt, 1000)
         } else {
             let mut s = [0u8; 32];
@@ -1865,7 +1867,7 @@ fn run_client_receive(
 
         let mut temp_rng = its_hardware::CliRng;
         let mock_shares = fragment_data(target_msg.as_bytes(), config.crypto.threshold_k, config.crypto.total_shares_n, &mut temp_rng)
-            .expect("Kunne ikke generere fragmenter");
+            .expect("Could not generate fragments");
 
         let channels = [
             AehChannel::Wikipedia,
@@ -1911,7 +1913,7 @@ fn run_client_receive(
         }
 
         if continuous {
-            println!("\nStarter kontinuerlig scheduled winnowing-loop...");
+            println!("\nStarting continuous scheduled winnowing loop...");
             println!("Scanner kanaler i faste intervaller á {} ms.", config.traffic.tick_rate_ms);
             let mut tick = 0u64;
 
@@ -1944,7 +1946,7 @@ fn run_client_receive(
                         if let Some(block) = channel.stego_decode(&text_to_decode) {
                             let mut share_ratchet = ratchet.clone();
                             share_ratchet.counter = block.share_id as u64;
-                            let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Kunne ikke trække ratchet");
+                            let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Could not step ratchet");
 
                             let stealth = StealthIdentity::new(anchor, k_pool);
                             let mut data_points = Vec::new();
@@ -1983,21 +1985,21 @@ fn run_client_receive(
                     }
 
                     // 4. Try to reconstruct
-                    println!("\nForsøger at rekonstruere klassificeret besked fra de verificerede kanaler...");
+                    println!("\nAttempting to reconstruct classified message from verified channels...");
                     if received_shares.len() >= config.crypto.threshold_k {
                         match reconstruct_data(&received_shares, config.crypto.threshold_k) {
                             Ok(msg_bytes) => {
                                 let secured = ZeroizedBuffer::new(msg_bytes);
                                 if let Ok(msg_str) = String::from_utf8(secured.data.clone()) {
-                                    println!("Succes! Rekonstrueret klassificeret besked: \"{}\"", msg_str);
+                                    println!("Success! Reconstructed classified message: \"{}\"", msg_str);
                                 }
                             }
                             Err(_) => {
-                                println!("Fejl: Kunne ikke genskabe besked.");
+                                println!("Error: Could not reconstruct message.");
                             }
                         }
                     } else {
-                        println!("Fejl: For få gyldige shares. Har {}, skal bruge {}.", received_shares.len(), config.crypto.threshold_k);
+                        println!("Error: Too few valid shares. Have {}, need {}.", received_shares.len(), config.crypto.threshold_k);
                     }
                 } else {
                     println!("\n--- [TICK {}]: RECEIVED CHAFF DECOY BLOCKS (WINNOWING ACTIVE) ---", tick);
@@ -2005,7 +2007,7 @@ fn run_client_receive(
                 }
 
                 if tick >= 3 {
-                    println!("\nContinuous scheduled loops fuldført for simulation.");
+                    println!("\nContinuous scheduled loops completed for simulation.");
                     break;
                 }
             }
@@ -2031,7 +2033,7 @@ fn run_client_receive(
                 if let Some(block) = channel.stego_decode(&text_to_decode) {
                     let mut share_ratchet = ratchet.clone();
                     share_ratchet.counter = block.share_id as u64;
-                    let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Kunne ikke trække ratchet");
+                    let (k_pool, k_mac, nonce) = share_ratchet.step().expect("Could not step ratchet");
 
                     let stealth = StealthIdentity::new(anchor, k_pool);
                     let mut data_points = Vec::new();
@@ -2069,29 +2071,29 @@ fn run_client_receive(
                 }
             }
 
-            println!("\nForsøger at rekonstruere klassificeret besked fra de verificerede kanaler...");
+            println!("\nAttempting to reconstruct classified message from verified channels...");
             if received_shares.len() >= config.crypto.threshold_k {
                 match reconstruct_data(&received_shares, config.crypto.threshold_k) {
                     Ok(msg_bytes) => {
                         let secured = ZeroizedBuffer::new(msg_bytes);
                         if let Ok(msg_str) = String::from_utf8(secured.data.clone()) {
-                            println!("Succes! Rekonstrueret klassificeret besked: \"{}\"", msg_str);
+                            println!("Success! Reconstructed classified message: \"{}\"", msg_str);
                         }
                     }
                     Err(_) => {
-                        println!("Fejl: Kunne ikke genskabe besked.");
+                        println!("Error: Could not reconstruct message.");
                     }
                 }
             } else {
-                println!("Fejl: For få gyldige shares. Har {}, skal bruge {}.", received_shares.len(), config.crypto.threshold_k);
+                println!("Error: Too few valid shares. Have {}, need {}.", received_shares.len(), config.crypto.threshold_k);
             }
             return;
         }
     }
 
-    println!("Lytter efter indkommende SSS-shares på port {}...", config.node.port);
+    println!("Listening for incoming SSS shares on port {}...", config.node.port);
     let bind_addr = format!("{}:{}", config.node.bind_address, config.node.port);
-    let socket = UdpSocket::bind(&bind_addr).expect("Kunne ikke binde UDP socket");
+    let socket = UdpSocket::bind(&bind_addr).expect("Could not bind UDP socket");
 
     let mut shares = Vec::<SssPackedShare>::new();
     let mut buf = [0u8; 1024];
@@ -2110,15 +2112,15 @@ fn run_client_receive(
                         offset += 4;
                     }
                 }
-                println!("Modtog Share ID: {}", id.value());
+                println!("Received Share ID: {}", id.value());
                 shares.push(SssPackedShare { id, data_points });
 
                 if shares.len() >= config.crypto.threshold_k {
-                    println!("Tærskel nået! Rekonstruerer besked...");
+                    println!("Threshold reached! Reconstructing message...");
                     if let Ok(msg_bytes) = reconstruct_data(&shares, config.crypto.threshold_k) {
                         let secured = ZeroizedBuffer::new(msg_bytes);
                         if let Ok(msg_str) = String::from_utf8(secured.data.clone()) {
-                            println!("Rekonstrueret besked: {}", msg_str);
+                            println!("Reconstructed message: {}", msg_str);
                         }
                     }
                     break;
@@ -2292,28 +2294,33 @@ fn run_fingerprint_erasure(
     output_format: its_fingerprint_erasure::OutputFormat,
 ) {
     if file_path.as_os_str().is_empty() || out_path.as_os_str().is_empty() {
-        println!("Fejl: fingerprint-erasure kræver --file og --out.");
+        eprintln!("Error: fingerprint-erasure requires --file/--in and --out.");
         return;
     }
     let want_otp = !out_otp_path.as_os_str().is_empty();
     if want_otp && pad_path.as_os_str().is_empty() {
-        println!("Fejl: --out-otp kræver --pad.");
+        eprintln!("Error: --out-otp requires --pad.");
         return;
     }
+    let quiet = stdio::is_stdio(&out_path);
 
-    let input = match std::fs::read(&file_path) {
+    let input = match stdio::read_bytes(&file_path) {
         Ok(bytes) => bytes,
         Err(e) => {
-            println!("Fejl: Kunne ikke læse input: {:?}", e);
+            eprintln!("Error: Could not read input: {:?}", e);
             return;
         }
     };
 
-    if pad_path.as_os_str().is_empty() && !want_otp {
-        println!("Advarsel: v0.8 anbefaler OTP — brug --pad og --out-otp for strict stack.");
+    if pad_path.as_os_str().is_empty() && !want_otp && !quiet {
+        println!("Warning: v0.8 recommends OTP — use --pad and --out-otp for strict stack.");
     }
 
-    let path_str = file_path.to_str().unwrap_or("");
+    let path_str = if stdio::is_stdio(&file_path) {
+        "stdin"
+    } else {
+        file_path.to_str().unwrap_or("")
+    };
     let declared_kind = its_fingerprint_erasure::kind_from_path(path_str);
     let declared_domain = its_fingerprint_erasure::domain_from_path(path_str);
     let mut opts = its_fingerprint_erasure::ErasureOptions::strict_stack();
@@ -2325,86 +2332,101 @@ fn run_fingerprint_erasure(
     let gamma_out = match its_fingerprint_erasure::erase_provenance(&input, opts) {
         Ok(outp) => outp,
         Err(e) => {
-            println!("Fejl under provenance erasure: {:?}", e);
+            eprintln!("Error during provenance erasure: {:?}", e);
             return;
         }
     };
 
-    if let Err(e) = std::fs::write(&out_path, &gamma_out.bytes) {
-        println!("Fejl: Kunne ikke skrive normaliseret output: {:?}", e);
+    if let Err(e) = stdio::write_bytes(&out_path, &gamma_out.bytes) {
+        eprintln!("Error: Could not write normalized output: {:?}", e);
         return;
     }
-    println!("Provenance erasure fuldført.");
-    println!("- Normaliseret: {:?}", out_path);
+    stdio::log_status(quiet, "Provenance erasure completed.");
+    if !quiet {
+        println!("- Normalized: {:?}", out_path);
+    }
 
     if want_otp {
         let mut pad = match its_fingerprint_erasure::PadFile::open(&pad_path) {
             Ok(p) => p,
             Err(e) => {
-                println!("Fejl: Pad-fil: {:?}", e);
+                eprintln!("Error: Pad file: {:?}", e);
                 return;
             }
         };
         match its_fingerprint_erasure::otp_mask(&gamma_out.bytes, &mut pad) {
             Ok(wire) => {
-                if let Err(e) = std::fs::write(&out_otp_path, &wire) {
-                    println!("Fejl: Kunne ikke skrive wire: {:?}", e);
+                if let Err(e) = stdio::write_bytes(&out_otp_path, &wire) {
+                    eprintln!("Error: Could not write wire: {:?}", e);
                     return;
                 }
-                println!("- Wire (OTP): {:?}", out_otp_path);
+                if !quiet {
+                    println!("- Wire (OTP): {:?}", out_otp_path);
+                }
             }
-            Err(e) => println!("Fejl under OTP mask: {:?}", e),
+            Err(e) => eprintln!("Error during OTP mask: {:?}", e),
         }
     }
 }
 
 fn run_time_lock(file_path: PathBuf, epochs: usize, out_path: PathBuf) {
     let mut rng = TimelockRng;
-    println!("Indlæser dokument til tidslåsning: {:?}", file_path);
+    let quiet = stdio::is_stdio(&out_path);
+    stdio::log_status(
+        quiet,
+        &format!("Loading document for time-locking: {:?}", file_path),
+    );
 
-    let message_bytes = match std::fs::read(&file_path) {
+    let message_bytes = match stdio::read_bytes(&file_path) {
         Ok(bytes) => bytes,
         Err(e) => {
-            println!("Fejl: Kunne ikke læse filen: {:?}", e);
+            eprintln!("Error: Could not read input: {:?}", e);
             return;
         }
     };
 
-    println!("Genererer hybrid SSS-Chained Time-Lock over {} epoker...", epochs);
-    println!("Dette beregner de asymmetriske primtal og RSA-modulus lokalt...");
+    stdio::log_status(
+        quiet,
+        &format!("Generating hybrid SSS-Chained Time-Lock over {} epochs...", epochs),
+    );
 
     match SssTimeLock::generate(&message_bytes, epochs, &mut rng) {
         Ok(puzzle) => {
             let text_puzzle = TimeLockText::from_core(&puzzle);
             let serialized = text_puzzle.serialize();
 
-            if let Err(e) = std::fs::write(&out_path, serialized) {
-                println!("Fejl: Kunne ikke gemme tidslåsen i filen: {:?}", e);
+            if let Err(e) = stdio::write_bytes(&out_path, serialized.as_bytes()) {
+                eprintln!("Error: Could not write time-lock: {:?}", e);
                 return;
             }
 
-            println!("Tidslås genereret med succes!");
-            println!("- Modulus M: {}", puzzle.m);
-            println!("- Base x: {}", puzzle.x);
-            println!("- Gemt i: {:?}", out_path);
-            println!("Du kan nu sikkert slette det originale dokument.");
+            stdio::log_status(quiet, "Time-lock generated successfully!");
+            if !quiet {
+                println!("- Modulus M: {}", puzzle.m);
+                println!("- Base x: {}", puzzle.x);
+                println!("- Saved to: {:?}", out_path);
+            }
         }
         Err(GenerateError::InvalidInput) => {
-            println!("Fejl: Ugyldige parametre (tom fil eller epochs=0).");
+            eprintln!("Error: Invalid parameters (empty file or epochs=0).");
         }
         Err(GenerateError::Rng(e)) => {
-            println!("Fejl under entropi-indsamling: {:?}", e);
+            eprintln!("Error during entropy collection: {:?}", e);
         }
     }
 }
 
 fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
-    println!("Indlæser tidslåst puslespil fra: {:?}", puzzle_path);
+    let quiet = stdio::is_stdio(&out_path);
+    stdio::log_status(
+        quiet,
+        &format!("Loading time-locked puzzle from: {:?}", puzzle_path),
+    );
 
-    let puzzle_content = match std::fs::read_to_string(&puzzle_path) {
+    let puzzle_content = match stdio::read_text(&puzzle_path) {
         Ok(content) => content,
         Err(e) => {
-            println!("Fejl: Kunne ikke læse tidslåsen: {:?}", e);
+            eprintln!("Error: Could not read time-lock: {:?}", e);
             return;
         }
     };
@@ -2412,43 +2434,57 @@ fn run_time_unlock(puzzle_path: PathBuf, out_path: PathBuf) {
     let text_puzzle = match TimeLockText::deserialize(&puzzle_content) {
         Ok(p) => p,
         Err(e) => {
-            println!("Fejl: Ugyldigt tidslås-filformat: {:?}", e);
+            eprintln!("Error: Invalid time-lock file format: {:?}", e);
             return;
         }
     };
 
     let puzzle = text_puzzle.to_core();
 
-    println!("Starter den sekventielle tids-omvej på din lokale CPU...");
-    println!("Udfører {} modulære kvadreringer... Snyd og genveje er umulige!", puzzle.t);
+    stdio::log_status(
+        quiet,
+        &format!(
+            "Starting time detour ({} epochs)...",
+            puzzle.t
+        ),
+    );
 
     let start_time = std::time::Instant::now();
 
     match puzzle.solve() {
         Ok(decrypted_bytes) => {
             let duration = start_time.elapsed();
-            println!("Tidslås oplåst på: {:.2?}", duration);
+            stdio::log_status(quiet, &format!("Time-lock unlocked in: {:.2?}", duration));
 
-            if let Err(e) = std::fs::write(&out_path, decrypted_bytes) {
-                println!("Fejl: Kunne ikke skrive det dekrypterede dokument: {:?}", e);
+            if let Err(e) = stdio::write_bytes(&out_path, &decrypted_bytes) {
+                eprintln!("Error: Could not write decrypted output: {:?}", e);
                 return;
             }
 
-            println!("Beskeden er dekrypteret og gemt i: {:?}", out_path);
+            if !quiet {
+                println!("Message decrypted and saved to: {:?}", out_path);
+            }
         }
         Err(_) => {
-            println!("Fejl: Kunne ikke dekryptere tidslåsen (muligvis korrupt data).");
+            eprintln!("Error: Could not decrypt time-lock (possibly corrupt data).");
         }
     }
 }
 
 fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
-    println!("Indlæser tidslåst puslespil til deniability-test: {:?}", puzzle_path);
+    let quiet = stdio::is_stdio(&out_path);
+    stdio::log_status(
+        quiet,
+        &format!(
+            "Loading time-locked puzzle for deniability test: {:?}",
+            puzzle_path
+        ),
+    );
 
-    let puzzle_content = match std::fs::read_to_string(&puzzle_path) {
+    let puzzle_content = match stdio::read_text(&puzzle_path) {
         Ok(content) => content,
         Err(e) => {
-            println!("Fejl: Kunne ikke læse tidslåsen: {:?}", e);
+            eprintln!("Error: Could not read time-lock: {:?}", e);
             return;
         }
     };
@@ -2456,7 +2492,7 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     let text_puzzle = match TimeLockText::deserialize(&puzzle_content) {
         Ok(p) => p,
         Err(e) => {
-            println!("Fejl: Ugyldigt tidslås-filformat: {:?}", e);
+            println!("Error: Invalid time-lock file format: {:?}", e);
             return;
         }
     };
@@ -2465,16 +2501,16 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     let decoy_bytes = decoy_msg.as_bytes();
 
     if decoy_bytes.len() != puzzle.initial_share_1.len() {
-        println!("Advarsel: Dækhistorien skal have nøjagtig samme længde som den krypterede payload ({} bytes).", puzzle.initial_share_1.len());
-        println!("Dækhistorien vil blive afskåret eller polstret for at matche længden.");
+        println!("Warning: Cover story must be exactly the same length as the encrypted payload ({} bytes).", puzzle.initial_share_1.len());
+        println!("Cover story will be truncated or padded to match the length.");
     }
 
     // Pad or truncate decoy message to match the puzzle payload length exactly
     let mut padded_decoy = decoy_bytes.to_vec();
     padded_decoy.resize(puzzle.initial_share_1.len(), b' ');
 
-    println!("Udfører deniability-transposition over SSS-transitions-matrixen...");
-    println!("Dette beviser, at dækhistorien er matematisk 100% konsistent med transitions-vektorerne!");
+    println!("Performing deniability transposition over SSS transition matrix...");
+    println!("This proves the cover story is mathematically 100% consistent with the transition vectors!");
 
     // Solve to get the valid Y first
     let mut cur = puzzle.x as u128;
@@ -2525,14 +2561,19 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
     let alt_text_puzzle = TimeLockText::from_core(&alt_puzzle);
     let serialized_alt = alt_text_puzzle.serialize();
 
-    if let Err(e) = std::fs::write(&out_path, serialized_alt) {
-        println!("Fejl: Kunne ikke gemme den alternative tidslås: {:?}", e);
+    if let Err(e) = stdio::write_bytes(&out_path, serialized_alt.as_bytes()) {
+        eprintln!("Error: Could not save alternative time-lock: {:?}", e);
         return;
     }
 
-    println!("Succes! Alternativ 'bageopskrift' tidslås genereret og gemt i: {:?}", out_path);
-    println!("Hvis nogen tvinger dig til at løse puslespillet, kan du udlevere denne alternative fil.");
-    println!("Den vil dekryptere til din dækhistorie: \"{}\"", String::from_utf8_lossy(&padded_decoy).trim());
+    stdio::log_status(quiet, "Success! Alternative time-lock generated.");
+    if !quiet {
+        println!("Saved to: {:?}", out_path);
+        println!(
+            "Cover story on unlock: \"{}\"",
+            String::from_utf8_lossy(&padded_decoy).trim()
+        );
+    }
 }
 
 fn run_client_export_share(config: Config, msg: String, threshold_k: Option<usize>, total_shares_n: Option<usize>) {
@@ -2543,24 +2584,24 @@ fn run_client_export_share(config: Config, msg: String, threshold_k: Option<usiz
     let mut rng = its_hardware::CliRng;
     match fragment_data(msg.as_bytes(), k, n, &mut rng) {
         Ok(shares) => {
-            println!("--- REPRODUCIBLE PHYSICAL SSS SHARES (KOPIDUPLICERBARE PAPIRBLOKKE) ---");
+            println!("--- REPRODUCIBLE PHYSICAL SSS SHARES (COPYABLE PAPER BLOCKS) ---");
             for share in &shares {
                 let encoded = export_analog_share(share);
                 println!("{}", encoded);
             }
             println!("----------------------------------------------------------------------");
-            println!("Opbevar disse strenge sikkert på uafhængige analoge medier (papir, QR-koder, mikrofilm).");
-            println!("Enhver samling af {} ud af disse {} strenge kan fuldstændigt rekonstruere beskeden.", k, n);
+            println!("Store these strings safely on independent analog media (paper, QR codes, microfilm).");
+            println!("Any collection of {} out of these {} strings can fully reconstruct the message.", k, n);
         }
         Err(_) => {
-            println!("Fejl under fragmentering af data.");
+            println!("Error fragmenting data.");
         }
     }
 }
 
 fn run_client_import_share(config: Config, shares_input: Vec<String>, threshold_k: Option<usize>) {
     let k = threshold_k.unwrap_or(config.crypto.threshold_k);
-    println!("Analog-import: Forsøger at rekonstruere besked ud fra {} analoge dele (k={}).", shares_input.len(), k);
+    println!("Analog import: Attempting to reconstruct message from {} analog shares (k={}).", shares_input.len(), k);
 
     let mut parsed_shares = Vec::new();
     for input in &shares_input {
@@ -2570,29 +2611,29 @@ fn run_client_import_share(config: Config, shares_input: Vec<String>, threshold_
         }
         match import_analog_share(trimmed) {
             Ok(share) => {
-                println!("Indlæste gyldig share ID: {}", share.id.value() as u32);
+                println!("Loaded valid share ID: {}", share.id.value() as u32);
                 parsed_shares.push(share);
             }
             Err(e) => {
-                println!("Fejl ved indlæsning af share \"{}\": {}", trimmed, e);
+                println!("Error loading share \"{}\": {}", trimmed, e);
                 return;
             }
         }
     }
 
     if parsed_shares.is_empty() {
-        println!("Fejl: Ingen gyldige analoge dele indtastet.");
+        println!("Error: No valid analog shares entered.");
         return;
     }
 
     match reconstruct_data(&parsed_shares, k) {
         Ok(secret_bytes) => {
-            println!("\n--- REKONSTRUERET HEMMELIGHED (100% KORREKT) ---");
+            println!("\n--- RECONSTRUCTED SECRET (100% CORRECT) ---");
             println!("{}", String::from_utf8_lossy(&secret_bytes));
             println!("-------------------------------------------------");
         }
         Err(_) => {
-            println!("Fejl: Rekonstruktion fejlede. Muligvis for få dele (har {}, behøver k={}), eller delene tilhører ikke samme hemmelighed.", parsed_shares.len(), k);
+            println!("Error: Reconstruction failed. Possibly too few shares (have {}, need k={}), or shares belong to different secrets.", parsed_shares.len(), k);
         }
     }
 }
