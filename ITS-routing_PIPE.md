@@ -60,7 +60,7 @@ its_otm sign --state alice.state --in msg.wire --out msg.otm
 
 Reverse after delay: `time-unlock` → `decrypt`.
 
-Demo: `scripts/pipe_timelock.sh`
+Demo: `scripts/pipe_timelock.sh` · ITS E2E: `scripts/pipe_its_e2e.sh`
 
 ---
 
