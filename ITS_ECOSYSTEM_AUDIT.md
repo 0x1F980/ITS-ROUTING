@@ -1,7 +1,7 @@
 # ITS Ecosystem Audit: Doc-Sandhed, ITS, og Død Kode
 
 **Dato:** 2026-06-14  
-**Fix status:** **Fixed** — 2026-06-16 (ecosystem audit fix plan executed)  
+**Fix status:** **Fixed** — 2026-06-16 (ecosystem audit fix plan) · **Dominance pass** 2026-06-17 (v0.10.0 wire epoch, compact-wire Lean, KM `--wire-only`, ROUTING pipe E2E)  
 **Scope:** 6 sibling repos  
 **Primær læsekilde:** `*_SECURITY_LAYERS.md`, `*_FORMAL_VERIFICATION.md`, `*_mathematics.md` + Rust/Lean
 

@@ -19,6 +19,7 @@ ITS-routing **orchestrates** upstream crates. It does not replace their proofs �
 
 | Subcommand / flag | Upstream crate | ITS scope doc |
 |-------------------|----------------|---------------|
+| ITS-asymmetric wire / bundle | ITS-asymmetric | [ITS-asymmetric_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ASSYMETRIC/blob/main/ITS-asymmetric_SECURITY_LAYERS.md), [UNIFIED_THREAT_MODEL](https://github.com/0x1F980/ITS-ASSYMETRIC/blob/main/ITS-asymmetric_UNIFIED_THREAT_MODEL.md), [Wire Profile draft](docs/ITS_WIRE_PROFILE_DRAFT_v0.1.md) |
 | Operator vault, contacts, `--ratchet-seed-file` source | **ITS-KeyManagement** | [ITS-KeyManagement_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-KeyManagement/blob/main/ITS-KeyManagement_SECURITY_LAYERS.md) |
 | `--ratchet-seed-file` (transport) | ITS-routing AEH path | This repo — accepts **derived bytes only**, never passwords |
 | Default send stack (Γ + OTP + chaff) | ITS + ITS-fingerprint_erasure | [ITS_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS/blob/master/ITS_SECURITY_LAYERS.md), [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F464/ITS-fingerprint_erasure/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
