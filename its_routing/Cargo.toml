@@ -1,10 +1,10 @@
 [package]
-name = "its_net_cli"
+name = "its_routing"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "its-net"
+name = "its-routing"
 path = "src/main.rs"
 
 [dependencies]

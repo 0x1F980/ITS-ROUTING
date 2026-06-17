@@ -1,18 +1,18 @@
-# ITS-net: Network-Level Threat Model & Transition Strategy (ITS-net_vision)
+# ITS-routing: Network-Level Threat Model & Transition Strategy (ITS-routing_vision)
 
 ## License: GNU GPLv3 Only
 ## Target: Network Security Researchers, Cryptographic Auditors & Tactical Operations Teams
 
-> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md).
+> **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md).
 
 
-This document details the network-level threat landscape and operational transitions managed by `ITS-net`.
+This document details the network-level threat landscape and operational transitions managed by `ITS-routing`.
 
 ---
 
 ## 1. The Network Threat Model
 
-We assume that the network transport layer is inherently hostile. The network daemon (`its_net_cli`) is designed specifically to operate under a complete infrastructure compromise.
+We assume that the network transport layer is inherently hostile. The network daemon (`its_routing`) is designed specifically to operate under a complete infrastructure compromise.
 
 ### 1. Global Passive Surveillance (Traffic Volume Analysis):
 Even if packets are perfectly encrypted, an omnipotent adversary (Eve) who monitors all internet backbones can observe traffic volumes. If Alice sends a burst of data, and Bob receives a corresponding burst of data on the other side of the world, Eve can easily correlate their connection using volume/packet-count matching, destroying their anonymity.
@@ -27,7 +27,7 @@ Eve owns the routing infrastructure. She can intercept, inject, modify, or delay
 
 ## 2. Structural Transport Mitigations
 
-`ITS-net` implements a multi-layered defense to neutralize these network-level vectors:
+`ITS-routing` implements a multi-layered defense to neutralize these network-level vectors:
 
 ### Constant-Rate Chaffing (Dummy Injection):
 Our network courier maintains a perfectly constant, invariant packet transmission rate. If there are no real SSS-shares in the queue, the daemon automatically generates and transmits cryptographically indistinguishable dummy packets ("chaff"). This converts the network stream into a flat, constant-rate profile, making traffic volume analysis completely blind.
@@ -35,17 +35,14 @@ Our network courier maintains a perfectly constant, invariant packet transmissio
 ### Lorenz Chaotic Jitter:
 To prevent Eve from filtering dummy packets based on periodic timing analysis, the packet transmission intervals are randomized using a Lorenz chaotic system calculated over the finite field. Since chaotic trajectories are non-periodic and highly sensitive to initial conditions, Eve cannot perform statistical de-jittering.
 
-### Active Anomaly Detection:
-The daemon continuously monitors incoming traffic patterns, round-trip times, and packet drop rates. If it detects any statistical anomaly (e.g., Eve attempting to perform timing correlation or selective packet dropping), the self-healing router immediately terminates the compromised tunnel and dynamically establishes a fresh, asymmetric path.
-
 ---
 
 ## 3. The Active vs. Passive Operational Transition
 
-`ITS-net` offers a tactical choice between two operational modes, depending on the required level of anonymity:
+`ITS-routing` offers a tactical choice between two operational modes, depending on the required level of anonymity:
 
 ### Option A: Active Onion Routing (Concentrated Culpability)
-*   **Tactical Profile:** Perfect cryptographic deniability. The user runs an active node, participating in the multi-hop onion routing mesh. If physically coerced, the **Dual-Seed Duress Ratchet** allows Bob to safely reveal a decoy password, unlocking harmless recipes.
+*   **Tactical Profile:** Perfect cryptographic deniability. The user runs an active node, participating in the multi-hop onion routing mesh. Under physical coercion, **[ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement)** dual-password duress exports a decoy ratchet seed for `its-routing client-send --ratchet-seed-file` while showing a benign contact view.
 *   **Operational Risk:** High behavioral visibility. Eve can easily detect that you are running an active routing daemon. While she cannot read the data, the mere act of participating is visible on your network profile.
 
 ### Option B: Ambient Entropy Harvesting (AEH) (Parasitic Diffused Culpability)

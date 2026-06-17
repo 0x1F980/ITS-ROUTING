@@ -1,4 +1,4 @@
-#compdef its-net
+#compdef its-routing
 
 _its_net() {
     local line
@@ -12,7 +12,7 @@ _its_net() {
 
     case $state in
         cmds)
-            _values "its-net command" \
+            _values "its-routing command" \
                 'start-node[Start a bare-metal active VPS routing node]' \
                 'client-send[Send an Onion-encrypted, fragmented packet]' \
                 'client-receive[Receive, reconstruct and verify packets]' \

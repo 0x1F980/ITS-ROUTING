@@ -1,4 +1,4 @@
-# ITS-net: Security Layers & ITS Scope (ITS-net_SECURITY_LAYERS)
+# ITS-routing: Security Layers & ITS Scope (ITS-routing_SECURITY_LAYERS)
 
 ## License: GNU GPLv3 Only
 ## Target: Auditors, AI-assisted reviewers, integrators
@@ -11,7 +11,7 @@
 
 ## 1. Role
 
-ITS-net **orchestrates** upstream crates. It does not replace their proofs — it routes operators to the correct **per-layer** scope document.
+ITS-routing **orchestrates** upstream crates. It does not replace their proofs — it routes operators to the correct **per-layer** scope document.
 
 ---
 
@@ -19,6 +19,8 @@ ITS-net **orchestrates** upstream crates. It does not replace their proofs — i
 
 | Subcommand / flag | Upstream crate | ITS scope doc |
 |-------------------|----------------|---------------|
+| Operator vault, contacts, `--ratchet-seed-file` source | **ITS-KeyManagement** | [ITS-KeyManagement_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-KeyManagement/blob/main/ITS-KeyManagement_SECURITY_LAYERS.md) |
+| `--ratchet-seed-file` (transport) | ITS-routing AEH path | This repo — accepts **derived bytes only**, never passwords |
 | Default send stack (Γ + OTP + chaff) | ITS + ITS-fingerprint_erasure | [ITS_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS/blob/master/ITS_SECURITY_LAYERS.md), [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F464/ITS-fingerprint_erasure/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
 | `--strict-stack` | FE + ITS wire stack | FE scope + core ITS §3 |
 | `time-lock` / `time-unlock` / `time-deny` | ITS-self_enclosed_timelock | [ITS-self_enclosed_timelock_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_SECURITY_LAYERS.md) |
@@ -53,17 +55,17 @@ Each layer must be evaluated separately. See ecosystem master FAQ.
 
 ## 5. Do not misread (auditors / AI)
 
-1. **"ITS-net uses hashing"** — Trace the subcommand; hashes may be build/AEH paths, not WC-MAC tags.
+1. **"ITS-routing uses hashing"** — Trace the subcommand; hashes may be build/AEH paths, not WC-MAC tags.
 
 2. **"time-lock is fully ITS"** — RSW **squaring** is computational delay; the puzzle is **ITS** because RSW output $Y$ is **chained** into SSS ($s_{2,0} = (Y+m) \bmod p$). See timelock SECURITY_LAYERS.
 
-3. **Rejecting ITS-net for glue code** — Wrong unit of analysis; follow the table in §2.
+3. **Rejecting ITS-routing for glue code** — Wrong unit of analysis; follow the table in §2.
 
 ---
 
 ## 6. Cross-links
 
 - [README.md](README.md)
-- [ITS-net_HEADS_UP.md](ITS-net_HEADS_UP.md)
-- [ITS-net_mathematics.md](ITS-net_mathematics.md)
-- [ITS-net_manual.md](ITS-net_manual.md)
+- [ITS-routing_HEADS_UP.md](ITS-routing_HEADS_UP.md)
+- [ITS-routing_mathematics.md](ITS-routing_mathematics.md)
+- [ITS-routing_manual.md](ITS-routing_manual.md)

@@ -1,21 +1,21 @@
-# ITS-net: Transport Use-Cases, Network Integration & Transport Fork Guide (ITS-net_usecase)
+# ITS-routing: Transport Use-Cases, Network Integration & Transport Fork Guide (ITS-routing_usecase)
 
 ## License: GNU GPLv3 Only
 ## Target: Network Security Engineers, Protocol Forkers & Tactical Node Operators
 
-> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md).
+> **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md).
 
 
 ---
 
 ## 1. Real-World & Tactical Use-Cases
 
-The `its_net_cli` daemon (executable name: `its-net`) implements the active-transport network logic of our Information-Theoretic Secrecy routing. Core network deployment use-cases include:
+The `its_routing` daemon (executable name: `its-routing`) implements the active-transport network logic of our Information-Theoretic Secrecy routing. Core network deployment use-cases include:
 
 ### Tactical Scenario 1: Metadata-Invariant Anonymity Tunnel
 * **Objective:** Establish an unbreakable communication link between Alice and Bob that completely hides *when* they are communicating and *how much* data they are sending.
 * **Mechanism:** Constant-Rate Chaffing + Lorenz Chaotic Jitter.
-* **Deployment:** When active, the `its-net` daemon sends packets over the wire at a strictly uniform rate. If Alice has no real SSS-shares to transmit, the daemon automatically generates and sends dummy "chaff" packets. The transmission timing intervals are randomized using a finite field chaotic Lorenz Attractor. Eve's global passive ISP recorders observe only flat, non-correlated statistical white noise, completely neutralizing timing-correlation and volume analysis.
+* **Deployment:** When active, the `its-routing` daemon sends packets over the wire at a strictly uniform rate. If Alice has no real SSS-shares to transmit, the daemon automatically generates and sends dummy "chaff" packets. The transmission timing intervals are randomized using a finite field chaotic Lorenz Attractor. Eve's global passive ISP recorders observe only flat, non-correlated statistical white noise, completely neutralizing timing-correlation and volume analysis.
 
 ### Tactical Scenario 2: Morphic Blinding Packet-Mixing Node
 * **Objective:** Operate an intermediate routing node that mixes traffic from multiple active paths without having access to decrypted payloads or keys, and without letting Eve track packets entering vs. leaving the node.
@@ -29,8 +29,8 @@ The `its_net_cli` daemon (executable name: `its-net`) implements the active-tran
 
 ### Tactical Scenario 4: Air-Gapped Document Time-Lock (Dead-Man Custody)
 * **Objective:** Encrypt a sensitive local document so it cannot be read until a fixed amount of sequential CPU work has elapsed, with perfect deniability if the operator is coerced.
-* **Mechanism:** `ITS-self_enclosed_timelock` via `its-net time-lock`, `time-unlock`, and `time-deny`.
-* **Deployment:** On an air-gapped terminal, run `its-net time-lock --file secret.pdf --epochs 1000000 --out secret.its`, then securely erase the plaintext. After the delay, `its-net time-unlock --puzzle secret.its --out secret.pdf` recovers the document. Under duress, `its-net time-deny` produces an alternative `.its` file that decrypts to a harmless cover story.
+* **Mechanism:** `ITS-self_enclosed_timelock` via `its-routing time-lock`, `time-unlock`, and `time-deny`.
+* **Deployment:** On an air-gapped terminal, run `its-routing time-lock --file secret.pdf --epochs 1000000 --out secret.its`, then securely erase the plaintext. After the delay, `its-routing time-unlock --puzzle secret.its --out secret.pdf` recovers the document. Under duress, `its-routing time-deny` produces an alternative `.its` file that decrypts to a harmless cover story.
 
 ### Tactical Scenario 5: Public OTM Integrity Audit
 * **Objective:** Allow any third party to verify AEH/sneakernet share integrity without access to the signer's ratchet or trapdoor.
@@ -41,22 +41,22 @@ The `its_net_cli` daemon (executable name: `its-net`) implements the active-tran
 
 ## 2. Network Integration Guide
 
-`its_net_cli` depends on **`ITS-self_enclosed_timelock`** for time-lock operations and **`ITS-OTM_public_attestation`** for Wegman-Carter OTM verification in AEH receive paths. Routing, onion mixing, and SSS fragmentation continue to use `ITS` (`core_logic`, which re-exports `core_logic::otm::*`).
+`its_routing` depends on **`ITS-self_enclosed_timelock`** for time-lock operations and **`ITS-OTM_public_attestation`** for Wegman-Carter OTM verification in AEH receive paths. Routing, onion mixing, and SSS fragmentation continue to use `ITS` (`core_logic`, which re-exports `core_logic::otm::*`).
 
-The CLI client (`its-net`) can be integrated alongside other local desktop and mobile applications (such as a local chat app, a secure email client, or an administrative dashboard) to serve as their secure transport hub.
+The CLI client (`its-routing`) can be integrated alongside other local desktop and mobile applications (such as a local chat app, a secure email client, or an administrative dashboard) to serve as their secure transport hub.
 
-### Topology: Integrating `its-net` as a Local Transport Hub
+### Topology: Integrating `its-routing` as a Local Transport Hub
 
 ```
 +--------------------+        +--------------------+
-| Local Chat App /   |        |  its-net Daemon    |             Unsecured Wire
+| Local Chat App /   |        |  its-routing Daemon    |             Unsecured Wire
 | Security Frontend  | -----> | (Local Loopback    | --------> (Constant-Rate Chaff)
 |  (User Input)      |        |   on Port 127.0.0.1|             (Lorenz Jitter)
 +--------------------+        +--------------------+
 ```
 
 ### Configuration Syntax (`config.toml`)
-Configure the `its-net` daemon to launch a local listener and establish tunnels with peer nodes:
+Configure the `its-routing` daemon to launch a local listener and establish tunnels with peer nodes:
 
 ```toml
 [node]
@@ -80,10 +80,10 @@ clue_offset = 12
 
 ## 3. How to Fork & Extend the Network Engine
 
-Downstream forkers can extend `its-net` to support alternative transport protocols, mesh topologies, or custom steganographic media pipelines.
+Downstream forkers can extend `its-routing` to support alternative transport protocols, mesh topologies, or custom steganographic media pipelines.
 
 ### Implementing Alternative Transports (WebSockets, LoRa, Bluetooth Mesh)
-Currently, `its-net` routes over raw UDP. If your application targets low-power mesh radios (e.g., **LoRa** or **Bluetooth LE**), you can implement the `PacketCourier` trait:
+Currently, `its-routing` routes over raw UDP. If your application targets low-power mesh radios (e.g., **LoRa** or **Bluetooth LE**), you can implement the `PacketCourier` trait:
 
 1. **Implement `PacketCourier` for LoRa:**
    ```rust

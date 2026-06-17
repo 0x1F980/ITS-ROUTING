@@ -1,9 +1,9 @@
-# ITS-net: Tactical Heads-Up, Threat Profile & Worst-Case Survival Guide (ITS-net_HEADS_UP)
+# ITS-routing: Tactical Heads-Up, Threat Profile & Worst-Case Survival Guide (ITS-routing_HEADS_UP)
 
 ## License: GNU GPLv3 Only
 ## Target: Network Security Researchers, Cryptographic Auditors & Tactical Operations Teams
 
-> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) — evaluate upstream crates per layer.
+> **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) — evaluate upstream crates per layer.
 
 
 ---
@@ -11,9 +11,9 @@
 ## Section A: Prerequisite for Validity
 
 ### The Absolute Endpoint Constraint:
-All network-level anonymization, constant-rate chaffing loops, and chaotic de-correlation mechanisms in `ITS-net` are strictly predicated on the **host security of the local execution endpoint**.
+All network-level anonymization, constant-rate chaffing loops, and chaotic de-correlation mechanisms in `ITS-routing` are strictly predicated on the **host security of the local execution endpoint**.
 
-If an adversary has compromised Bob's operating system with a resident network tap or a software-level Trojan that reads packets directly from the loopback interface or memory queue before they are passed to the physical network layer, our traffic-obfuscation boundaries can be bypassed. While our `its_net_cli` daemon hides timing signatures over the physical network wire, it cannot protect Bob if his active queue structures are read directly from RAM. Absolute control and auditing of the local execution host are the non-negotiable prerequisites for all network-level security properties.
+If an adversary has compromised Bob's operating system with a resident network tap or a software-level Trojan that reads packets directly from the loopback interface or memory queue before they are passed to the physical network layer, our traffic-obfuscation boundaries can be bypassed. While our `its_routing` daemon hides timing signatures over the physical network wire, it cannot protect Bob if his active queue structures are read directly from RAM. Absolute control and auditing of the local execution host are the non-negotiable prerequisites for all network-level security properties.
 
 ---
 
@@ -29,7 +29,7 @@ We operate under the ultimate trilateral threat scenario, where the adversary, *
 
 ## Section C: Defensive Impregnability (The Defense)
 
-Even under this absolute physical domain control, `ITS-net` establishes absolute, unbreakable communications security by implementing our defensive protocols:
+Even under this absolute physical domain control, `ITS-routing` establishes absolute, unbreakable communications security by implementing our defensive protocols:
 
 ### 1. Constant-Rate Chaffing (Dummy Injection):
 To defeat traffic volume analysis, our network courier maintains a perfectly constant, invariant packet transmission rate. If there are no real SSS-shares in the queue, the daemon automatically generates and transmits cryptographically indistinguishable dummy packets ("chaff"). This converts the network stream into a flat, constant-rate profile, making traffic volume analysis completely blind.
@@ -46,18 +46,18 @@ Under extreme requirements, Bob must completely decouple his terminal from any p
 ### 5. Hermetic Prebuilt Binaries:
 To guarantee absolute, untampered runtime execution in offline zones, the system provides precompiled, cryptographically hashed, static prebuilt binaries. Generated through our hermetic Nix and Docker reproducible build pipelines, these binaries can be audited and signed on verified master devices, distributed via write-once physical media (e.g., optical CD-Rs), and executed on offline nodes without requiring external compilers, internet links, or dynamically linked package caches. This eliminates any possibility of compiler-inserted backdoors or dynamic-link interception.
 
-### 6. Duress Ratchets:
-To survive physical coercion, the system utilizes a Dual-Seed Duress Ratchet. If Bob is forced to input his password, entering a decoy password derives a decoy seed that unlocks completely benign files, while immediately purging the master key registers.
+### 6. Duress ratchets (ITS-KeyManagement):
+Operator vault passwords and the **Dual-Seed Duress Ratchet** live in **[ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement)**, not in ITS-routing. If Bob is coerced, a decoy password derives a decoy ratchet seed for transport while the vault exposes a decoy contact view. Export seeds with `its-km export-ratchet-seed --duress` before `its-routing client-send --ratchet-seed-file`.
 
 ### 6. Heartbeat Self-Wipe:
 The physical terminal requires a continuous, scheduled heartbeat signal from the operator. If the operator is seized, the absence of the heartbeat immediately triggers an automated memory sanitization routine, writing zeros to all sensitive registers using volatile writes and sequentially consistent compiler fences (`SeqCst`).
 
 ### 7. Offline Time-Lock Custody (`ITS-self_enclosed_timelock`):
 For documents that must remain unreadable until sequential CPU work completes:
-1. On an air-gapped host: `its-net time-lock --file secret.pdf --epochs N --out secret.its`
+1. On an air-gapped host: `its-routing time-lock --file secret.pdf --epochs N --out secret.its`
 2. Securely erase the plaintext original.
-3. After the delay: `its-net time-unlock --puzzle secret.its --out secret.pdf`
-4. Under coercion: `its-net time-deny --puzzle secret.its --decoy "Cover story" --out decoy.its` — hand Eve the decoy puzzle file.
+3. After the delay: `its-routing time-unlock --puzzle secret.its --out secret.pdf`
+4. Under coercion: `its-routing time-deny --puzzle secret.its --decoy "Cover story" --out decoy.its` — hand Eve the decoy puzzle file.
 
 CPU thermal and TEMPEST guidance for long squaring runs: [ITS-self_enclosed_timelock_HEADS_UP.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_HEADS_UP.md).
 
@@ -83,15 +83,15 @@ Our strict mathematical boundaries completely overrule both backdoored software 
    Two layers: **Γ** (Church-Rosser universal NF — Bob accepts functional R, not Eve's bits) then **OTP** (wire, I(X;F)=0). **v0.8:** `--fingerprint-erasure` defaults to strict stack (extended mode) + requires OTP pad + chaff; escape `--fe-permissive`. Post-save: `its_fe watch --dir DIR --in-place`.
    ```bash
    # Strict-stack send (strict policy + extended mode + domain; pair with --fe-pad + chaff daemon)
-   its-net client-send --file song.wav --dest 3 --fingerprint-erasure \
+   its-routing client-send --file song.wav --dest 3 --fingerprint-erasure \
      --fe-strict-stack --fe-kind audio --fe-domain continuous \
      --fe-pad offline.pad --config config.toml
 
    # Permissive Γ (requires --fe-permissive feature)
-   its-net client-send --file tainted.jpg --dest 3 --fingerprint-erasure --fe-permissive --config config.toml
+   its-routing client-send --file tainted.jpg --dest 3 --fingerprint-erasure --fe-permissive --config config.toml
 
    # Standalone offline
-   its-net fingerprint-erasure --file tainted.jpg --out clean.png --pad offline.pad --out-otp wire.bin
+   its-routing fingerprint-erasure --file tainted.jpg --out clean.png --pad offline.pad --out-otp wire.bin
    its_fe process --in tainted.jpg --out clean.png --strict-stack --kind image --domain continuous
    its_fe otp-mask --in clean.png --pad offline.pad --out wire.bin
    ```

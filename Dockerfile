@@ -5,7 +5,7 @@ FROM rust:1.80-alpine as builder
 
 RUN apk add --no-cache musl-dev
 
-WORKDIR /usr/src/its-net
+WORKDIR /usr/src/its-routing
 
 # Copy the entire workspace source files
 COPY . .
@@ -18,6 +18,6 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 FROM scratch
 
 # Copy only the statically compiled, stripped binaries
-COPY --from=builder /usr/src/its-net/target/x86_64-unknown-linux-musl/release/its-net /its-net
+COPY --from=builder /usr/src/its-routing/target/x86_64-unknown-linux-musl/release/its-routing /its-routing
 
-ENTRYPOINT ["/its-net"]
+ENTRYPOINT ["/its-routing"]

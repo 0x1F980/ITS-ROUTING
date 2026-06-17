@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# ITS-net timelock pipe demo (low epoch count — demo only).
+# ITS-routing timelock pipe demo (low epoch count — demo only).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BIN="${ITS_NET_BIN:-$ROOT/target/release/its-net}"
+BIN="${ITS_NET_BIN:-$ROOT/target/release/its-routing}"
 
 if [[ ! -x "$BIN" ]]; then
-  echo "Build: cd its_net_cli && cargo build --release" >&2
+  echo "Build: cd its_routing && cargo build --release" >&2
   exit 1
 fi
 
-MSG="ITS-net timelock pipe $(date +%s)"
+MSG="ITS-routing timelock pipe $(date +%s)"
 EPOCHS="${PIPE_DEMO_EPOCHS:-25}"
 
 OUT=$(

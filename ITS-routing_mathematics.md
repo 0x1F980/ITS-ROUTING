@@ -1,12 +1,12 @@
-# ITS-net: Formally Proven Network & Traffic Obfuscation Proofs (ITS-net_mathematics)
+# ITS-routing: Formally Proven Network & Traffic Obfuscation Proofs (ITS-routing_mathematics)
 
 ## License: GNU GPLv3 Only
 ## Target: Mathematicians, Cryptographers & Traffic Analysis Auditors
 
-> **Scope:** [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md) — network proofs orchestrate upstream ITS layers.
+> **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) — network proofs orchestrate upstream ITS layers.
 
 
-This document provides formal mathematical and information-theoretic proofs for the traffic obfuscation and packet-mixing mechanisms implemented in `ITS-net`.
+This document provides formal mathematical and information-theoretic proofs for the traffic obfuscation and packet-mixing mechanisms implemented in `ITS-routing`.
 
 ---
 

@@ -1,4 +1,4 @@
-# ITS-net — formal verification (W6)
+# ITS-routing — formal verification (W6)
 
 ## License: GNU GPLv3 Only
 
@@ -7,7 +7,7 @@
 ## Build
 
 ```bash
-cd its_net_cli && cargo test
+cd its_routing && cargo test
 ```
 
 Lean composition (upstream ITS repo): [ItsNet/Composition.lean](https://github.com/0x1F464/ITS/tree/master/mathematics/ItsMath/ItsNet/Composition.lean)
@@ -18,7 +18,7 @@ Master tracker: [VERIFICATION_STATUS.md](https://github.com/0x1F464/ITS/tree/mas
 
 ## Subcommand → proof map
 
-| `its-net` path | Upstream kernel | Status |
+| `its-routing` path | Upstream kernel | Status |
 |----------------|-----------------|--------|
 | strict stack send (Γ + OTP + chaff) | `composed_send_roundtrip` | **Proved** |
 | `--fingerprint-erasure` | `its_fingerprint_erasure` strict stack | **Proved (Rust)** |
@@ -32,11 +32,11 @@ Master tracker: [VERIFICATION_STATUS.md](https://github.com/0x1F464/ITS/tree/mas
 
 | Crate | Role | Verification doc |
 |-------|------|------------------|
-| [ITS-assymetric](https://github.com/0x1F464/ITS-assymetric) | Wire v6 static broadcast encrypt | `ITS-assymetric_FORMAL_VERIFICATION.md` |
+| [ITS-asymmetric](https://github.com/0x1F464/ITS-asymmetric) | Wire v6 static broadcast encrypt | `ITS-asymmetric_FORMAL_VERIFICATION.md` |
 | [ITS-fingerprint_erasure](https://github.com/0x1F464/ITS-FINGERPRINT_ERASURE) | Γ extended / two-domain NF | `ITS-fingerprint_erasure_FORMAL_VERIFICATION.md` |
 | [ITS-self_enclosed_timelock](https://github.com/0x1F464/ITS-self_enclosed_timelock) | Time-lock puzzles | upstream W4 |
 
-**W6 status:** ITS-net orchestration refines verified upstream kernels; no `sorry` in local CLI tests.
+**W6 status:** ITS-routing orchestration refines verified upstream kernels; no `sorry` in local CLI tests.
 
 ---
 
@@ -44,8 +44,9 @@ Master tracker: [VERIFICATION_STATUS.md](https://github.com/0x1F464/ITS/tree/mas
 
 | Claim | Test / command |
 |-------|----------------|
-| CLI builds | `cargo build --release` in `its_net_cli/` |
-| Unit tests | `cargo test` in `its_net_cli/` |
-| FE strict stack integration | `--fingerprint-erasure` path (see `ITS-net_SECURITY_LAYERS.md`) |
+| CLI builds | `cargo build --release` in `its_routing/` |
+| Unit tests | `cargo test` in `its_routing/` — analog SSS roundtrip, stdio paths |
+| Timelock / OTM glue | `tests/timelock_integration.rs`, `tests/otm_verify_integration.rs` |
+| FE strict stack | Proved in upstream `its_fingerprint_erasure`; invoked by `its-routing fingerprint-erasure` / send stack |
 
-See also: [ITS-net_SECURITY_LAYERS.md](ITS-net_SECURITY_LAYERS.md), [ITS-net_mathematics.md](ITS-net_mathematics.md).
+See also: [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md), [ITS-routing_mathematics.md](ITS-routing_mathematics.md).

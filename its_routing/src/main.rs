@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use std::net::{SocketAddr, UdpSocket};
 
-pub mod anomaly_detection;
 mod stdio;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
@@ -908,7 +907,7 @@ fn main() {
         }
     };
 
-    let mut config = parse_config(&config_content).expect("Ugyldigt konfigurationsformat");
+    let mut config = parse_config(&config_content).expect("Invalid configuration format");
 
     let subcommand = command_args[0].as_str();
     match subcommand {
@@ -941,8 +940,7 @@ fn main() {
             let mut dest = 1;
             let mut aeh = false;
             let mut continuous = false;
-            let mut password = None;
-            let mut duress = false;
+            let mut ratchet_seed_file = PathBuf::new();
             let mut fe = FingerprintErasureSendOptions::default();
 
             let mut s_idx = 1;
@@ -962,12 +960,9 @@ fn main() {
                 } else if command_args[s_idx] == "--continuous" {
                     continuous = true;
                     s_idx += 1;
-                } else if command_args[s_idx] == "--password" && s_idx + 1 < command_args.len() {
-                    password = Some(command_args[s_idx + 1].clone());
+                } else if command_args[s_idx] == "--ratchet-seed-file" && s_idx + 1 < command_args.len() {
+                    ratchet_seed_file = PathBuf::from(&command_args[s_idx + 1]);
                     s_idx += 2;
-                } else if command_args[s_idx] == "--duress" {
-                    duress = true;
-                    s_idx += 1;
                 } else if command_args[s_idx] == "--fingerprint-erasure" || command_args[s_idx] == "--gamma" {
                     fe.enabled = true;
                     s_idx += 1;
@@ -1112,13 +1107,12 @@ fn main() {
                 );
                 return;
             }
-            run_client_send(config, msg, file, dest, aeh, continuous, password, duress, fe);
+            run_client_send(config, msg, file, dest, aeh, continuous, ratchet_seed_file, fe);
         }
         "client-receive" => {
             let mut aeh = false;
             let mut continuous = false;
-            let mut password = None;
-            let mut duress = false;
+            let mut ratchet_seed_file = PathBuf::new();
 
             let mut s_idx = 1;
             while s_idx < command_args.len() {
@@ -1128,17 +1122,14 @@ fn main() {
                 } else if command_args[s_idx] == "--continuous" {
                     continuous = true;
                     s_idx += 1;
-                } else if command_args[s_idx] == "--password" && s_idx + 1 < command_args.len() {
-                    password = Some(command_args[s_idx + 1].clone());
+                } else if command_args[s_idx] == "--ratchet-seed-file" && s_idx + 1 < command_args.len() {
+                    ratchet_seed_file = PathBuf::from(&command_args[s_idx + 1]);
                     s_idx += 2;
-                } else if command_args[s_idx] == "--duress" {
-                    duress = true;
-                    s_idx += 1;
                 } else {
                     s_idx += 1;
                 }
             }
-            run_client_receive(config, aeh, continuous, password, duress);
+            run_client_receive(config, aeh, continuous, ratchet_seed_file);
         }
         "time-lock" => {
             let mut file = PathBuf::new();
@@ -1318,9 +1309,9 @@ fn main() {
 
 fn print_usage() {
     println!("Morphic Routing Shadow Network CLI (Sterilized Sync Version)");
-    println!("PATH \"-\" = stdin/stdout on time-lock and fingerprint-erasure (see ITS-net_PIPE.md).");
+    println!("PATH \"-\" = stdin/stdout on time-lock and fingerprint-erasure (see ITS-routing_PIPE.md).");
     println!("Usage:");
-    println!("  its-net [subcommand] [options]");
+    println!("  its-routing [subcommand] [options]");
     println!("\nSubcommands:");
     println!("  start-node      Starts an active onion routing daemon node");
     println!("                  -p, --port <port>       Port to bind the listener to");
@@ -1346,13 +1337,11 @@ fn print_usage() {
     println!("                  --fe-pad, --pad <path>  OTP wire payload on send (requires --fingerprint-erasure)");
     println!("                  --aeh                   Use Ambient Entropy Harvesting instead of Onion Tunnel");
     println!("                  --continuous            Enable continuous background decoy chaffing schedule loop");
-    println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
-    println!("                  --duress                Trigger Duress Mode to send plausible decoy recipe");
+    println!("                  --ratchet-seed-file <path>  32-byte StateRatchet seed (from ITS-KeyManagement export)");
     println!("  client-receive  Monitors port for incoming SSS-shares or scans AEH channels");
     println!("                  --aeh                   Scan steganographic public AEH channels");
     println!("                  --continuous            Enable continuous background winnowing scheduler loop");
-    println!("                  --password <pass>       PBKDF2 Password for True/Decoy ratchet seeds");
-    println!("                  --duress                Trigger Duress Mode to decrypt cover recipe only");
+    println!("                  --ratchet-seed-file <path>  32-byte StateRatchet seed (from ITS-KeyManagement export)");
     println!("  time-lock       Generates a local hybrid deniable time-lock puzzle over a file");
     println!("                  -f, --file <path>       Target document to lock");
     println!("                  -e, --epochs <count>    Number of sequential squaring delay rounds (default 1000)");
@@ -1375,10 +1364,55 @@ fn print_usage() {
     println!("                  -m, --msg <text>        Target secret message to split");
     println!("                  -k, --threshold <k>     Override threshold k");
     println!("                  -n, --shares <n>        Override total shares n");
+    println!("  client-export-share Serialize Shamir shares into physical character strings (analog export)");
+    println!("                  -m, --msg <text>        Target secret message to split");
+    println!("                  -k, --threshold <k>     Override threshold k");
+    println!("                  -n, --shares <n>        Override total shares n");
     println!("  client-import-share Reconstruct Shamir secret from physical character strings (analog import)");
     println!("                  -f, --file <path>       File containing physical share strings (one per line)");
     println!("                  -k, --threshold <k>     Override threshold k");
     println!("                  [shares]                Provide physical share strings directly as arguments");
+    println!("  Operator identity (vault, contacts, duress): use ITS-KeyManagement (its-km on PATH).");
+}
+
+// ==============================================================================
+// RATCHET SEED (transport-neutral — passwords live in ITS-KeyManagement)
+// ==============================================================================
+
+fn demo_aeh_seed(crypto: &CryptoConfig) -> [u8; 32] {
+    let mut s = [0u8; 32];
+    s[0..4].copy_from_slice(&crypto.stealth_anchor.to_be_bytes());
+    s[4..8].copy_from_slice(&crypto.stealth_whitening_factor.to_be_bytes());
+    s
+}
+
+fn resolve_aeh_ratchet_seed(crypto: &CryptoConfig, seed_file: &Path) -> [u8; 32] {
+    if !seed_file.as_os_str().is_empty() {
+        match std::fs::read(seed_file) {
+            Ok(data) if data.len() == 32 => {
+                let mut seed = [0u8; 32];
+                seed.copy_from_slice(&data);
+                return seed;
+            }
+            Ok(data) => {
+                println!(
+                    "Warning: ratchet seed file must be 32 bytes (got {}); using non-production demo fallback.",
+                    data.len()
+                );
+            }
+            Err(e) => {
+                println!(
+                    "Warning: could not read ratchet seed file: {:?}; using non-production demo fallback.",
+                    e
+                );
+            }
+        }
+    } else {
+        println!(
+            "Note: no --ratchet-seed-file; using anchor+whitening demo seed (non-production). Use ITS-KeyManagement export-ratchet-seed."
+        );
+    }
+    demo_aeh_seed(crypto)
 }
 
 // ==============================================================================
@@ -1526,8 +1560,7 @@ fn run_client_send(
     dest: u32,
     aeh: bool,
     continuous: bool,
-    password: Option<String>,
-    duress: bool,
+    ratchet_seed_file: PathBuf,
     fe: FingerprintErasureSendOptions,
 ) {
     let mut rng = its_hardware::CliRng;
@@ -1540,21 +1573,12 @@ fn run_client_send(
                 return;
             }
         }
-    } else if duress {
-        "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes.".into()
     } else if msg.is_empty() {
         println!("Error: client-send requires --msg or --file.");
         return;
     } else {
         msg.into_bytes()
     };
-
-    if duress && !file_path.as_os_str().is_empty() {
-        println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
-    } else if duress {
-        println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
-        println!("Initializing decoy cover-channels with plausible harmless content.");
-    }
 
     let payload = match prepare_send_payload(&raw_payload, &fe) {
         Ok(p) => p,
@@ -1567,12 +1591,12 @@ fn run_client_send(
     if fe.enabled {
         if fe.otp_wire {
             println!(
-                "Fingerprint-erasure v2: Γ(max) + OTP wire ({} bytes sendes).",
+                "Fingerprint-erasure v2: Γ(max) + OTP wire ({} bytes sent).",
                 payload.len()
             );
         } else {
             println!(
-                "Fingerprint-erasure v2: Γ({}) normaliseret ({} bytes sendes).",
+                "Fingerprint-erasure v2: Γ({}) normalized ({} bytes sent).",
                 if fe.mode == its_fingerprint_erasure::ErasureMode::Standard {
                     "standard"
                 } else if fe.mode == its_fingerprint_erasure::ErasureMode::Extended {
@@ -1590,17 +1614,7 @@ fn run_client_send(
     if aeh {
         let anchor = FieldElement::new(config.crypto.stealth_anchor);
 
-        // Derive/Initialize StateRatchet
-        let seed = if let Some(ref pwd) = password {
-            let salt: &[u8] = if duress { b"scpst-aeh-decoy-salt" } else { b"scpst-aeh-true-salt" };
-            println!("Deriving seed from password via PBKDF2-HMAC-SHA256...");
-            StateRatchet::derive_seed(pwd, salt, 1000)
-        } else {
-            let mut s = [0u8; 32];
-            s[0..4].copy_from_slice(&config.crypto.stealth_anchor.to_be_bytes());
-            s[4..8].copy_from_slice(&config.crypto.stealth_whitening_factor.to_be_bytes());
-            s
-        };
+        let seed = resolve_aeh_ratchet_seed(&config.crypto, &ratchet_seed_file);
 
         let ratchet = StateRatchet::new(seed);
         let channels = [
@@ -1826,44 +1840,23 @@ fn run_client_receive(
     config: Config,
     aeh: bool,
     continuous: bool,
-    password: Option<String>,
-    duress: bool,
+    ratchet_seed_file: PathBuf,
 ) {
     if aeh {
         println!("Fetching live entropy from public sources for transposition...");
         let live_entropy = fetch_live_entropy(&config.aeh.entropy_sources);
         println!("Received {} bytes live entropy.", live_entropy.len());
 
-        println!("Modtager via Ambient Entropy Harvesting (AEH)...");
-        println!("Scanner simulerede steganografiske kanaler efter attesterede shards...");
+        println!("Receiving via Ambient Entropy Harvesting (AEH)...");
+        println!("Scanning simulated steganographic channels for attested shards...");
 
         let anchor = FieldElement::new(config.crypto.stealth_anchor);
 
-        // Derive/Initialize StateRatchet for Bob
-        let seed = if let Some(ref pwd) = password {
-            let salt: &[u8] = if duress { b"scpst-aeh-decoy-salt" } else { b"scpst-aeh-true-salt" };
-            println!("Deriving seed from password via PBKDF2-HMAC-SHA256...");
-            StateRatchet::derive_seed(pwd, salt, 1000)
-        } else {
-            let mut s = [0u8; 32];
-            s[0..4].copy_from_slice(&config.crypto.stealth_anchor.to_be_bytes());
-            s[4..8].copy_from_slice(&config.crypto.stealth_whitening_factor.to_be_bytes());
-            s
-        };
+        let seed = resolve_aeh_ratchet_seed(&config.crypto, &ratchet_seed_file);
         let ratchet = StateRatchet::new(seed);
 
-        if duress {
-            println!("\n[DURESS MODE ACTIVE]: Decoy/Duress password entered!");
-            println!("Only scanning and extracting decoy cover-messages.");
-        }
-
-        // We simulate reading the stego texts from the 5 public channels.
-        // Let's generate a real message to extract, matching our password/duress state.
-        let target_msg = if duress {
-            "Decoy baking recipe: 2 cups flour, 1 cup sugar, 3 eggs. Bake at 180C for 30 minutes."
-        } else {
-            "Top Secret!"
-        };
+        // Demo extraction payload (real deployments use ITS-KeyManagement orchestration).
+        let target_msg = "Top Secret!";
 
         let mut temp_rng = its_hardware::CliRng;
         let mock_shares = fragment_data(target_msg.as_bytes(), config.crypto.threshold_k, config.crypto.total_shares_n, &mut temp_rng)
@@ -2579,7 +2572,7 @@ fn run_time_deny(puzzle_path: PathBuf, decoy_msg: String, out_path: PathBuf) {
 fn run_client_export_share(config: Config, msg: String, threshold_k: Option<usize>, total_shares_n: Option<usize>) {
     let k = threshold_k.unwrap_or(config.crypto.threshold_k);
     let n = total_shares_n.unwrap_or(config.crypto.total_shares_n);
-    println!("Analog-export: Fragmenterer besked med k={}, n={}", k, n);
+    println!("Analog-export: Fragmenting message with k={}, n={}", k, n);
 
     let mut rng = its_hardware::CliRng;
     match fragment_data(msg.as_bytes(), k, n, &mut rng) {
