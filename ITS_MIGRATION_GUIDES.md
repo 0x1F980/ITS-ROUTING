@@ -17,8 +17,21 @@
 ## Use case: Long-lived messaging
 
 **Replace:** TLS 1.3 static cert only  
-**With:** ITS wire + epoch-advance + (future) ITS-session ratchet  
+**With:** ITS wire + epoch-advance + ITS-session ratchet (`its_sessions`, `ITS_WIRE_PROFILE=compact`)  
 **Why:** Forward secrecy without lattice assumptions
+
+---
+
+## Interop (Eco D)
+
+```bash
+# Local proxy + its-curl
+python3 ROUTING/tools/its_wire_proxy.py --port 8765 &
+./ROUTING/scripts/its-curl.sh http://127.0.0.1:8765/its/wire --pk bob.public.key --file msg.txt
+./ROUTING/scripts/pipe_its_proxy_e2e.sh
+```
+
+Wire profile: [docs/ITS_WIRE_PROFILE_DRAFT_v0.2.md](docs/ITS_WIRE_PROFILE_DRAFT_v0.2.md)
 
 ---
 
