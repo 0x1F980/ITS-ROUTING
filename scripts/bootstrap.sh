@@ -24,7 +24,7 @@ clone_repo() {
 }
 
 clone_repo "SSS_CHAIN"
-clone_repo "ITS-ASSYMETRIC" main
+clone_repo "ITS-asymmetric" main
 clone_repo "ITS-OTM_public_attestation" main
 clone_repo "ITS-self_enclosed_timelock"
 clone_repo "ITS-ROUTING"

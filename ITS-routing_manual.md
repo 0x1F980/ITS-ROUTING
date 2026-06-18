@@ -120,7 +120,7 @@ Standalone public bundle verification (air-gapped audit):
 ```bash
 its_otm verify --bundle share_attestation.otm
 ```
-See [ITS-OTM_public_attestation_manual.md](https://github.com/0x1F464/ITS-OTM_public_attestation/blob/main/ITS-OTM_public_attestation_manual.md).
+See [ITS-OTM_public_attestation_manual.md](https://github.com/0x1F980/ITS-OTM_public_attestation/blob/main/ITS-OTM_public_attestation_manual.md).
 
 ### Command 5: Operator vault & duress (ITS-KeyManagement)
 

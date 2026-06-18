@@ -5,7 +5,7 @@
 
 **Read this document first** before auditing this CLI/daemon repository.
 
-**Ecosystem master:** [ITS_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS/blob/master/ITS_SECURITY_LAYERS.md) (ITS core repo).
+**Ecosystem master:** [ITS_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ROUTING/blob/master/ITS_ECOSYSTEM.md) (ITS core repo).
 
 ---
 
@@ -19,16 +19,16 @@ ITS-routing **orchestrates** upstream crates. It does not replace their proofs �
 
 | Subcommand / flag | Upstream crate | ITS scope doc |
 |-------------------|----------------|---------------|
-| ITS-asymmetric wire / bundle | ITS-asymmetric | [ITS-asymmetric_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ASSYMETRIC/blob/main/ITS-asymmetric_SECURITY_LAYERS.md), [UNIFIED_THREAT_MODEL](https://github.com/0x1F980/ITS-ASSYMETRIC/blob/main/ITS-asymmetric_UNIFIED_THREAT_MODEL.md), [Wire Profile draft](docs/ITS_WIRE_PROFILE_DRAFT_v0.1.md) |
+| ITS-asymmetric wire / bundle | ITS-asymmetric | [ITS-asymmetric_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-asymmetric/blob/main/ITS-asymmetric_SECURITY_LAYERS.md), [UNIFIED_THREAT_MODEL](https://github.com/0x1F980/ITS-asymmetric/blob/main/ITS-asymmetric_UNIFIED_THREAT_MODEL.md), [Wire Profile draft](docs/ITS_WIRE_PROFILE_DRAFT_v0.1.md) |
 | Operator vault, contacts, `--ratchet-seed-file` source | **ITS-KeyManagement** | [ITS-KeyManagement_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-KeyManagement/blob/main/ITS-KeyManagement_SECURITY_LAYERS.md) |
 | `--ratchet-seed-file` (transport) | ITS-routing AEH path | This repo — accepts **derived bytes only**, never passwords |
-| Default send stack (Γ + OTP + chaff) | ITS + ITS-fingerprint_erasure | [ITS_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS/blob/master/ITS_SECURITY_LAYERS.md), [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F464/ITS-fingerprint_erasure/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
+| Default send stack (Γ + OTP + chaff) | ITS + ITS-fingerprint_erasure | [ITS_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ROUTING/blob/master/ITS_ECOSYSTEM.md), [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F980/ITS-FINGERPRINT_ERASURE/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
 | `--strict-stack` | FE + ITS wire stack | FE scope + core ITS §3 |
-| `time-lock` / `time-unlock` / `time-deny` | ITS-self_enclosed_timelock | [ITS-self_enclosed_timelock_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_SECURITY_LAYERS.md) |
-| OTM / AEH attestation verify | ITS-OTM_public_attestation | [ITS-OTM_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS-OTM_public_attestation/blob/main/ITS-OTM_SECURITY_LAYERS.md) |
-| `--fingerprint-erasure` | ITS-fingerprint_erasure | [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F464/ITS-fingerprint_erasure/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
-| Hardware entropy hooks | ITS-hardware | [ITS-hardware_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS-hardware/blob/master/ITS-hardware_SECURITY_LAYERS.md) |
-| Ledger / vault sync | ITS-ledger | [ITS-ledger_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS-ledger/blob/master/ITS-ledger_SECURITY_LAYERS.md) |
+| `time-lock` / `time-unlock` / `time-deny` | ITS-self_enclosed_timelock | [ITS-self_enclosed_timelock_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_SECURITY_LAYERS.md) |
+| OTM / AEH attestation verify | ITS-OTM_public_attestation | [ITS-OTM_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-OTM_public_attestation/blob/main/ITS-OTM_SECURITY_LAYERS.md) |
+| `--fingerprint-erasure` | ITS-fingerprint_erasure | [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F980/ITS-FINGERPRINT_ERASURE/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
+| Hardware entropy hooks | ITS-hardware | [ITS-hardware_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-hardware/blob/master/ITS-hardware_SECURITY_LAYERS.md) |
+| Ledger / vault sync | ITS-ledger | [ITS-ledger_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ledger/blob/master/ITS-ledger_SECURITY_LAYERS.md) |
 
 ---
 

@@ -42,7 +42,7 @@ If the client's configuration or local key registry drifts out of synchronizatio
 
 ## 3. Time-Lock CLI Recovery (`time-lock`, `time-unlock`, `time-deny`)
 
-Offline time-lock operations use the external crate **`ITS-self_enclosed_timelock`**. See upstream [ITS-self_enclosed_timelock_troubleshooting.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_troubleshooting.md) for crate-level errors.
+Offline time-lock operations use the external crate **`ITS-self_enclosed_timelock`**. See upstream [ITS-self_enclosed_timelock_troubleshooting.md](https://github.com/0x1F980/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_troubleshooting.md) for crate-level errors.
 
 ### Symptom: Generation fails immediately
 ```

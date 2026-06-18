@@ -77,7 +77,7 @@ echo -n "hello" | its-routing time-lock -f - -o - -e 30 > locked.its
 - [ITS-routing manual](ITS-routing_manual.md)
 - [ITS-routing KEEP boundary](ITS-routing_KEEP_BOUNDARY.md)
 - [ITS-KeyManagement pipe](https://github.com/0x1F980/ITS-KeyManagement/blob/main/ITS-KeyManagement_PIPE.md) — orchestrated send/receive + ratchet seed export
-- [ITS-ASYMMETRIC pipe](https://github.com/0x1F464/ITS-asymmetric/blob/master/ITS-asymmetric_PIPE.md)
+- [ITS-ASYMMETRIC pipe](https://github.com/0x1F980/ITS-asymmetric/blob/master/ITS-asymmetric_PIPE.md)
 
 ---
 

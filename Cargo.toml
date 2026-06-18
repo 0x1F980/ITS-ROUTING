@@ -7,8 +7,8 @@ members = [
 
 [workspace.dependencies]
 its_transport = { path = "its_transport", version = "0.1.0" }
-its_hardware = { git = "file:///home/user/ITS-hardware" }
-its_ledger = { git = "file:///home/user/ITS-ledger" }
-its_self_enclosed_timelock = { git = "file:///home/user/ITS-self_enclosed_timelock" }
-its_otm_public_attestation = { git = "file:///home/user/ITS-OTM_public_attestation" }
-its_fingerprint_erasure = { git = "file:///home/user/ITS-fingerprint_erasure" }
+its_hardware = { git = "ssh://git@github.com/0x1F980/ITS-hardware.git", branch = "master" }
+its_ledger = { git = "ssh://git@github.com/0x1F980/ITS-ledger.git", branch = "master" }
+its_self_enclosed_timelock = { git = "ssh://git@github.com/0x1F980/ITS-self_enclosed_timelock.git", branch = "master" }
+its_otm_public_attestation = { git = "ssh://git@github.com/0x1F980/ITS-OTM_public_attestation.git", branch = "main" }
+its_fingerprint_erasure = { git = "ssh://git@github.com/0x1F980/ITS-FINGERPRINT_ERASURE.git", branch = "master" }

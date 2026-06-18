@@ -59,10 +59,10 @@ For documents that must remain unreadable until sequential CPU work completes:
 3. After the delay: `its-routing time-unlock --puzzle secret.its --out secret.pdf`
 4. Under coercion: `its-routing time-deny --puzzle secret.its --decoy "Cover story" --out decoy.its` — hand Eve the decoy puzzle file.
 
-CPU thermal and TEMPEST guidance for long squaring runs: [ITS-self_enclosed_timelock_HEADS_UP.md](https://github.com/0x1F464/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_HEADS_UP.md).
+CPU thermal and TEMPEST guidance for long squaring runs: [ITS-self_enclosed_timelock_HEADS_UP.md](https://github.com/0x1F980/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_HEADS_UP.md).
 
 ### 8. Public OTM Attestation (`ITS-OTM_public_attestation`):
-AEH receive paths verify Wegman-Carter tags via the standalone OTM crate. For third-party audit without ratchet access, publish `.otm` bundle files and run `its_otm verify --bundle FILE`. Never publish `k_mac`/`nonce` before the attested message — one-time keys are revealed only with the bundle. See [ITS-OTM_public_attestation_HEADS_UP.md](https://github.com/0x1F464/ITS-OTM_public_attestation/blob/main/ITS-OTM_public_attestation_HEADS_UP.md).
+AEH receive paths verify Wegman-Carter tags via the standalone OTM crate. For third-party audit without ratchet access, publish `.otm` bundle files and run `its_otm verify --bundle FILE`. Never publish `k_mac`/`nonce` before the attested message — one-time keys are revealed only with the bundle. See [ITS-OTM_public_attestation_HEADS_UP.md](https://github.com/0x1F980/ITS-OTM_public_attestation/blob/main/ITS-OTM_public_attestation_HEADS_UP.md).
 
 ---
 

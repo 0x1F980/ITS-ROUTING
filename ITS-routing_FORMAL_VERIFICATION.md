@@ -10,9 +10,9 @@
 cd its_routing && cargo test
 ```
 
-Lean composition (upstream ITS repo): [ItsNet/Composition.lean](https://github.com/0x1F464/ITS/tree/master/mathematics/ItsMath/ItsNet/Composition.lean)
+Lean composition (archived upstream): [ItsNet/Composition.lean](https://github.com/0x1F464/ITS/tree/master/mathematics/ItsMath/ItsNet/Composition.lean) — see [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
 
-Master tracker: [VERIFICATION_STATUS.md](https://github.com/0x1F464/ITS/tree/master/mathematics/VERIFICATION_STATUS.md)
+Master tracker (archived): [VERIFICATION_STATUS.md](https://github.com/0x1F464/ITS/blob/master/mathematics/VERIFICATION_STATUS.md)
 
 ---
 
@@ -32,9 +32,9 @@ Master tracker: [VERIFICATION_STATUS.md](https://github.com/0x1F464/ITS/tree/mas
 
 | Crate | Role | Verification doc |
 |-------|------|------------------|
-| [ITS-asymmetric](https://github.com/0x1F464/ITS-asymmetric) | Wire v6 static broadcast encrypt | `ITS-asymmetric_FORMAL_VERIFICATION.md` |
-| [ITS-fingerprint_erasure](https://github.com/0x1F464/ITS-FINGERPRINT_ERASURE) | Γ extended / two-domain NF | `ITS-fingerprint_erasure_FORMAL_VERIFICATION.md` |
-| [ITS-self_enclosed_timelock](https://github.com/0x1F464/ITS-self_enclosed_timelock) | Time-lock puzzles | upstream W4 |
+| [ITS-asymmetric](https://github.com/0x1F980/ITS-asymmetric) | Wire v6 static broadcast encrypt | `ITS-asymmetric_FORMAL_VERIFICATION.md` |
+| [ITS-fingerprint_erasure](https://github.com/0x1F980/ITS-FINGERPRINT_ERASURE) | Γ extended / two-domain NF | `ITS-fingerprint_erasure_FORMAL_VERIFICATION.md` |
+| [ITS-self_enclosed_timelock](https://github.com/0x1F980/ITS-self_enclosed_timelock) | Time-lock puzzles | upstream W4 |
 
 **W6 status:** ITS-routing orchestration refines verified upstream kernels; no `sorry` in local CLI tests.
 

@@ -3,7 +3,7 @@
 ## License: GNU GPLv3 Only
 
 **Status:** draft — not IETF submitted  
-**Normative implementation:** [ITS-asymmetric](https://github.com/0x1F980/ITS-ASSYMETRIC) v0.10+
+**Normative implementation:** [ITS-asymmetric](https://github.com/0x1F980/ITS-asymmetric) v0.10+
 
 ---
 

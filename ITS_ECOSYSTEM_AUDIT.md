@@ -243,7 +243,7 @@ CI: `.github/workflows/ci.yml` — `cargo test --all-targets`, `lake build Sacx`
 | Dokumenteret | Kode | Status |
 |--------------|------|--------|
 | Timelock subcommands | `run_time_lock/unlock/deny` i `main.rs` | **OK** |
-| OTM verify in AEH receive | `verify_aeh_otm` → `core_logic::otm::verify_tag` | **OK** |
+| OTM verify in AEH receive | `verify_aeh_otm` → `its_otm_public_attestation` | **OK** |
 | Fingerprint erasure pipe | `run_fingerprint_erasure`, send stack | **OK** (ikke testet) |
 | `hydra_sss` analog export/import | `main.rs` test | **OK** |
 | Anomaly detection / self-healing | `anomaly_detection.rs` | **DOC LØGN** — modul kompileret, **0 call sites** (`grep anomaly_detection::` → none) |
@@ -270,7 +270,7 @@ CI: `.github/workflows/ci.yml` — `cargo test --all-targets`, `lake build Sacx`
 | OTM cert tiers 1a/1b | `otm_cert.rs` | **OK** |
 | SHA256 fingerprint deprecated | Stadig i vault/CLI display | **Legacy bevidst** |
 | `its-km` shim | `bin/its_id.rs` | **Legacy bevidst** |
-| ITS-sessions stub | `orchestrator.rs` log only | **OK (docs siger stub)** |
+| ITS-sessions | removed v1 — epoch-advance only | **OK** |
 | Send/receive subprocess | `orchestrator.rs` → `its_asymmetric`, `its-routing` | **OK, untested E2E** |
 | Timelock via ROUTING | `validity.rs` subprocess | **OK**; `-c CONFIG` sendes men timelock ignorerer config |
 | SSS mod 257 (QR) | `sss_qr.rs` | **OK** — separat field fra M31 routing |

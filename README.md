@@ -1,7 +1,7 @@
 # ITS-routing: OS Transport Layer & CLI Daemon (Transport/CLI)
 
 ## GNU General Public License v3.0 Only
-Copyright (C) 2026 0x1F464. All rights reserved.
+Copyright (C) 2026 0x1F980. All rights reserved.
 
 ITS-routing is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
@@ -11,7 +11,7 @@ ITS-routing is free software: you can redistribute it and/or modify it under the
 
 ## 1. Overview & Architecture
 
-**Read first:** **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md)** — maps subcommands to upstream ITS scope docs. Ecosystem master: [ITS_SECURITY_LAYERS.md](https://github.com/0x1F464/ITS/blob/master/ITS_SECURITY_LAYERS.md).
+**Read first:** **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md)** — maps subcommands to upstream ITS scope docs. Ecosystem master: [ITS_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ROUTING/blob/master/ITS_ECOSYSTEM.md).
 
 `ITS-routing` (binary `its-routing`, crate `its_routing`) is the **transport engine** of the Morphic Routing Network (ITS/SCPST). It moves bytes on the wire — onion, UDP, SSS, chaff. It does **not** manage human contacts or vault passwords (see ITS-KeyManagement).
 
@@ -38,9 +38,9 @@ ITS-routing is free software: you can redistribute it and/or modify it under the
 ```
 
 **Upstream crates:**
-* [`ITS-self_enclosed_timelock`](https://github.com/0x1F464/ITS-self_enclosed_timelock) — `its-routing time-lock`, `time-unlock`, `time-deny`
-* [`ITS-OTM_public_attestation`](https://github.com/0x1F464/ITS-OTM_public_attestation) — AEH/sneakernet OTM verify via `verify_public_otm_tag`; standalone `its_otm` CLI for public bundles
-* [`ITS-FINGERPRINT_ERASURE`](https://github.com/0x1F464/ITS-FINGERPRINT_ERASURE) — Γ extended mode + two-domain NF; `--fingerprint-erasure` enforces strict stack (OTP+chaff); `its_fe watch` for post-save; `--fe-permissive` escape
+* [`ITS-self_enclosed_timelock`](https://github.com/0x1F980/ITS-self_enclosed_timelock) — `its-routing time-lock`, `time-unlock`, `time-deny`
+* [`ITS-OTM_public_attestation`](https://github.com/0x1F980/ITS-OTM_public_attestation) — AEH/sneakernet OTM verify via `verify_public_otm_tag`; standalone `its_otm` CLI for public bundles
+* [`ITS-FINGERPRINT_ERASURE`](https://github.com/0x1F980/ITS-FINGERPRINT_ERASURE) — Γ extended mode + two-domain NF; `--fingerprint-erasure` enforces strict stack (OTP+chaff); `its_fe watch` for post-save; `--fe-permissive` escape
 
 ---
 

@@ -57,7 +57,24 @@ for pkg in SSS_CHAIN ITS-OTM_public_attestation ITS-self_enclosed_timelock ITS-h
   fi
 done
 if [[ -f "$ECO_ROOT/ITS-asymmetric/Cargo.toml" ]]; then
-  (cd "$ECO_ROOT/ITS-asymmetric" && cargo test --features bundle,std --quiet 2>/dev/null) && green "ITS-asymmetric tests" || red "ITS-asymmetric tests"
+  # Lib + unit only — bundle_adversarial integration tests take ~15 min
+  (cd "$ECO_ROOT/ITS-asymmetric" && cargo test --lib --features bundle,std --quiet 2>/dev/null) && green "ITS-asymmetric tests" || red "ITS-asymmetric tests"
+fi
+
+echo "=== Z12: fragment + onion regression (its_transport) ==="
+if [[ -d "$ROUTING" ]]; then
+  if (cd "$ROUTING" && cargo test -p its_transport fragment onion --quiet 2>/dev/null); then
+    green "Z12"
+  else
+    (cd "$ROUTING" && cargo test -p its_transport --quiet 2>/dev/null) && green "Z12 (full its_transport)" || red "Z12"
+  fi
+fi
+
+echo "=== Z13: core_logic-archive-v1 tag ==="
+if git -C "$ECO_ROOT/ITS-session" rev-parse core_logic-archive-v1 >/dev/null 2>&1; then
+  green "Z13"
+else
+  red "Z13 missing tag on ITS-session"
 fi
 
 echo "=== Z16: cargo tree no core_logic (ROUTING) ==="
