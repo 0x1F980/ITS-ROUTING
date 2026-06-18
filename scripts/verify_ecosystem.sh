@@ -51,11 +51,14 @@ if [[ -d "$ROUTING" ]]; then
 fi
 
 echo "=== cargo test (math + glue) ==="
-for pkg in SSS_CHAIN ITS-asymmetric ITS-OTM_public_attestation ITS-self_enclosed_timelock ITS-hardware ITS-ledger ITS-KeyManagement; do
+for pkg in SSS_CHAIN ITS-OTM_public_attestation ITS-self_enclosed_timelock ITS-hardware ITS-ledger ITS-KeyManagement; do
   if [[ -f "$ECO_ROOT/$pkg/Cargo.toml" ]]; then
     (cd "$ECO_ROOT/$pkg" && cargo test --quiet 2>/dev/null) && green "$pkg tests" || red "$pkg tests"
   fi
 done
+if [[ -f "$ECO_ROOT/ITS-asymmetric/Cargo.toml" ]]; then
+  (cd "$ECO_ROOT/ITS-asymmetric" && cargo test --features bundle,std --quiet 2>/dev/null) && green "ITS-asymmetric tests" || red "ITS-asymmetric tests"
+fi
 
 echo "=== Z16: cargo tree no core_logic (ROUTING) ==="
 if [[ -d "$ROUTING" ]]; then

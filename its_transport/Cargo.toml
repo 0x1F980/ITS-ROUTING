@@ -6,7 +6,7 @@ description = "ITS transport core (onion, fragment, trapdoor) — migrated from 
 license = "GPL-3.0-only"
 
 [dependencies]
-its_otm_public_attestation = { git = "ssh://git@github.com/0x1F980/ITS-OTM_public_attestation.git", branch = "main" }
+its_otm_public_attestation = { git = "file:///home/user/ITS-OTM_public_attestation" }
 sha2 = { version = "0.10.8", default-features = false }
 hkdf = { version = "0.12.4", default-features = false }
 pbkdf2 = { version = "0.12.2", default-features = false, features = ["hmac", "sha2"] }
