@@ -8,17 +8,17 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
-use core_logic::field_arith::FieldElement;
-use core_logic::trapdoor::Trapdoor;
-use core_logic::routing::{create_onion_packet, MorphicMixingNode, MorphicOnionPacket, PAYLOAD_SIZE};
-use core_logic::hydra_sss::{fragment_data, reconstruct_data, SssPackedShare};
-use core_logic::stealth_identity::StealthIdentity;
-use core_logic::ratchet::StateRatchet;
-use core_logic::SecureRandom;
+use its_transport::field_arith::FieldElement;
+use its_transport::trapdoor::Trapdoor;
+use its_transport::onion::{create_onion_packet, MorphicMixingNode, MorphicOnionPacket, PAYLOAD_SIZE};
+use its_transport::{fragment_data, reconstruct_data, SssPackedShare};
+use its_transport::stealth_identity::StealthIdentity;
+use its_transport::StateRatchet;
+use its_transport::SecureRandom;
 use its_self_enclosed_timelock::field_arith::FieldElement as TlFieldElement;
 use its_self_enclosed_timelock::field_arith::MODULUS as TL_MODULUS;
 use its_self_enclosed_timelock::{GenerateError, SssTimeLock};
-use core_logic::otm::verify_tag as verify_public_otm_tag;
+use its_otm_public_attestation::otm::verify_tag as verify_public_otm_tag;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// Bridges `/dev/urandom` into the standalone time-lock crate's RNG trait.

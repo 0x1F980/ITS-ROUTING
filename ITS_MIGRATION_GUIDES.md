@@ -17,7 +17,7 @@
 ## Use case: Long-lived messaging
 
 **Replace:** TLS 1.3 static cert only  
-**With:** ITS wire + epoch-advance + ITS-session ratchet (`its_sessions`, `ITS_WIRE_PROFILE=compact`)  
+**With:** ITS wire + `epoch-advance` + `ITS_WIRE_PROFILE=compact`  
 **Why:** Forward secrecy without lattice assumptions
 
 ---

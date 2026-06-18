@@ -41,7 +41,7 @@ The `its_routing` daemon (executable name: `its-routing`) implements the active-
 
 ## 2. Network Integration Guide
 
-`its_routing` depends on **`ITS-self_enclosed_timelock`** for time-lock operations and **`ITS-OTM_public_attestation`** for Wegman-Carter OTM verification in AEH receive paths. Routing, onion mixing, and SSS fragmentation continue to use `ITS` (`core_logic`, which re-exports `core_logic::otm::*`).
+`its_routing` depends on **`ITS-self_enclosed_timelock`** for time-lock operations and **`ITS-OTM_public_attestation`** for Wegman-Carter OTM verification in AEH receive paths. Routing, onion mixing, and SSS fragmentation use **`its_transport`** (onion, `sss_fragment`, `transport_ratchet`).
 
 The CLI client (`its-routing`) can be integrated alongside other local desktop and mobile applications (such as a local chat app, a secure email client, or an administrative dashboard) to serve as their secure transport hub.
 
@@ -87,7 +87,7 @@ Currently, `its-routing` routes over raw UDP. If your application targets low-po
 
 1. **Implement `PacketCourier` for LoRa:**
    ```rust
-   use core_logic::routing::MorphicOnionPacket;
+   use its_transport::MorphicOnionPacket;
 
    pub struct LoraCourier {
        pub device_address: u16,

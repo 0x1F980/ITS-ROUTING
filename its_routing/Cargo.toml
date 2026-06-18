@@ -2,22 +2,39 @@
 name = "its_routing"
 version = "0.1.0"
 edition = "2021"
+description = "ITS-ROUTING — transport daemon and CLI"
+license = "GPL-3.0-only"
 
 [[bin]]
 name = "its-routing"
 path = "src/main.rs"
 
 [dependencies]
-core_logic = { git = "ssh://git@github.com/0x1F464/ITS.git", branch = "master" }
-its_hardware = { git = "ssh://git@github.com/0x1F464/ITS-hardware.git", branch = "master" }
-its_ledger = { git = "ssh://git@github.com/0x1F464/ITS-ledger.git", branch = "master" }
-its_self_enclosed_timelock = { git = "ssh://git@github.com/0x1F464/ITS-self_enclosed_timelock.git", branch = "master" }
-its_otm_public_attestation = { git = "ssh://git@github.com/0x1F464/ITS-OTM_public_attestation.git", branch = "main" }
-its_fingerprint_erasure = { path = "../../ITS-fingerprint_erasure" }
+its_transport = { workspace = true }
+its_hardware = { workspace = true }
+its_ledger = { workspace = true }
+its_self_enclosed_timelock = { workspace = true }
+its_otm_public_attestation = { workspace = true }
+its_fingerprint_erasure = { workspace = true }
 subtle = { version = "2.5.0", default-features = false }
 zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
 
 [features]
 default = []
 dev-permissive = ["its_fingerprint_erasure/dev-permissive"]
-m61 = ["core_logic/m61", "its_hardware/m61", "its_ledger/m61", "its_self_enclosed_timelock/m61", "its_otm_public_attestation/m61"]
+m61 = ["its_transport/m61", "its_hardware/m61", "its_ledger/m61", "its_self_enclosed_timelock/m61", "its_otm_public_attestation/m61"]
+
+[lib]
+path = "src/routing_lib.rs"
+
+[[test]]
+name = "tunnel_simulation"
+path = "tests/transport/tunnel.rs"
+
+[[test]]
+name = "stealth_identity_simulation"
+path = "tests/transport/stealth_identity_simulation.rs"
+
+[[test]]
+name = "morphic_proof_simulation"
+path = "tests/transport/morphic_proof_simulation.rs"

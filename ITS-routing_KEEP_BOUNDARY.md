@@ -14,7 +14,7 @@
 | `routing_table`, node `id`, port | `config.toml` | Hop topology (not human contacts) |
 | Constant-rate chaff, Lorenz jitter | `start-node`, traffic config | Traffic shaping |
 | SSS fragment / reconstruct | `client-send`, `client-receive` | Message splitting over network |
-| `StealthIdentity` | AEH stego paths | Crypto stego (`core_logic`) — **not** a contact book |
+| `StealthIdentity` | AEH stego paths | Crypto stego (`its_transport`) — **not** a contact book |
 | Expert pipes | `time-lock`, `time-unlock`, `time-deny`, `fingerprint-erasure` | Low-level CLI for power users |
 | Analog share export/import | `client-export-share`, `client-import-share` | Transport-adjacent SSS strings |
 | `--ratchet-seed-file` | AEH send/receive | **32-byte seed from ITS-KeyManagement** — routing never sees passwords |
