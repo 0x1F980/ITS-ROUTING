@@ -338,6 +338,27 @@ Security reduces to wire on medium + OTM on Bob.
 
 Recovery without breaking C/I: fountain + multi-mirror + AEH + sneakernet (operational gates in `verify_ecosystem.sh`).
 
+### Ledger availability enforcement (strike / slash)
+
+Repeated availability attacks tied to actor identity incur ledger strikes; at threshold \(N\)
+send rights are revoked (fratagelse af afsendelsesret — no pool epoch publish).
+
+\[
+\text{strikes}(a) \geq N \Rightarrow \neg\text{poolPublishAllowed}(a)
+\]
+
+Attack observables map to CensorshipDisclosure tags (not ad-hoc flags):
+
+| Attack tag | Disclosure observable |
+|------------|----------------------|
+| selective omit / mirror mismatch | `mirrorMismatchOnSelectiveOmit` |
+| rate delta gap | `l3GapRateDelta` |
+| SSS deletion exceeds bound | reconstruct bound ∨ `l3GapRateDelta` |
+
+| Lean | `AvailabilityLedger.lean` — `sendRightsRevoked`, `slashOnDisclosedAttack`, `aAbsoluteWithLedgerEnforcement` |
+| Operational | `its_routing::availability_ledger` — pre-publish gate in pool send |
+| Persistence contract | ITS-ledger `AvailabilityStrikeStore` (stub; full vault log TBD) |
+
 ---
 
 ## §VI — AEH alternative (when pool protocol is banned)
@@ -559,6 +580,7 @@ MASTER v6:       U_6 = U_5 ∧ A_abs ∧ BIS_derived ∧ roleAwareDeniability
 | MathSupremacy | `MathSupremacyDoctrine.lean` | **Proved** |
 | C2 integrity | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (OTM import) |
 | A availability | `AvailabilityResilience.lean` | **Operational** |
+| A ledger enforcement | `AvailabilityLedger.lean` | **Proved** (strike → revoke) |
 | AEH L4/L5 | `AEH/StegoIndistinguishability.lean`, `AEH/EpochGate.lean` | **Proved** |
 | L9 composition | `Transport/Composition.lean` | **Proved** |
 | Offline | `OfflineChannel.lean` | **Proved** |

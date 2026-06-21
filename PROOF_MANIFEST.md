@@ -34,6 +34,7 @@
 | P1–P3 participation postulates | `OplusClosure.participationPostulatesDerived` | **Proved** (L3 + pool + L3') | **Proved** |
 | B1+B3 from L3+pool+P1–P3 | `BroadcastIPDerivation.bisFullyDerived` | **Proved** | **Proved** |
 | Absolut A (censorship disclosure) | `CensorshipDisclosure.aAbsolute` | **Proved** | N/A |
+| Availability ledger enforcement | `AvailabilityLedger.aAbsoluteWithLedgerEnforcement` | **Proved** | N/A |
 | Public pool multicast | `PublicPoolMulticast.lean` | **Proved** | N/A |
 | Role-aware noGuiltyNode | `RoleAwareDeniability.lean` | **Proved** | **Proved** |
 | **C4 timelock deniability** | `CoercionModel.lean`, `Transport/TimelockComposition.lean` → `Stl.Security.Deniability` | **Proved** (cross-repo) | N/A |
@@ -45,6 +46,7 @@
 | L9 mode composition P ⊗ AEH | `Transport/Composition.lean` | **Proved** | **Proved** |
 | L13 comparative threat | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
 | A availability (operational) | `AvailabilityResilience.lean` | **Operational** (not ITS) | N/A |
+| A ledger slash / send-rights revoke | `AvailabilityLedger.lean` | **Proved** (links `aAbsolute`) | N/A |
 
 ---
 

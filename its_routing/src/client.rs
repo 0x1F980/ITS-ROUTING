@@ -12,6 +12,7 @@ use its_transport::SecureRandom;
 
 use crate::config::Config;
 use crate::courier::{build_epoch_courier, ZeroizedBuffer};
+use crate::availability_ledger;
 use crate::pool_mailbox::PoolMailbox;
 #[cfg(feature = "pool")]
 use crate::cover_transport::{EpochLoop, PoolPlusCoverHarvest};
@@ -89,6 +90,15 @@ fn run_pool_send(
     let payload_epochs = cell_state.queued_epochs();
     let chaff_epochs = cell_state.fountain_extra_chaff_epochs(config.pool.fountain_enabled);
     let total_epochs = payload_epochs + chaff_epochs;
+    let actor = config.node.id;
+    if !availability_ledger::pool_publish_allowed(actor) {
+        println!(
+            "Error: send rights revoked for node {actor} ({} strikes ≥ threshold). \
+             Availability ledger forbids pool publish.",
+            availability_ledger::strike_count(actor)
+        );
+        return;
+    }
     let courier = build_epoch_courier(
         &config.pool.pool_file,
         &config.pool.pool_url,

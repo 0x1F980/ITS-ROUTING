@@ -18,6 +18,7 @@ lean_lib «routing-math-cert» where
     `AEH.EpochGate,
     `AEH.StegoIndistinguishability,
     `AuthorAttributionZero,
+    `AvailabilityLedger,
     `AvailabilityResilience,
     `BroadcastForward,
     `BroadcastIPDerivation,

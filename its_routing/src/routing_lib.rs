@@ -20,6 +20,7 @@ pub use its_transport::{lorenz, morphic_proof, onion, stealth_identity};
 pub mod stdio;
 pub mod rng;
 pub mod aeh;
+pub mod availability_ledger;
 pub mod ridges;
 pub mod config;
 pub mod courier;
