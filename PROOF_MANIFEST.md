@@ -67,6 +67,7 @@
 | L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
 | L12 | I(link; O⁺_participation) = 0 | `ParticipationSymmetry.lean`, `OplusClosure.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
 | L13 | Passive ISP ⊆ active Eve | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
+| — | N=1 size-independent I(M;O)=0 | `FewUserDoctrine.lean` | **Proved** | **Proved** (finite-MI) |
 | — | Broadcast forward I(author;h(O))=0 | `BroadcastForward.lean` | **Proved** | **Proved** (finite-MI) |
 | — | I(author; O) package | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
 | — | I(recipient; O) and IP | `RecipientAttributionZero.lean` | **Proved** | **Proved** |

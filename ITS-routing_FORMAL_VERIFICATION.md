@@ -41,15 +41,15 @@ cd ROUTING && ./scripts/verify_math.sh
 |-------|-------------|-------------|
 | Master unattackable certificate | `UnattackableCertificate.lean` | **Proved** |
 | C1 wire Shannon | `Transport/WireComposition.lean` + `ITS-asymmetric` | **Proved** |
-| C2 integrity | `IntegrityAxiom.lean` | **Axiom** (OTM Lean pending) |
-| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, etc. | **Theorem (**MI stub**)** |
+| C2 integrity | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (OTM import) |
+| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, etc. | **Proved** (finite-MI) |
 | I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** |
 | O⁺ under P1–P3 | `OplusClosure.lean` | **Postulate-under-P1–P3** |
 | Offline O_net = ∅ | `OfflineChannel.lean` | **Proved** |
 | EP split | `EndpointSplit.lean` | **Proved** |
 | Observation O / O⁺ / O_phys | `ObservationAlphabet.lean` | **Proved** (scope formalized) |
 
-Full lemma map: [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v4 · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v4
+Full lemma map: [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v4 (v4 MI status column) · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v5
 
 ---
 

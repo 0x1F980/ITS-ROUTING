@@ -476,13 +476,13 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 | Recipient zero | `RecipientAttributionZero.lean` | **Proved** |
 | Flow zero | `FlowAttributionZero.lean` | **Proved** |
 | Sybil | `SybilDoctrine.lean` | **Proved** (finite-MI) |
-| N=1 | `FewUserDoctrine.lean` | Theorem (**MI stub**) |
+| N=1 | `FewUserDoctrine.lean` | **Proved** (finite-MI) |
 | BIS IP | `BroadcastIPSymmetry.lean` | **Structural postulates** |
-| Forward hop | `BroadcastForward.lean` | **Proved** (**MI stub**) |
+| Forward hop | `BroadcastForward.lean` | **Proved** (finite-MI) |
 | SSS courier | `SSSMultiIPCourier.lean` | **Proved** |
 | Either EP | `EndpointEitherOr.lean` | **Proved** |
 | MathSupremacy | `MathSupremacyDoctrine.lean` | **Proved** |
-| C2 integrity | `IntegrityAxiom.lean` | **Stub** |
+| C2 integrity | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (OTM import) |
 | A availability | `AvailabilityResilience.lean` | **Operational** |
 | AEH L4/L5 | `AEH/StegoIndistinguishability.lean`, `AEH/EpochGate.lean` | **Proved** |
 | L9 composition | `Transport/Composition.lean` | **Proved** |
@@ -508,14 +508,14 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 
 | # | Task | Unblocks |
 |---|------|----------|
-| 1 | `Transport/FiniteMutualInfo.lean` — eliminate `mutualInfo := 0` | All I=0 claims |
+| 1 | `Transport/FiniteMutualInfo.lean` — eliminate `mutualInfo := 0` | All I=0 claims | **Done (Sprint 1)** |
 | 2 | `ITS-OTM/mathematics/` + lake import | C2 / I |
 | 3 | `BroadcastIPDerivation.lean` — derive B2 | BIS |
 | 4 | `TimelessSecurity.lean`, `MediumIndependence.lean` | Time + medium |
 | 5 | Stl cross-import + `CoercionModel.lean` | C4 / TTL | **Done (Sprint 3)** |
 | 6 | `MasterTheorem.lean` + `networkEcosystemCertificateV5` | One certificate | **Done (Sprint 2–3)** |
-| 7 | Isolate `MixAnonymity` / `ChaffIndistinguishability` from master path | Anti-spaghetti |
-| 8 | `verify_math.sh` M9–M16 green | Machine verification |
+| 7 | Isolate `MixAnonymity` / `ChaffIndistinguishability` from master path | Anti-spaghetti | **Done (Sprint 0)** |
+| 8 | `verify_math.sh` M9–M16 green | Machine verification | **Done (Sprint 0 cleanup)** |
 
 ---
 
