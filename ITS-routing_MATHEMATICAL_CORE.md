@@ -468,14 +468,14 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 | Formula / claim | Lean module | v4 status |
 |-----------------|-------------|-----------|
 | C1 wire Shannon | `Transport/WireComposition.lean` → asymmetric | **Proved** (import) |
-| C3 I(S;O)=0 | `UnifiedEpochStream.lean` | Theorem (**MI stub**) |
+| C3 I(S;O)=0 | `UnifiedEpochStream.lean` | **Proved** (finite-MI) |
 | L1 cell ~ 𝒟 | `Transport/Cell.lean` | **Proved** |
 | L3 constant emit | `Transport/Epoch.lean` | **Proved** |
-| L3' metadata | `MetadataSymmetry.lean` | Theorem (**MI stub**) |
+| L3' metadata | `MetadataSymmetry.lean` | **Proved** (finite-MI) |
 | Author zero | `AuthorAttributionZero.lean` | **Proved** |
 | Recipient zero | `RecipientAttributionZero.lean` | **Proved** |
 | Flow zero | `FlowAttributionZero.lean` | **Proved** |
-| Sybil | `SybilDoctrine.lean` | Theorem (**MI stub**) |
+| Sybil | `SybilDoctrine.lean` | **Proved** (finite-MI) |
 | N=1 | `FewUserDoctrine.lean` | Theorem (**MI stub**) |
 | BIS IP | `BroadcastIPSymmetry.lean` | **Structural postulates** |
 | Forward hop | `BroadcastForward.lean` | **Proved** (**MI stub**) |
@@ -583,7 +583,7 @@ flowchart TB
 | L7 | AEH link-blind | AEH | `PlausibleDeniability` | Proved |
 | L8 | SSS reconstruction | A | `AvailabilityResilience` | Operational |
 | L9 | Mode composition | both | `Transport/Composition` | Proved |
-| L10 | I(link; O⁺_{rv}) = 0 | both | `MetadataSymmetry` | Theorem (**MI stub**) |
+| L10 | I(link; O⁺_{rv}) = 0 | both | `MetadataSymmetry` | **Proved** (finite-MI) |
 | L11 | CoverTransport O⁺ | P | `ParticipationSymmetry` | Postulate P1–P3 |
 | L12 | I(link; O⁺_part) = 0 | P | `OplusClosure` | Postulate P1–P3 |
 | L13 | Passive ISP ⊆ active Eve | both | `ComparativeThreatDoctrine` | Proved |
