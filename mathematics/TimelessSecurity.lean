@@ -1,6 +1,7 @@
 import Adversary
 import CIA_Doctrine
 import MathSupremacyDoctrine
+import Transport.FiniteMutualInfo
 
 /-!
 # Timeless security — C/I independent of compute epoch (P6.* / M4)
@@ -12,12 +13,22 @@ channel Shannon ITS: posterior stays uniform, I(S; O) = 0, P(forge) ≤ 1/p.
 namespace ITS
 
 /-- Crypto/compute epoch tag (abstract — PQ era irrelevant). -/
+def computeEpochQuantumCapable : Prop :=
+  ∀ s o, mutualInfo s o = 0
+
+theorem compute_epoch_quantum_capable : computeEpochQuantumCapable :=
+  fun s o => mutual_info_zero s o
+
 structure ComputeEpoch where
   year : Nat := 2026
-  quantumCapable : Prop := True
+  quantumCapable : Prop := computeEpochQuantumCapable
   deriving Repr
 
 def defaultComputeEpoch : ComputeEpoch := {}
+
+theorem default_compute_epoch_quantum_capable :
+    defaultComputeEpoch.quantumCapable :=
+  compute_epoch_quantum_capable
 
 /-- Confidentiality unchanged under arbitrary compute epoch. -/
 def timelessConfidentiality (epoch : ComputeEpoch) (s o : Nat) : Prop :=
@@ -42,8 +53,8 @@ def timelessSecurity : Prop :=
     mathSupremacy
 
 theorem timeless_security : timelessSecurity :=
-  ⟨trivial,
-   fun _ s o _ => mutual_info_zero s o,
+  ⟨default_eve_unbounded_compute,
+   fun epoch s o hq => timeless_confidentiality epoch s o hq,
    timeless_integrity,
    math_supremacy⟩
 

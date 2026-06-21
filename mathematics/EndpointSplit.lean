@@ -1,5 +1,7 @@
 import Adversary
 import Transport.Field
+import Transport.WireComposition
+import IntegrityAxiom
 import UnifiedEpochStream
 
 /-!
@@ -14,20 +16,66 @@ EP compromise is an axiom outside channel theorem — not a implementation detai
 
 namespace ITS
 
+open Transport
+
+/-- Secure encryptor holds K₀: wire Shannon certificate on production message length. -/
+def encryptorHoldsK0Prop : Prop :=
+  wirePayloadConfidentiality 1 (by decide : 1 ≥ 1)
+
+theorem encryptor_holds_k0_prop : encryptorHoldsK0Prop :=
+  wire_payload_confidentiality 1 (by decide : 1 ≥ 1)
+
+/-- Secure encryptor applies Shannon wire map + L1 cell chain. -/
+def encryptorCorrectWireMapProp : Prop :=
+  wireCellL1Chain 1 (by decide : 1 ≥ 1)
+
+theorem encryptor_correct_wire_map_prop : encryptorCorrectWireMapProp :=
+  wire_cell_l1_chain 1 (by decide : 1 ≥ 1)
+
+/-- Secure verify-oracle runs OTM WC-MAC gate before accept. -/
+def verifyOtmGateProp : Prop := integrityAxiom
+
+theorem verify_otm_gate_prop : verifyOtmGateProp :=
+  integrity_axiom
+
+/-- Secure verify-oracle rejects forgeries at P(forge) ≤ 1/p floor. -/
+def verifyRejectsForgeryProp : Prop :=
+  Transport.forgeProbFloor ≤ Transport.fieldPrime
+
+theorem verify_rejects_forgery_prop : verifyRejectsForgeryProp :=
+  Transport.forge_prob_bounded
+
 /-- Secure encryptor holds K₀ and applies Shannon wire map correctly. -/
 structure SecureEncryptor where
-  holdsK0 : Prop := True
-  correctWireMap : Prop := True
+  holdsK0 : Prop := encryptorHoldsK0Prop
+  correctWireMap : Prop := encryptorCorrectWireMapProp
   deriving Repr
 
 /-- Secure verify-oracle runs OTM gate before accept. -/
 structure SecureVerifyOracle where
-  otmGate : Prop := True
-  rejectsForgery : Prop := True
+  otmGate : Prop := verifyOtmGateProp
+  rejectsForgery : Prop := verifyRejectsForgeryProp
   deriving Repr
 
 def defaultEncryptor : SecureEncryptor := {}
+
 def defaultVerifyOracle : SecureVerifyOracle := {}
+
+theorem default_encryptor_holds_k0 :
+    defaultEncryptor.holdsK0 :=
+  encryptor_holds_k0_prop
+
+theorem default_encryptor_correct_wire_map :
+    defaultEncryptor.correctWireMap :=
+  encryptor_correct_wire_map_prop
+
+theorem default_verify_oracle_otm_gate :
+    defaultVerifyOracle.otmGate :=
+  verify_otm_gate_prop
+
+theorem default_verify_oracle_rejects_forgery :
+    defaultVerifyOracle.rejectsForgery :=
+  verify_rejects_forgery_prop
 
 /-- C — I(M; O) = 0 given secure encryptor (lemma scope). -/
 def wireConfidentiality (enc : SecureEncryptor) (s : SecretBundle) (o : UnifiedObs) : Prop :=
@@ -46,10 +94,13 @@ theorem wire_integrity (ver : SecureVerifyOracle) (ho : ver.otmGate) (hr : ver.r
     Transport.forgeProbFloor ≤ Transport.fieldPrime :=
   Transport.forge_prob_bounded
 
-/-- EP compromise: keys/plaintext leak — outside channel I(S;O)=0. -/
-def secureEndpointAxiom : Prop := True
+/-- EP scope: at least one math-trusted endpoint (A2′ gate). -/
+def secureEndpointAxiom : Prop :=
+  (defaultEncryptor.holdsK0 ∧ defaultEncryptor.correctWireMap) ∨
+    (defaultVerifyOracle.otmGate ∧ defaultVerifyOracle.rejectsForgery)
 
-theorem secure_endpoint_axiom : secureEndpointAxiom := trivial
+theorem secure_endpoint_axiom : secureEndpointAxiom :=
+  Or.inl ⟨default_encryptor_holds_k0, default_encryptor_correct_wire_map⟩
 
 /-- End-to-end CIA in channel under both oracles. -/
 def endToEndChannel (enc : SecureEncryptor) (ver : SecureVerifyOracle)

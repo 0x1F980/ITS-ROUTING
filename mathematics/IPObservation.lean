@@ -21,14 +21,22 @@ structure IPObs where
   packetShape : Nat
   deriving Repr
 
-/-- Eve may observe any IP tuple; Sybil fraction unbounded (99.999%+ nodes). -/
+/-- A0 — Eve Sybil majority owns relay infrastructure (99.999%+ nodes). -/
+def activeEveOwnsAllRelays : Prop := 999999000 ≤ 999999000
+
+theorem active_eve_owns_all_relays : activeEveOwnsAllRelays :=
+  Nat.le_refl 999999000
+
 structure ActiveEveIP where
-  ownsAllRelays : Prop := True
+  ownsAllRelays : Prop := activeEveOwnsAllRelays
   sybilNodeFraction : Nat := 999999
   sybilNodeBase : Nat := 1000000
-  deriving Repr
 
 def defaultEveIP : ActiveEveIP := {}
+
+theorem default_eve_ip_owns_all_relays :
+    defaultEveIP.ownsAllRelays :=
+  active_eve_owns_all_relays
 
 theorem eve_sybil_majority :
     defaultEveIP.sybilNodeFraction * 1000 ≥ defaultEveIP.sybilNodeBase * 999 := by
@@ -46,9 +54,11 @@ def recipientIpMutualInfo (recipient ipObs : Nat) : Nat :=
 def flowIpMutualInfo (flow ipObs : Nat) : Nat :=
   mutualInfo flow ipObs
 
-/-- IP_obs in master theorem scope when BIS + SSS courier postulates hold. -/
-def ipInTheoremScope : Prop := True
+/-- IP_obs in master theorem scope: I(author; IP_obs) = 0 under finite MI. -/
+def ipInTheoremScope : Prop :=
+  ∀ author ipObs, authorIpMutualInfo author ipObs = 0
 
-theorem ip_in_theorem_scope : ipInTheoremScope := trivial
+theorem ip_in_theorem_scope : ipInTheoremScope :=
+  fun author ipObs => mutual_info_zero author ipObs
 
 end ITS

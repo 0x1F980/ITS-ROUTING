@@ -19,10 +19,13 @@ theorem reader_zero_in_obs (reader obs : Nat) :
     readerZeroInObs reader obs :=
   mutual_info_zero reader obs
 
-/-- Publisher host ≠ Tor exit — theorem scope separates intent from O guilt. -/
-def publisherNotExitNode : Prop := True
+/-- Publisher host ≠ Tor exit — role separation + zero publisher guilt in O. -/
+def publisherNotExitNode : Prop :=
+  publisherObs ≠ forwarderObs ∧
+    ∀ obs, mutualInfo publisherObs obs = 0
 
-theorem publisher_not_exit_node : publisherNotExitNode := trivial
+theorem publisher_not_exit_node : publisherNotExitNode :=
+  ⟨by native_decide, fun obs => mutual_info_zero publisherObs obs⟩
 
 /-- Forwarder preserves author-zero under broadcast forward (h = 0 prod default). -/
 def forwarderAuthorZero (author obs cells : Nat) : Prop :=

@@ -39,26 +39,6 @@ def recipientIdObs : Nat := 13
 /-- IP layer observation index (abstract). -/
 def ipObservation : Nat := 0
 
-/-- Master theorem applies to channel O. -/
-def inTheoremScopeO (_o : ChannelObs) : Prop := True
-
-theorem channel_in_scope (_o : ChannelObs) : inTheoremScopeO _o := trivial
-
-/-- IP/physical layer: closed under BIS + SSS courier (v4 — not out-of-band forever). -/
-def ipInTheoremScopeUnderMath : Prop := True
-
-theorem ip_in_theorem_scope_under_math : ipInTheoremScopeUnderMath := trivial
-
-/-- Author attribution in O is theorem scope (I(author;O)=0). -/
-def authorInChannelScope : Prop := True
-
-theorem author_in_channel_scope : authorInChannelScope := trivial
-
-/-- Recipient attribution in O is theorem scope (I(recipient;O)=0). -/
-def recipientInChannelScope : Prop := True
-
-theorem recipient_in_channel_scope : recipientInChannelScope := trivial
-
 /-- Node role tags for role-aware deniability (v7). -/
 inductive NodeRole
   | forwarder

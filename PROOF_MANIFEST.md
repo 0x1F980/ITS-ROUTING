@@ -2,9 +2,9 @@
 
 **Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v6: axioms, §Expectations matrix, NoLastHop, Absolut A, Lean module map, v6/v7 checklist
 
-**Master cert:** `networkEcosystemCertificateV6` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₅ ∧ aAbsolute ∧ bisFullyDerived ∧ roleAwareDeniability)
+**Master cert:** `networkEcosystemCertificateV7` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₆ ∧ participationPostulatesDerived ∧ secureEndpointAxiom ∧ publicPoolMulticastClosed)
 
-**Math gate:** `./scripts/verify_math.sh` — M1–M17, `lake build`, 0 `sorry`, smoke `MasterTheoremV6.lean`  
+**Math gate:** `./scripts/verify_math.sh` — M1–M17, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke `MasterTheoremV6.lean`  
 **Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22, Rust refinement  
 **Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17–M22 / X4 / P8.* status
 
@@ -30,6 +30,8 @@
 | Medium independence (P2.3) | `MediumIndependence.lean` | **Proved** | **Proved** |
 | **M10 — networkEcosystemCertificateV5** | `MasterTheorem.lean` | **Proved** (C4 Stl import) | N/A |
 | **M17 — networkEcosystemCertificateV6** | `MasterTheoremV6.lean` | **Proved** (Absolut A + BIS full + roles) | N/A |
+| **M17+ — networkEcosystemCertificateV7** | `MasterTheoremV6.lean` | **Proved** (zero `Prop := True`; P1–P3 derived) | N/A |
+| P1–P3 participation postulates | `OplusClosure.participationPostulatesDerived` | **Proved** (L3 + pool + L3') | **Proved** |
 | B1+B3 from L3+pool+P1–P3 | `BroadcastIPDerivation.bisFullyDerived` | **Proved** | **Proved** |
 | Absolut A (censorship disclosure) | `CensorshipDisclosure.aAbsolute` | **Proved** | N/A |
 | Public pool multicast | `PublicPoolMulticast.lean` | **Proved** | N/A |
@@ -38,7 +40,7 @@
 | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
 | Either EP secure (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
 | No guilty node (all deniable) | `PlausibleDeniabilityAbsolute.noGuiltyNode` | **Proved** | **Proved** |
-| O⁺ closure L10–L12 under P1–P3 | `OplusClosure.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
+| O⁺ closure L10–L12 under P1–P3 | `OplusClosure.lean` | **Proved** (P1–P3 derived) | **Proved** |
 | Offline / sneakernet O_net = ∅ | `OfflineChannel.lean` | **Proved** | **Proved** |
 | L9 mode composition P ⊗ AEH | `Transport/Composition.lean` | **Proved** | **Proved** |
 | L13 comparative threat | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
@@ -71,8 +73,8 @@
 | L8 | SSS availability | `AvailabilityResilience.lean` | **Operational** | N/A |
 | L9 | Composition | `Transport/Composition.lean` | **Proved** | **Proved** |
 | L10 | I(link; O⁺_{rate,volume}) = 0 | `MetadataSymmetry.lean` | **Theorem** | **Proved** (finite-MI) |
-| L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
-| L12 | I(link; O⁺_participation) = 0 | `ParticipationSymmetry.lean`, `OplusClosure.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
+| L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Proved** (L3 + L3') | **Proved** |
+| L12 | I(link; O⁺_participation) = 0 | `ParticipationSymmetry.lean`, `OplusClosure.lean` | **Proved** (P3 + finite-MI) | **Proved** |
 | L13 | Passive ISP ⊆ active Eve | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
 | — | N=1 size-independent I(M;O)=0 | `FewUserDoctrine.lean` | **Proved** | **Proved** (finite-MI) |
 | — | Broadcast forward I(author;h(O))=0 | `BroadcastForward.lean` | **Proved** | **Proved** (finite-MI) |

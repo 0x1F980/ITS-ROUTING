@@ -1,6 +1,7 @@
 import Stl.Security.Deniability
 import Stl.TimeLock
 import ItsMath.Field.M31
+import ItsMath.AxiomRegistry
 
 /-!
 # Coercion model (C4) — ITS-timelock bridge (P5.1 / M15)
@@ -13,11 +14,13 @@ namespace ITS
 
 open ItsMath
 
-/-- Registered coercion axiom from ITS ecosystem registry (Stl cross-import). -/
-def coercionModelAx : Prop := True
+/-- Coercion walk yields consistent plaintext (Stl L2 deny roundtrip). -/
+def coercionModelAx : Prop :=
+  ∀ (c sT m : Nat), sT < M31 → m < M31 →
+    Stl.Security.denyDecrypt (Stl.encryptPayload m sT) sT = m
 
 theorem coercion_model_ax : coercionModelAx :=
-  Stl.Security.deniability_coercion_model
+  fun c sT m hT hm => Stl.Security.deny_produces_consistent_plaintext c sT m hT hm
 
 /-- ROUTING C4 coercion model claim (cross-import). -/
 def coercionModel : Prop := coercionModelAx

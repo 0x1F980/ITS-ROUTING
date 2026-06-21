@@ -16,8 +16,9 @@ theorem integrity_axiom : integrityAxiom :=
   Otm.otm_integrity
 
 /-- OTM Lean module linked in ecosystem lakefile. -/
-def otmLeanImportReady : Prop := True
+def otmLeanImportReady : Prop := Otm.otmIntegrity
 
-theorem otm_lean_import_ready : otmLeanImportReady := trivial
+theorem otm_lean_import_ready : otmLeanImportReady :=
+  Otm.otm_integrity
 
 end ITS

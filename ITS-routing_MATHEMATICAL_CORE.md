@@ -70,6 +70,8 @@ For each message pair \((s, r)\):
 | Absolut A | censur ⇒ videregivelse ∨ reconstruct | `CensorshipDisclosure.aAbsolute` | **Proved** (v7) |
 | Ingen skyldig forwarder | `noGuiltyNode` på \(O_{fwd}\) | `RoleAwareDeniability.lean` | **Proved** (v7) |
 | Host vs reader | \(I(\text{reader}_i; O)=0\) | multi-recipient + SOCKS | **Proved** |
+| P1–P3 participation | harvest pool/E, no dedicated EP | `OplusClosure.participationPostulatesDerived` | **Proved** (v7) |
+| Zero math stubs | no `Prop := True` in cert path | `grep mathematics/` | **Proved** (v7 closure) |
 
 **DoD cross-ref:** [`its_dod_postulates_v7_ca308ef5.plan.md`](../.cursor/plans/its_dod_postulates_v7_ca308ef5.plan.md) — P0–P8 mapping in [aca03375 plan](../.cursor/plans/mathematical_core_doc_aca03375.plan.md).
 

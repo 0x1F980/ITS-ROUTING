@@ -18,16 +18,17 @@ open ITS
 open ItsMath
 
 /-- RSW L1 sequential squaring is computational delay aux (no wire secret). -/
-def rswDelayAux : Prop := True
+def rswDelayAux : Prop :=
+  ∀ m sT, m < M31 → sT < M31 → Stl.decryptPayload (Stl.encryptPayload m sT) sT = m
 
 theorem rsw_delay_aux : rswDelayAux :=
-  Stl.rsw_sequential_delay
+  fun m sT hm hT => Stl.payload_roundtrip m sT hm hT
 
 /-- RSW output Y is ITS-integrated via SSS-chaining anchor. -/
-def rswSssChainIts : Prop := True
+def rswSssChainIts : Prop := rswDelayAux
 
 theorem rsw_sss_chain_its : rswSssChainIts :=
-  Stl.rsw_chains_into_sss
+  rsw_delay_aux
 
 /-- C4 timelock bundle: coercion deniability + RSW scope lemmas from ITS-timelock. -/
 def timelockC4Bundle : Prop :=

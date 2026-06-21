@@ -2,6 +2,9 @@ import MasterTheorem
 import BroadcastIPDerivation
 import CensorshipDisclosure
 import RoleAwareDeniability
+import OplusClosure
+import EndpointSplit
+import PublicPoolMulticast
 
 /-!
 # Master theorem v6 — network ecosystem certificate (v7 absolutisme)
@@ -36,5 +39,18 @@ theorem network_ecosystem_certificate_v6 : networkEcosystemCertificateV6 :=
    a_absolute,
    bis_fully_derived_closed,
    role_aware_deniability bisFullyDerived⟩
+
+/-- v7 — zero-stub participation + endpoint + BIS closure bundled. -/
+def networkEcosystemCertificateV7 : Prop :=
+  networkEcosystemCertificateV6 ∧
+    participationPostulatesDerived ∧
+    secureEndpointAxiom ∧
+    publicPoolMulticastClosed
+
+theorem network_ecosystem_certificate_v7 : networkEcosystemCertificateV7 :=
+  ⟨network_ecosystem_certificate_v6,
+   participation_postulates_derived,
+   secure_endpoint_axiom,
+   public_pool_multicast_closed⟩
 
 end ITS

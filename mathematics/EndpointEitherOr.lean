@@ -25,7 +25,7 @@ def eitherEndpointSecure (enc : SecureEncryptor) (ver : SecureVerifyOracle) : Pr
 
 theorem either_endpoint_secure_default :
     eitherEndpointSecure defaultEncryptor defaultVerifyOracle :=
-  Or.inl ⟨trivial, trivial⟩
+  Or.inl ⟨default_encryptor_holds_k0, default_encryptor_correct_wire_map⟩
 
 /-- Channel O remains ITS-blind to Eve regardless of Sybil count. -/
 def channelBlindUnderSybil : Prop :=

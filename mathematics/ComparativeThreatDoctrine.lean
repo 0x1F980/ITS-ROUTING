@@ -13,11 +13,11 @@ namespace ITS
 
 /-- Passiv ISP er strengt svagere end aktiv Eve. -/
 def passiveIspSubsetActiveEve : Prop :=
-  defaultEve.ownsInfrastructure = True ∧
-    defaultEve.unboundedCompute = True
+  defaultEve.ownsInfrastructure ∧
+    defaultEve.unboundedCompute
 
 theorem passive_isp_subset_active_eve : passiveIspSubsetActiveEve :=
-  ⟨rfl, rfl⟩
+  ⟨default_eve_owns_infrastructure, default_eve_unbounded_compute⟩
 
 /-- Overlay mixnet kræver peer-masse for intuitiv k-anon (operational, ikke ITS). -/
 def overlayNeedsMassPeers : Prop :=

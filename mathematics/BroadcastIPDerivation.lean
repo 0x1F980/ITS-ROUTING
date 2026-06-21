@@ -36,7 +36,7 @@ theorem derived_b2_its_cell : derivedB2FromL3Cell.itsCellDrawnFromDIP :=
 theorem derived_b2_stego_aligned : derivedB2FromL3Cell.stegoAligned :=
   stego_indistinguishability
 
-/-- Full BIS with derived B2 (B1/B3 remain structural operator postulates). -/
+/-- Legacy v5 cert path: BIS with derived B2 only. -/
 def bisWithDerivedB2 : BroadcastIPPostulates :=
   { defaultBroadcastIPPostulates with b2 := derivedB2FromL3Cell }
 
@@ -53,9 +53,17 @@ theorem broadcast_ip_symmetry_derived_b2 :
   broadcast_ip_symmetry_closed bisWithDerivedB2
 
 /-- Production default: h = 0 hops, global UES pool broadcast. -/
-def productionZeroHop : Prop := True
+def productionHopCount : Nat := 0
 
-theorem production_zero_hop : productionZeroHop := trivial
+def productionZeroHop : Prop := productionHopCount = 0
+
+theorem production_zero_hop : productionZeroHop := rfl
+
+/-- Multicast relay at h = 0 preserves 𝒟 support on every cell draw. -/
+def productionMultisetRelay : Prop := bisB3MultisetRelay
+
+theorem production_multiset_relay : productionMultisetRelay :=
+  bis_b3_multiset_relay
 
 /-- B1 derived from L3 constant emit + public pool + P2 harvest. -/
 def b1DerivesFromL3PublicPool : Prop :=
@@ -63,11 +71,17 @@ def b1DerivesFromL3PublicPool : Prop :=
     defaultParticipationPostulates.p2.harvestAllEEveryEpoch
 
 theorem b1_derives_from_l3_public_pool : b1DerivesFromL3PublicPool :=
-  ⟨l3_public_pool_symmetric_emit, trivial⟩
+  ⟨l3_public_pool_symmetric_emit, default_p2_harvest_all_e⟩
 
 def derivedB1FromL3PublicPool : B1SymmetricEmit where
   allIPsEmitEachEpoch := l3PublicPoolSymmetricEmit
   constantEmitRate := l3StreamZeroLeak
+
+theorem derived_b1_all_ips_emit : derivedB1FromL3PublicPool.allIPsEmitEachEpoch :=
+  l3_public_pool_symmetric_emit
+
+theorem derived_b1_constant_emit_rate : derivedB1FromL3PublicPool.constantEmitRate :=
+  l3_stream_zero_leak
 
 /-- B3 derived from h = 0 + broadcast forward (no author in IP header). -/
 def b3DerivesFromZeroHopForward : Prop :=
@@ -79,7 +93,10 @@ theorem b3_derives_from_zero_hop_forward : b3DerivesFromZeroHopForward :=
 
 def derivedB3FromZeroHopForward : B3MulticastForward where
   noAuthorInIPHeader := b3DerivesFromZeroHopForward
-  multisetRelay := productionZeroHop
+  multisetRelay := productionMultisetRelay
+
+theorem derived_b3_multiset_relay : derivedB3FromZeroHopForward.multisetRelay :=
+  production_multiset_relay
 
 /-- Full BIS with B1, B2, B3 all derived (v7 absolutisme). -/
 def bisFullyDerived : BroadcastIPPostulates :=

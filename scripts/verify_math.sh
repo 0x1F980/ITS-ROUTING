@@ -96,7 +96,7 @@ if ! grep -q 'finite-MI' "$ROOT/PROOF_MANIFEST.md"; then
   exit 1
 fi
 
-echo "[13/13] M16: cert path isolation (no dev-onion imports)"
+echo "[13/14] M16: cert path isolation (no dev-onion imports)"
 DEV_IMPORTS=$(
   grep -r --include='*.lean' -l -E 'import.*(MixAnonymity|ChaffIndistinguishability)' "$MATH" 2>/dev/null \
     | grep -v '.lake' || true
@@ -112,5 +112,11 @@ if grep -E 'MixAnonymity|ChaffIndistinguishability' "$MATH/lakefile.lean" \
   exit 1
 fi
 
+echo "[14/14] M18: no Prop := True stub in ROUTING mathematics"
+if grep -r --include='*.lean' 'Prop := True' "$MATH" 2>/dev/null | grep -v '.lake'; then
+  echo "FAIL: Prop := True stub found (prove or document Outside)"
+  exit 1
+fi
+
 echo ""
-echo "ALL MATH CHECKS PASSED (M1–M17)"
+echo "ALL MATH CHECKS PASSED (M1–M18)"

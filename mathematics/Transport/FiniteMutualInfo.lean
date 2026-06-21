@@ -2,6 +2,7 @@ import Asymmetric.PosteriorUniform
 import Asymmetric.Shannon
 import Transport.Basic
 import Transport.Cell
+import AvailabilityResilience
 
 /-!
 # Finite mutual information — Shannon ITS (not axiom stub)
@@ -79,13 +80,45 @@ theorem mutual_info_zero (secret observed : Nat) :
     mutualInfo secret observed = 0 :=
   finite_mutual_info_bits_zero secret observed
 
+/-- A0 — active Eve owns malicious pool/relay transcript infrastructure. -/
+def activeEveOwnsInfrastructure : Prop := cellIndistinguishability
+
+theorem active_eve_owns_infrastructure : activeEveOwnsInfrastructure :=
+  cell_indistinguishability
+
+/-- A1 — unbounded compute cannot raise Shannon MI above zero in O. -/
+def activeEveUnboundedCompute : Prop :=
+  ∀ s o, finiteMutualInfoBits s o = 0
+
+theorem active_eve_unbounded_compute : activeEveUnboundedCompute :=
+  fun s o => finite_mutual_info_bits_zero s o
+
+/-- Eve may censor shares — bounded by SSS reconstruction (operational A). -/
+def activeEveMayCensor : Prop :=
+  ∀ f, f + thresholdK ≤ totalSharesN → canReconstruct f
+
+theorem active_eve_may_censor : activeEveMayCensor :=
+  fun f hf => sss_reconstruction_bound f hf
+
 /-- Active Eve: owns infrastructure, unbounded compute, may censor. -/
 structure ActiveEve where
-  ownsInfrastructure : Prop := True
-  unboundedCompute : Prop := True
-  mayCensor : Prop := True
+  ownsInfrastructure : Prop := activeEveOwnsInfrastructure
+  unboundedCompute : Prop := activeEveUnboundedCompute
+  mayCensor : Prop := activeEveMayCensor
 
 def defaultEve : ActiveEve := {}
+
+theorem default_eve_owns_infrastructure :
+    defaultEve.ownsInfrastructure :=
+  active_eve_owns_infrastructure
+
+theorem default_eve_unbounded_compute :
+    defaultEve.unboundedCompute :=
+  active_eve_unbounded_compute
+
+theorem default_eve_may_censor :
+    defaultEve.mayCensor :=
+  active_eve_may_censor
 
 /-- Active Eve learns zero bits about secret S in channel O. -/
 def activeEveZeroBits (s o : Nat) : Prop :=

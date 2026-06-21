@@ -1,6 +1,9 @@
 import IPObservation
 import Transport.Cell
+import Transport.Epoch
 import AEH.StegoIndistinguishability
+import BroadcastForward
+import UnifiedEpochStream
 
 /-!
 # Broadcast IP Symmetry (BIS) — I(author; IP_obs) = 0
@@ -17,21 +20,47 @@ namespace ITS
 open AEH Transport
 
 /-- B1 — each epoch every IP ∈ 𝒩 emits traffic ~ 𝒟_IP (size/timing/dst). -/
+def bisB1AllIPsEmit : Prop :=
+  l3ConstantRate ∧ defaultL3Send.emitsEveryEpoch
+
+theorem bis_b1_all_ips_emit : bisB1AllIPsEmit :=
+  ⟨l3_constant_rate, default_l3_send_emits_every_epoch⟩
+
+def bisB1ConstantEmitRate : Prop := l3StreamZeroLeak
+
+theorem bis_b1_constant_emit_rate : bisB1ConstantEmitRate :=
+  l3_stream_zero_leak
+
 structure B1SymmetricEmit where
-  allIPsEmitEachEpoch : Prop := True
-  constantEmitRate : Prop := True
+  allIPsEmitEachEpoch : Prop := bisB1AllIPsEmit
+  constantEmitRate : Prop := bisB1ConstantEmitRate
   deriving Repr
 
 /-- B2 — ITS cell bytes indistinguishable from chaff / benign mass draw. -/
+def bisB2CellFromDIP : Prop := cellIndistinguishability ∧ l3StreamZeroLeak
+
+def bisB2StegoAligned : Prop := stegoIndistinguishability
+
 structure B2IndistinguishablePayload where
-  itsCellDrawnFromDIP : Prop := True
-  stegoAligned : Prop := True
+  itsCellDrawnFromDIP : Prop := bisB2CellFromDIP
+  stegoAligned : Prop := bisB2StegoAligned
   deriving Repr
 
 /-- B3 — forward/multicast: no author-label in IP header; multiset relay. -/
+def bisB3NoAuthorInHeader : Prop :=
+  ∀ author obs cells, broadcastForwardZeroAuthor author obs cells
+
+theorem bis_b3_no_author_in_header : bisB3NoAuthorInHeader :=
+  fun author obs cells => broadcast_forward_zero_author author obs cells
+
+def bisB3MultisetRelay : Prop := ∀ cells, forwardPreservesD cells
+
+theorem bis_b3_multiset_relay : bisB3MultisetRelay :=
+  fun cells => forward_preserves_d cells
+
 structure B3MulticastForward where
-  noAuthorInIPHeader : Prop := True
-  multisetRelay : Prop := True
+  noAuthorInIPHeader : Prop := bisB3NoAuthorInHeader
+  multisetRelay : Prop := bisB3MultisetRelay
   deriving Repr
 
 /-- Full Broadcast IP Symmetry postulates. -/
