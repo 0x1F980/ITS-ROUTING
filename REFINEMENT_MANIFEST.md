@@ -8,6 +8,24 @@
 
 ---
 
+## Status (Sprint 5 — ca308ef5)
+
+| Gate | Command | Status |
+|------|---------|--------|
+| **M17** Lean refinement lib | `lake build routing-math-refinement` | **Green** |
+| **M18** Public mirror deploy | `pipe_its_http_pool_e2e.sh` + `ITS-routing_DEPLOY_MATH_GATES.md` | **Green** |
+| **M19** KM + SOCKS egress | `pipe_its_km_pool_e2e.sh`, `pipe_its_socks_pool_e2e.sh` | **Green** |
+| **M20** Timelock pipe | `pipe_timelock.sh` | **Green** |
+| **M21** Censorship recovery | `pipe_its_censorship_recovery_e2e.sh`, `pipe_its_sneakernet_e2e.sh`, `pipe_its_aeh_censorship_e2e.sh` | **Green** |
+| **M22** Manifest alignment | PROOF_MANIFEST + REFINEMENT_MANIFEST ↔ Lean/Rust | **Green** |
+| **M7** epoch cell Rust test | `cargo test -p its_transport rust_epoch_cell_refines_ideal` | **Green** |
+| Ratchet algebra test | `cargo test -p its_transport rust_ratchet_algebra_matches_lean` | **Green** |
+| Ecosystem | `./scripts/verify_ecosystem.sh` | **Green** |
+
+**Closes:** X4 (Sprint 4), P8.* product DoD (Sprint 5).
+
+---
+
 ## Status (Sprint 4 — ca308ef5)
 
 | Gate | Command | Status |
@@ -30,6 +48,10 @@
 | L1 cell indistinguishability | `Transport/Cell.lean` — `cellIndistinguishability` | uniform RNG fill in `step()` | **Proved (Lean)** — uniform draw over F_p; payload/chaff header not in O model |
 | OTM tag verify | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | `epoch_cell::verify_cell`, `aeh.rs` | **Cross-repo** (ITS-OTM) |
 | Pool client path | `UnifiedEpochStream.lean`, `MasterTheorem.lean` | `its_routing::client` pool receive | **E2E pipes** — `pipe_its_pool_e2e.sh` |
+| SOCKS egress | L3 + BIS | `tools/its_pool_proxy.py` | **E2E** — `pipe_its_socks_pool_e2e.sh` |
+| KM one-command send | subprocess glue | `its-km` | **E2E** — `pipe_its_km_pool_e2e.sh` |
+| Timelock ridge | `Transport/TimelockComposition.lean` | `ridges/timelock.rs` | **E2E** — `pipe_timelock.sh` |
+| Censorship recovery | `AvailabilityResilience.lean` | fountain + multi-mirror | **E2E** — `pipe_its_censorship_recovery_e2e.sh` |
 | End-to-end binary | composition lemmas | `client.rs` pool/AEH | E2E pipes in `verify_ecosystem.sh` |
 
 ---

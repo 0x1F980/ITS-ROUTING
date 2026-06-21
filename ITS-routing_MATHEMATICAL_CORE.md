@@ -408,7 +408,7 @@ Under axioms A0–A1 and file/message to known contact:
 
 **Conclusion:** Choosing Tor/I2P/Nym when explicitly requiring A0–A1 for C/I on file/message is the objectively weaker design — not because overlays are poorly engineered, but because their **security lemma class is weaker by definition**.
 
-Future doc: `ITS-routing_OVERLAY_EXTINCTION.md` (planned — lemma-ID per claim).
+Future doc: [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) (lemma-ID per claim).
 
 ---
 

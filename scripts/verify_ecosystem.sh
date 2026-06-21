@@ -424,6 +424,74 @@ else
   red "v4: verify_math.sh missing"
 fi
 
+echo "=== M18: public mirror reference deploy (BIS/P1-P3) ==="
+if [[ -f "$ROUTING/ITS-routing_DEPLOY_MATH_GATES.md" ]] \
+  && [[ -f "$ROUTING/deploy/pool-mirror/pool_mirror_server.py" ]]; then
+  if [[ -x "$ROUTING/scripts/pipe_its_http_pool_e2e.sh" ]]; then
+    "$ROUTING/scripts/pipe_its_http_pool_e2e.sh" >/dev/null 2>&1 && green "M18: pipe_its_http_pool_e2e.sh" || red "M18: pipe_its_http_pool_e2e.sh failed"
+  else
+    red "M18: pipe_its_http_pool_e2e.sh missing"
+  fi
+else
+  red "M18: deploy math gates doc or pool-mirror missing"
+fi
+
+echo "=== M19: KM send + SOCKS egress (P8.2/P8.4) ==="
+m19_ok=1
+[[ -f "$ROUTING/ITS-routing_SOCKS_EGRESS.md" ]] || { red "M19: ITS-routing_SOCKS_EGRESS.md missing"; m19_ok=0; }
+if [[ -x "$ROUTING/scripts/pipe_its_km_pool_e2e.sh" ]]; then
+  "$ROUTING/scripts/pipe_its_km_pool_e2e.sh" >/dev/null 2>&1 || { red "M19: pipe_its_km_pool_e2e.sh failed"; m19_ok=0; }
+else
+  red "M19: pipe_its_km_pool_e2e.sh missing"; m19_ok=0
+fi
+if [[ -x "$ROUTING/scripts/pipe_its_socks_pool_e2e.sh" ]]; then
+  "$ROUTING/scripts/pipe_its_socks_pool_e2e.sh" >/dev/null 2>&1 || { red "M19: pipe_its_socks_pool_e2e.sh failed"; m19_ok=0; }
+else
+  red "M19: pipe_its_socks_pool_e2e.sh missing"; m19_ok=0
+fi
+[[ "$m19_ok" -eq 1 ]] && green "M19: KM + SOCKS egress"
+
+echo "=== M20: timelock pipe (P8.5) ==="
+if [[ -x "$ROUTING/scripts/pipe_timelock.sh" ]]; then
+  "$ROUTING/scripts/pipe_timelock.sh" >/dev/null 2>&1 && green "M20: pipe_timelock.sh" || red "M20: pipe_timelock.sh failed"
+else
+  red "M20: pipe_timelock.sh missing"
+fi
+
+echo "=== M21: censorship recovery pipes (P8.3/B4) ==="
+m21_ok=1
+for p in pipe_its_censorship_recovery_e2e.sh pipe_its_sneakernet_e2e.sh pipe_its_aeh_censorship_e2e.sh; do
+  if [[ -x "$ROUTING/scripts/$p" ]]; then
+    "$ROUTING/scripts/$p" >/dev/null 2>&1 || { red "M21: $p failed"; m21_ok=0; }
+  else
+    red "M21: $p missing"; m21_ok=0
+  fi
+done
+[[ -f "$ROUTING/ITS-routing_CENSORSHIP_RECOVERY.md" ]] || { red "M21: ITS-routing_CENSORSHIP_RECOVERY.md missing"; m21_ok=0; }
+[[ "$m21_ok" -eq 1 ]] && green "M21: censorship + sneakernet pipes"
+
+echo "=== M22: manifest ↔ Lean/Rust alignment ==="
+m22_ok=1
+for f in MasterTheorem.lean BroadcastIPDerivation.lean Refinement/EpochCellCorrectness.lean; do
+  mod="${f%.lean}"
+  mod="${mod//\//.}"
+  grep -q "$mod" "$ROUTING/PROOF_MANIFEST.md" 2>/dev/null || { red "M22: PROOF_MANIFEST missing $mod"; m22_ok=0; }
+done
+for p in pipe_its_pool_e2e.sh pipe_its_socks_pool_e2e.sh pipe_timelock.sh; do
+  grep -q "$p" "$ROUTING/REFINEMENT_MANIFEST.md" 2>/dev/null || { red "M22: REFINEMENT_MANIFEST missing $p"; m22_ok=0; }
+done
+[[ -f "$ROUTING/ITS-routing_STANDARD_REPLACEMENT.md" ]] || { red "M22: ITS-routing_STANDARD_REPLACEMENT.md missing"; m22_ok=0; }
+[[ -f "$ROUTING/ITS-routing_OVERLAY_EXTINCTION.md" ]] || { red "M22: ITS-routing_OVERLAY_EXTINCTION.md missing"; m22_ok=0; }
+[[ -f "$ROUTING/ITS_MIGRATION_GUIDES.md" ]] && grep -q 'Tor SOCKS' "$ROUTING/ITS_MIGRATION_GUIDES.md" || { red "M22: ITS_MIGRATION_GUIDES Tor/I2P migration missing"; m22_ok=0; }
+[[ "$m22_ok" -eq 1 ]] && green "M22: PROOF + REFINEMENT manifests aligned"
+
+echo "=== Sprint 5: product docs D1-D30 registry ==="
+d_ok=1
+for doc in ITS-routing_SOCKS_EGRESS.md ITS-routing_DEPLOY_MATH_GATES.md ITS-routing_STANDARD_REPLACEMENT.md ITS-routing_OVERLAY_EXTINCTION.md ITS_MIGRATION_GUIDES.md QUICKSTART.md; do
+  [[ -f "$ROUTING/$doc" ]] || { red "Sprint5 doc missing: $doc"; d_ok=0; }
+done
+[[ "$d_ok" -eq 1 ]] && green "Sprint5: product docs D7-D30 present"
+
 if [[ "$FAIL" -eq 0 ]]; then
   echo "=== verify_ecosystem: ALL CHECKS PASSED ==="
 else

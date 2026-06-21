@@ -55,6 +55,23 @@ Reproducible verification badge for adopters.
 
 ---
 
+## Sprint 6 — `ecosystem-v1.0.0-complete` gate (prep)
+
+**Execute before meta-tag (operator action — not automated in this sprint):**
+
+- [ ] `./scripts/verify_math.sh` green on tagged checkout (M9–M16)
+- [ ] `./scripts/verify_ecosystem.sh` green (M17–M22, P8.*)
+- [ ] All sibling repos at matching tags — see [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
+- [ ] Product docs present: SOCKS egress (D30), deploy math gates (D9), standard replacement, overlay extinction, migration guides
+- [ ] Public pool reference deploy tested: `pipe_its_http_pool_e2e.sh`
+- [ ] Timelock pipe: `pipe_timelock.sh`
+- [ ] Independent reviewer sign-off on [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v5 + [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
+- [ ] Push all repos; apply meta-tag `ecosystem-v1.0.0-complete` (requires user confirmation)
+
+---
+
 Badge: **ITS v0.10 verify_fast + Lean green — reproducible build**
 
 Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (multi-hour on standard profile).
+
+**Target badge (Sprint 6):** `ecosystem-v1.0.0-complete` — verify_math + verify_ecosystem + P8.* + tagged sibling repos.

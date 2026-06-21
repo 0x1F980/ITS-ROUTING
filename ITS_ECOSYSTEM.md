@@ -346,6 +346,24 @@ Ecosystem verify uses `--features full` when testing the complete routing binary
 ./scripts/verify_ecosystem.sh
 ```
 
+**Product docs (Sprint 5):** [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
+
+---
+
+## Ecosystem tag `ecosystem-v1.0.0-complete` (Sprint 6 — prep only)
+
+**Criteria (do not tag without operator confirmation):**
+
+| # | Requirement |
+|---|-------------|
+| 1 | `./scripts/verify_math.sh` green (M9–M16) |
+| 2 | `./scripts/verify_ecosystem.sh` green (M17–M22, P8.*) |
+| 3 | Sibling repos pushed at matching `v1.0.0` tags |
+| 4 | [ITS_INDEPENDENT_REVIEW_CHECKLIST.md](ITS_INDEPENDENT_REVIEW_CHECKLIST.md) executed on tagged release |
+| 5 | Meta-tag `ecosystem-v1.0.0-complete` on all ecosystem repos |
+
+Full checklist: [PROOF_MANIFEST.md](PROOF_MANIFEST.md) — Ecosystem tag criteria section.
+
 ---
 
 ## Organization

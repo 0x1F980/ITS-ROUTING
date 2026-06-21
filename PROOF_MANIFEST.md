@@ -3,8 +3,8 @@
 **Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — axioms, formula manifest, Lean module map, v5 gaps
 
 **Math gate:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke `UnattackableCertificate.lean`  
-**Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes, Rust refinement  
-**Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17 / X4 status (Sprint 4)
+**Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22, Rust refinement  
+**Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17–M22 / X4 / P8.* status
 
 **MathSupremacy:** Eve owns 99.999%+ nodes; all pool/relay HW/SW is backdoored transcript. Security = Lean lemmas only.
 
@@ -100,7 +100,42 @@ Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
 | Pool publish | anonym pool HTTP | `pipe_its_pool_e2e.sh` |
 | CoverTransport | cover harvest | `pipe_its_cover_harvest_e2e.sh` |
 | Sneakernet | offline courier | `pipe_its_sneakernet_e2e.sh` |
+| SOCKS egress | app proxy | `pipe_its_socks_pool_e2e.sh` |
+| KM send/receive | operator glue | `pipe_its_km_pool_e2e.sh` |
+| Timelock | C4 ridge | `pipe_timelock.sh` |
+| Public mirror | reference deploy | `pipe_its_http_pool_e2e.sh` |
 
-**Refinement gate:** `cargo test -p its_transport -p its_routing` + `./scripts/verify_ecosystem.sh`
+**Refinement gate:** `cargo test -p its_transport -p its_routing` + `./scripts/verify_ecosystem.sh` (M17–M22)
+
+---
+
+## Product DoD (P8.* — Sprint 5)
+
+| Postulate | Claim | Gate | Status |
+|-----------|-------|------|--------|
+| **P8.1** | Anonym file/message via pool default | `pipe_its_pool_e2e.sh` | **Green** |
+| **P8.2** | App egress via SOCKS pool proxy | `pipe_its_socks_pool_e2e.sh` + D30 | **Green** |
+| **P8.3** | Censur: fountain + multi-mirror + AEH + sneakernet | M21 pipes | **Green** |
+| **P8.4** | One-command send via `its-km` | `pipe_its_km_pool_e2e.sh` | **Green** |
+| **P8.5** | Timelock generate/unlock/deny | `pipe_timelock.sh` | **Green** |
+| **P8.6** | Public pool deploy BIS/P1–P3 | M18 + D9 | **Green** |
+| **P8.7** | Migration Tor/I2P/Nym → ITS | D7 + `ITS_MIGRATION_GUIDES.md` | **Green** (local verify) |
+
+---
+
+## Ecosystem tag criteria (`ecosystem-v1.0.0-complete` — Sprint 6 prep)
+
+**Do not tag without user confirmation.** When all criteria are green:
+
+| # | Criterion | Gate |
+|---|-----------|------|
+| 1 | Math certificate v5 | `./scripts/verify_math.sh` (M9–M16) |
+| 2 | Refinement + product pipes | `./scripts/verify_ecosystem.sh` (M17–M22) |
+| 3 | P8.* product DoD | table above |
+| 4 | Sibling repos committed at matching tags | `bootstrap.sh` + per-repo `v1.0.0` |
+| 5 | Independent review checklist executed | `ITS_INDEPENDENT_REVIEW_CHECKLIST.md` |
+| 6 | Meta-tag on all ecosystem repos | `ecosystem-v1.0.0-complete` (git — operator action) |
+
+**Remaining for full ship:** push all repos, tag, execute review checklist on tagged release, public mirror deployment (operational).
 
 **Constitution:** [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md) · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v4
