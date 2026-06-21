@@ -35,11 +35,18 @@ lake env lean Transport/FiniteMutualInfo.lean
 
 OTM_ROOT="$(cd "$ROOT/../ITS-OTM_public_attestation" 2>/dev/null && pwd || true)"
 if [[ -n "${OTM_ROOT:-}" && -f "$OTM_ROOT/mathematics/Otm/OtmIntegrity.lean" ]]; then
-  echo "[6/6] smoke Otm/OtmIntegrity.lean (ITS-OTM)"
+  echo "[6/7] smoke Otm/OtmIntegrity.lean (ITS-OTM)"
   (cd "$OTM_ROOT/mathematics" && lake env lean Otm/OtmIntegrity.lean)
 else
-  echo "[6/6] skip OTM smoke (ITS-OTM mathematics not found)"
+  echo "[6/7] skip OTM smoke (ITS-OTM mathematics not found)"
+fi
+
+if [[ -f "$ROOT/mathematics/MasterTheorem.lean" ]]; then
+  echo "[7/7] smoke MasterTheorem.lean (M10 Sprint 2)"
+  lake env lean MasterTheorem.lean
+else
+  echo "[7/7] skip MasterTheorem smoke (not found)"
 fi
 
 echo ""
-echo "ALL MATH CHECKS PASSED (M1–M8 gate + Sprint 1 smoke)"
+echo "ALL MATH CHECKS PASSED (M1–M8 gate + Sprint 1/2 smoke)"

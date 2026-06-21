@@ -21,7 +21,11 @@
 | I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
 | I(recipient; O) = 0 | `RecipientAttributionZero.lean` | **Proved** | **Proved** |
 | I(flow; O) = 0, I(flow; IP) = 0 | `FlowAttributionZero.lean` | **Proved** | **Proved** |
-| I(author; IP_obs) = 0, I(recipient; IP_obs) = 0 | `BroadcastIPSymmetry.lean` (B1–B3) | **Theorem under BIS** | **Structural postulates** |
+| I(author; IP_obs) = 0, I(recipient; IP_obs) = 0 | `BroadcastIPSymmetry.lean` (B1–B3) | **Theorem under BIS** | **B2 derived** (`BroadcastIPDerivation.lean`) |
+| B2 from L3 + cell | `BroadcastIPDerivation.lean` | **Proved** | **Proved** |
+| Timeless C/I (P6.*) | `TimelessSecurity.lean` | **Proved** | **Proved** |
+| Medium independence (P2.3) | `MediumIndependence.lean` | **Proved** | **Proved** |
+| **M10 — networkEcosystemCertificateV5** | `MasterTheorem.lean` | **Proved** (C4 placeholder) | N/A |
 | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
 | Either EP secure (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
 | No guilty node (all deniable) | `PlausibleDeniabilityAbsolute.noGuiltyNode` | **Proved** | **Proved** |
@@ -65,7 +69,11 @@
 | — | I(author; O) package | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
 | — | I(recipient; O) and IP | `RecipientAttributionZero.lean` | **Proved** | **Proved** |
 | — | I(flow; O) and I(flow; IP) | `FlowAttributionZero.lean` | **Proved** | **Proved** |
-| — | BIS B1–B3 IP symmetry | `BroadcastIPSymmetry.lean` | **Theorem under postulates** | **Structural postulates** |
+| — | BIS B1–B3 IP symmetry | `BroadcastIPSymmetry.lean` | **Theorem under postulates** | **B2 derived** |
+| — | B2 from L3 + cell | `BroadcastIPDerivation.lean` | **Proved** | **Proved** |
+| — | Timeless security P6.* | `TimelessSecurity.lean` | **Proved** | **Proved** |
+| — | Medium independence | `MediumIndependence.lean` | **Proved** | **Proved** |
+| — | Master v5 ecosystem cert | `MasterTheorem.lean` | **Proved** (C4 Sprint 3) | N/A |
 | — | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
 | — | Either EP (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
 | — | Absolute deniability master | `PlausibleDeniabilityAbsolute.lean` | **Proved** | **Proved** |

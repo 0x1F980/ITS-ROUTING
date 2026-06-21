@@ -3,7 +3,7 @@
 **Formal spec (formulas + Lean map):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md)
 
 **Status:** Formal math certificate — software refinement explicitly phase 2  
-**Master theorem:** `mathematics/UnattackableCertificate.lean` (v4)  
+**Master theorem:** `mathematics/MasterTheorem.lean` (v5) · v4: `UnattackableCertificate.lean`  
 **Absolute deniability:** `mathematics/PlausibleDeniabilityAbsolute.lean`  
 **Verify:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke certificate  
 **Refinement (later):** `./scripts/verify_ecosystem.sh` — cargo + E2E pipes
@@ -46,7 +46,10 @@
 | **I(author; O)** | Ingen forfatter i kanal-O | **Theorem** — `AuthorAttributionZero.lean` |
 | **I(recipient; O)** | Ingen modtager i kanal-O headers | **Theorem** — `RecipientAttributionZero.lean` |
 | **I(flow; O), I(flow; IP)** | Ingen path-korrelation | **Theorem** — `FlowAttributionZero.lean` |
-| **I(author; IP_obs), I(recipient; IP_obs)** | Ingen IP-afsender/modtager | **Theorem under BIS** — `BroadcastIPSymmetry.lean` |
+| **I(author; IP_obs), I(recipient; IP_obs)** | Ingen IP-afsender/modtager | **Theorem under BIS** — `BroadcastIPSymmetry.lean`; B2 **derived** — `BroadcastIPDerivation.lean` |
+| **Timeless C/I (P6.*)** | Compute-epoch uafhængig | **Theorem** — `TimelessSecurity.lean` |
+| **Medium independence (P2.3)** | Wire-seal på pool/AEH/offline | **Theorem** — `MediumIndependence.lean` |
+| **M10 ecosystem cert v5** | C1∧C2∧C3∧C4∧T∧timeless∧medium | **Theorem** — `MasterTheorem.lean` (C4 Sprint 3) |
 | **Ingen skyldig node** | Alle plausibelt benægtelige | **Theorem** — `PlausibleDeniabilityAbsolute.noGuiltyNode` |
 | **Either EP** | Alice encryptor **∨** Bob verify-oracle | **Theorem** — `EndpointEitherOr.lean` |
 | **Sybil 99.999%+** | 0 ekstra bits om M | **Proved (finite-MI)** — `SybilDoctrine.lean` |

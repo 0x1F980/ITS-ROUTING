@@ -9,7 +9,13 @@ package «routing-math» where
 
 @[default_target]
 lean_lib «routing-math-cert» where
-  roots := #[`UnattackableCertificate]
+  roots := #[
+    `UnattackableCertificate,
+    `BroadcastIPDerivation,
+    `TimelessSecurity,
+    `MediumIndependence,
+    `MasterTheorem
+  ]
 
 lean_lib «routing-math-dev» where
   roots := #[
