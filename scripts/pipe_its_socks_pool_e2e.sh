@@ -2,19 +2,11 @@
 # SOCKS pool proxy smoke test (v1.8).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ASYM="${ITS_ASYMMETRIC_DIR:-/home/user/ITS-asymmetric}"
-TMP="${TMPDIR:-/tmp}/its_socks_pool_e2e_$$"
-POOL="$TMP/pool"
-mkdir -p "$TMP" "$POOL"
-trap 'rm -rf "$TMP"' EXIT
+# shellcheck source=scripts/lib/pipe_pool_common.sh
+source "$ROOT/scripts/lib/pipe_pool_common.sh"
 
-cargo build --release --manifest-path "$ASYM/Cargo.toml" --bin its_asymmetric --features "bundle,parallel,std,compact-wire" --quiet
-cargo build --release --manifest-path "$ROOT/its_routing/Cargo.toml" --quiet
-ITS="$ASYM/target/release/its_asymmetric"
-ROUTING="$ROOT/target/release/its-routing"
-
-"$ITS" keygen --out-dir "$TMP/bob" 2>/dev/null || "$ITS" keygen --out "$TMP/bob"
-dd if=/dev/urandom of="$TMP/ratchet.seed" bs=32 count=1 2>/dev/null
+pipe_pool_init "$ROOT" "its_socks_pool_e2e"
+pipe_pool_keygen "$TMP/bob"
 
 cat > "$TMP/pool.toml" <<EOF
 [pool]

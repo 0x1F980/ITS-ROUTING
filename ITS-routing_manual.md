@@ -3,14 +3,46 @@
 ## License: GNU GPLv3 Only
 ## Target: Systems Developers, Incident Responders & Field Engineers
 
-> **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) — subcommand → scope table in §2.
+> **Production default (v2.0):** UES Monocell Pool (`transport_mode = "pool"`, 0 hops, 1 epoch). Onion mesh / UDP daemon paths are **dev-only** (`dev-onion-mix` feature) — see [Appendix A](#appendix-a-dev-onion-mix-legacy).
 
+> **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) — subcommand → scope table in §2.
 
 This document details the configuration formats, CLI commands, and deployment models managed by `ITS-routing`.
 
 ---
 
-## 0. Pipe (stdin / stdout)
+## 0. UES Monocell Pool (production path)
+
+Export a 32-byte ratchet seed from [ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement), then send/receive via the epoch cell pool:
+
+```bash
+its-km export-ratchet-seed --contact bob --out /tmp/seed.bin --password '...'
+
+its-routing -c pool.toml client-send --pool --file msg.wire \
+  --ratchet-seed-file /tmp/seed.bin
+
+its-routing -c pool.toml client-receive --pool --continuous \
+  --ratchet-seed-file /tmp/seed.bin --out recv.wire
+rm -f /tmp/seed.bin
+```
+
+Minimal `pool.toml`:
+
+```toml
+[pool]
+transport_mode = "pool"
+pool_file = ".its-pool"          # local file pool (or pool_url for HTTP mirror)
+cell_size_L = 4096
+epoch_interval_ms = 100
+sss_k = 2
+sss_n = 3
+```
+
+Primary E2E gate: `./scripts/pipe_its_pool_e2e.sh`. HTTP mirror deploy: `./scripts/pipe_its_http_pool_e2e.sh`.
+
+---
+
+## 1. Pipe (stdin / stdout)
 
 Use `-` for **stdin** or **stdout** on selected subcommands. Same syntax in **bash**, **zsh**, and **fish**.
 
@@ -27,11 +59,9 @@ Full guide: [ITS-routing_PIPE.md](ITS-routing_PIPE.md). Demo: `scripts/pipe_time
 
 `ITS-routing` is executed via the unified binary `its-routing` (formerly `morphic-its` / `hydra_cli`).
 
-### Command 1: Start an Active Routing Node
-Starts an active onion router node on a VPS or bare-metal host:
-```bash
-its-routing start-node --config config.toml --port 8180 --chaff-rate 100
-```
+### Command 1: Pool send / receive (production)
+
+See [§0 UES Monocell Pool](#0-ues-monocell-pool-production-path). Flags: `--pool`, `--ratchet-seed-file`, `--file` / `--msg`, `--continuous` on receive.
 
 ### Command 2: Single-Shot AEH Transmission
 Dispatches a single authenticated, steganographically-camouflaged SSS share across public pools.
@@ -173,6 +203,19 @@ its-routing fingerprint-erasure --file tainted.jpg --out clean.png --pad offline
 its_fe otp-unmask --in wire.bin --pad offline.pad --out clean.png   # Bob
 ```
 Flags: `--delta`, `--format`, `--pad`, `--out-otp`.
+
+---
+
+## Appendix A: Dev onion-mix (legacy)
+
+> **Not production default.** Build with `cargo build -p its_routing --features dev-onion-mix`.
+
+### Start an Active Routing Node (dev-only)
+```bash
+its-routing start-node --config config.toml --port 8180 --chaff-rate 100
+```
+
+Multi-hop onion send/receive uses UDP mesh daemons and `routing_table` entries. E2E regression: rebuild with `dev-onion-mix` and use legacy mesh configs under `scripts/e2e_*.toml`.
 
 ---
 

@@ -1,5 +1,7 @@
 # ITS-routing: Unattackable Model (v4 — absolute deniability)
 
+**Formal spec (formulas + Lean map):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md)
+
 **Status:** Formal math certificate — software refinement explicitly phase 2  
 **Master theorem:** `mathematics/UnattackableCertificate.lean` (v4)  
 **Absolute deniability:** `mathematics/PlausibleDeniabilityAbsolute.lean`  
@@ -47,7 +49,9 @@
 | **I(author; IP_obs), I(recipient; IP_obs)** | Ingen IP-afsender/modtager | **Theorem under BIS** — `BroadcastIPSymmetry.lean` |
 | **Ingen skyldig node** | Alle plausibelt benægtelige | **Theorem** — `PlausibleDeniabilityAbsolute.noGuiltyNode` |
 | **Either EP** | Alice encryptor **∨** Bob verify-oracle | **Theorem** — `EndpointEitherOr.lean` |
-| **Sybil 99.999%+** | 0 ekstra bits om M | **Theorem** — `SybilDoctrine.lean` |
+| **Sybil 99.999%+** | 0 ekstra bits om M | **Theorem (**MI stub**)** — `SybilDoctrine.lean` |
+
+> **v4 MI honesty:** C3 (`UnifiedEpochStream`), Sybil, L3' (`MetadataSymmetry`), and N=1 claims use `mutualInfo := 0` stubs until Sprint 1 `FiniteMutualInfo.lean`. See [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §XII.
 
 Author/recipient/flow lukkes via pool (ingen provenance), AEH (φ ~ 𝒟_benign), broadcast-forward,
 SSS multi-IP courier, og BIS — **ikke** via at stole på Eve's nodes.
@@ -71,14 +75,14 @@ SSS multi-IP courier, og BIS — **ikke** via at stole på Eve's nodes.
 |---|-------|------|-------------|-------------|
 | L1 | Wire Shannon + cell indistinguishability | begge | `Transport/WireComposition.lean` | **Proved** (asymmetric import) |
 | L2 | OTM WC-MAC, P(forge) ≤ 1/p | begge | `IntegrityAxiom.lean` | **Axiom** |
-| L3 | C_e ~ 𝒟, altid emit | P | `UnifiedEpochStream.lean` | **Proved** |
+| L3 | C_e ~ 𝒟, altid emit | P | `UnifiedEpochStream.lean` | **Theorem (**MI stub**)** |
 | L4 | φ ~ 𝒟_benign | AEH | `AEH/StegoIndistinguishability.lean` | **Proved** |
 | L5 | I(S; release) = 0 | begge | `AEH/EpochGate.lean` | **Proved** |
 | L6 | I(link; O) = 0 under L3+L3' | P | `LinkParticipation.lean` | **Proved** |
 | L7 | φ ~ 𝒟_benign ⇒ link-blind i AEH | AEH | `PlausibleDeniability.lean` | **Proved** |
 | L8 | SSS rekonstruktion under ≤ f deletion | A | `AvailabilityResilience.lean` | **Operational** |
 | L9 | Composition end-to-end | begge | `Transport/Composition.lean` → `UnattackableCertificate.lean` | **Proved** |
-| L10 | I(link; O⁺_{rate,volume}) = 0 | begge | `MetadataSymmetry.lean` | **Proved** |
+| L10 | I(link; O⁺_{rate,volume}) = 0 | begge | `MetadataSymmetry.lean` | **Theorem (**MI stub**)** |
 | L11 | CoverTransport ⇒ konstant O⁺ deltagelse | P | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** |
 | L12 | I(link; O⁺_participation) = 0 | P | `OplusClosure.lean` | **Postulate-under-P1–P3** |
 | L13 | Passiv ISP-inference ⊆ aktiv Eve | begge | `ComparativeThreatDoctrine.lean` | **Proved** |
@@ -131,7 +135,7 @@ Eve ejer alle noder undtagen én sikker endpoint. Sybil fake-posters afvises af 
 I(M;\, O_{\mathcal{A}}) = 0 \quad \text{(Sybil-strategier } \mathcal{A} \text{)}
 \]
 
-**Lean:** `SybilDoctrine.lean` — Sybil irrelevant for C/I; kun A og O⁺.
+**Lean:** `SybilDoctrine.lean` — Sybil irrelevant for C/I; kun A og O⁺. **v4:** Shannon claim is **MI stub** until `FiniteMutualInfo.lean`.
 
 ---
 

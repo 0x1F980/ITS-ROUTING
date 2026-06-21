@@ -1,5 +1,7 @@
 # ROUTING — Proof manifest (v4 — absolute deniability + math certificate)
 
+**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — axioms, formula manifest, Lean module map, v5 gaps
+
 **Math gate:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke `UnattackableCertificate.lean`  
 **Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes, Rust refinement
 
@@ -9,25 +11,25 @@
 
 ## Master math certificate (v4)
 
-| Claim | Lean module | Math status |
-|-------|-------------|-------------|
-| **M7 — unattackable certificate v4** | `UnattackableCertificate.lean` | **Proved** |
-| **C4 absolute plausible deniability** | `PlausibleDeniabilityAbsolute.lean` | **Proved** |
-| C1 wire Shannon \(I(M;O)=0\) | `Transport/WireComposition.lean` → `Asymmetric.fullWireEncShannonIts` | **Proved** (cross-repo) |
-| C2 integrity P(forge) ≤ 1/p | `IntegrityAxiom.lean` | **Axiom** (OTM Lean import-ready) |
-| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, `SybilDoctrine.lean`, `MathSupremacyDoctrine.lean` | **Proved** |
-| I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** |
-| I(recipient; O) = 0 | `RecipientAttributionZero.lean` | **Proved** |
-| I(flow; O) = 0, I(flow; IP) = 0 | `FlowAttributionZero.lean` | **Proved** |
-| I(author; IP_obs) = 0, I(recipient; IP_obs) = 0 | `BroadcastIPSymmetry.lean` (B1–B3) | **Theorem under BIS** |
-| SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** |
-| Either EP secure (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** |
-| No guilty node (all deniable) | `PlausibleDeniabilityAbsolute.noGuiltyNode` | **Proved** |
-| O⁺ closure L10–L12 under P1–P3 | `OplusClosure.lean` | **Postulate-under-P1–P3** |
-| Offline / sneakernet O_net = ∅ | `OfflineChannel.lean` | **Proved** |
-| L9 mode composition P ⊗ AEH | `Transport/Composition.lean` | **Proved** |
-| L13 comparative threat | `ComparativeThreatDoctrine.lean` | **Proved** |
-| A availability (operational) | `AvailabilityResilience.lean` | **Operational** (not ITS) |
+| Claim | Lean module | Math status | v4 MI status |
+|-------|-------------|-------------|--------------|
+| **M7 — unattackable certificate v4** | `UnattackableCertificate.lean` | **Proved** | N/A (certificate shell) |
+| **C4 absolute plausible deniability** | `PlausibleDeniabilityAbsolute.lean` | **Proved** | N/A |
+| C1 wire Shannon \(I(M;O)=0\) | `Transport/WireComposition.lean` → `Asymmetric.fullWireEncShannonIts` | **Proved** (cross-repo) | **Proved** (import) |
+| C2 integrity P(forge) ≤ 1/p | `IntegrityAxiom.lean` | **Axiom** (OTM Lean import-ready) | **Stub** |
+| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, `SybilDoctrine.lean`, `MathSupremacyDoctrine.lean` | **Theorem** | **MI stub** |
+| I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
+| I(recipient; O) = 0 | `RecipientAttributionZero.lean` | **Proved** | **Proved** |
+| I(flow; O) = 0, I(flow; IP) = 0 | `FlowAttributionZero.lean` | **Proved** | **Proved** |
+| I(author; IP_obs) = 0, I(recipient; IP_obs) = 0 | `BroadcastIPSymmetry.lean` (B1–B3) | **Theorem under BIS** | **Structural postulates** |
+| SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
+| Either EP secure (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
+| No guilty node (all deniable) | `PlausibleDeniabilityAbsolute.noGuiltyNode` | **Proved** | **Proved** |
+| O⁺ closure L10–L12 under P1–P3 | `OplusClosure.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
+| Offline / sneakernet O_net = ∅ | `OfflineChannel.lean` | **Proved** | **Proved** |
+| L9 mode composition P ⊗ AEH | `Transport/Composition.lean` | **Proved** | **Proved** |
+| L13 comparative threat | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
+| A availability (operational) | `AvailabilityResilience.lean` | **Operational** (not ITS) | N/A |
 
 ---
 
@@ -44,29 +46,29 @@
 
 ## Lemma chain (math-only — no `.rs` in proof path)
 
-| # | Lemma | Lean module | Math status |
-|---|-------|-------------|-------------|
-| L1 | Wire + cell indistinguishability | `Transport/WireComposition.lean`, `Transport/Cell.lean` | **Proved** |
-| L2 | OTM WC-MAC floor | `Transport/Field.lean`, `IntegrityAxiom.lean` | **Axiom** |
-| L3 | C_e ~ 𝒟 constant emit | `UnifiedEpochStream.lean` | **Proved** |
-| L4 | φ ~ 𝒟_benign | `AEH/StegoIndistinguishability.lean` | **Proved** |
-| L5 | I(S; release) = 0 | `AEH/EpochGate.lean` | **Proved** |
-| L6 | I(link; O) = 0 | `LinkParticipation.lean` | **Proved** |
-| L7 | AEH link-blind | `PlausibleDeniability.lean` | **Proved** |
-| L8 | SSS availability | `AvailabilityResilience.lean` | **Operational** |
-| L9 | Composition | `Transport/Composition.lean` | **Proved** |
-| L10 | I(link; O⁺_{rate,volume}) = 0 | `MetadataSymmetry.lean` | **Proved** |
-| L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** |
-| L12 | I(link; O⁺_participation) = 0 | `ParticipationSymmetry.lean`, `OplusClosure.lean` | **Postulate-under-P1–P3** |
-| L13 | Passive ISP ⊆ active Eve | `ComparativeThreatDoctrine.lean` | **Proved** |
-| — | Broadcast forward I(author;h(O))=0 | `BroadcastForward.lean` | **Proved** |
-| — | I(author; O) package | `AuthorAttributionZero.lean` | **Proved** |
-| — | I(recipient; O) and IP | `RecipientAttributionZero.lean` | **Proved** |
-| — | I(flow; O) and I(flow; IP) | `FlowAttributionZero.lean` | **Proved** |
-| — | BIS B1–B3 IP symmetry | `BroadcastIPSymmetry.lean` | **Theorem under postulates** |
-| — | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** |
-| — | Either EP (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** |
-| — | Absolute deniability master | `PlausibleDeniabilityAbsolute.lean` | **Proved** |
+| # | Lemma | Lean module | Math status | v4 MI status |
+|---|-------|-------------|-------------|--------------|
+| L1 | Wire + cell indistinguishability | `Transport/WireComposition.lean`, `Transport/Cell.lean` | **Proved** | **Proved** |
+| L2 | OTM WC-MAC floor | `Transport/Field.lean`, `IntegrityAxiom.lean` | **Axiom** | **Stub** |
+| L3 | C_e ~ 𝒟 constant emit | `UnifiedEpochStream.lean` | **Theorem** | **MI stub** |
+| L4 | φ ~ 𝒟_benign | `AEH/StegoIndistinguishability.lean` | **Proved** | **Proved** |
+| L5 | I(S; release) = 0 | `AEH/EpochGate.lean` | **Proved** | **Proved** |
+| L6 | I(link; O) = 0 | `LinkParticipation.lean` | **Proved** | **Proved** |
+| L7 | AEH link-blind | `PlausibleDeniability.lean` | **Proved** | **Proved** |
+| L8 | SSS availability | `AvailabilityResilience.lean` | **Operational** | N/A |
+| L9 | Composition | `Transport/Composition.lean` | **Proved** | **Proved** |
+| L10 | I(link; O⁺_{rate,volume}) = 0 | `MetadataSymmetry.lean` | **Theorem** | **MI stub** |
+| L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
+| L12 | I(link; O⁺_participation) = 0 | `ParticipationSymmetry.lean`, `OplusClosure.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
+| L13 | Passive ISP ⊆ active Eve | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
+| — | Broadcast forward I(author;h(O))=0 | `BroadcastForward.lean` | **Proved** | **MI stub** |
+| — | I(author; O) package | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
+| — | I(recipient; O) and IP | `RecipientAttributionZero.lean` | **Proved** | **Proved** |
+| — | I(flow; O) and I(flow; IP) | `FlowAttributionZero.lean` | **Proved** | **Proved** |
+| — | BIS B1–B3 IP symmetry | `BroadcastIPSymmetry.lean` | **Theorem under postulates** | **Structural postulates** |
+| — | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
+| — | Either EP (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
+| — | Absolute deniability master | `PlausibleDeniabilityAbsolute.lean` | **Proved** | **Proved** |
 
 **Cross-repo C1 source:** `ITS-asymmetric/mathematics` — `Asymmetric.Shannon`, `Asymmetric.WireAdversary`
 

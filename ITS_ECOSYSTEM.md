@@ -38,7 +38,7 @@ Wire confidentiality, SSS backward ambiguity, WC-MAC attestation, and timelock d
 |---------|-------------------------|------------|-------------|
 | **C1 Payload** | Plaintext on channel/disk | ITS-asymmetric (+ ITSKMV3 vault seal) | Wire Lean K8 done; vault Fase 1 |
 | **C2 Integritet** | Tag/cert forgery | ITS-OTM (WC-MAC ITS) | Done |
-| **C3 Anonymitet** | Traffic deanonymization | ROUTING (`its_transport`) | **UES Pool v1.5** — epoch_cell + L3/L3' |
+| **C3 Anonymitet** | Traffic deanonymization | ROUTING (`its_transport`) | **UES Pool v1.5** — epoch_cell + L3/L3'; math spec: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) |
 | **C4 Benægtelighed** | Proof under coercion | ITS-timelock L2 (SSS underbestemmelse) | Done; L1 RSW = delay aux only |
 
 **Aux (isolated):** RSW squaring loop = time wall only — carries no wire secret.
@@ -184,7 +184,7 @@ flowchart LR
 | Routing has no wire crypto dep | `its_routing` does not depend on `its_asymmetric` |
 | Routing canonical imports | `onion`, `sss_fragment`, `transport_otp_ratchet` — not alias paths |
 | Infrastructure replacement doc | `ITS_INFRASTRUCTURE_REPLACEMENT.md` exists with C1–C4 |
-| Routing math honesty | `ITS-routing_mathematics.md` must not claim Shannon ITS for chaff without Lean ref |
+| Routing math honesty | [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) is authoritative; [ITS-routing_mathematics.md](ITS-routing_mathematics.md) dev-only onion — no Shannon ITS without Lean ref |
 | Vault ITS-only | No Argon2/ITSKMV2 in KM/ledger src |
 | Transport ratchet ITS | No HKDF/PBKDF on transport ratchet path |
 
@@ -273,7 +273,7 @@ Each repo follows the same pillar layout: **SECURITY_LAYERS** (read first) → v
 | ITS-asymmetric | README | `ITS-asymmetric_manual.md` |
 | ITS-OTM | README | `ITS-OTM_public_attestation_manual.md` |
 | ITS-timelock | README | `ITS-self_enclosed_timelock_manual.md` |
-| ROUTING | README | `ITS-routing_manual.md` |
+| ROUTING | [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) · README | `ITS-routing_manual.md` |
 | ITS-KeyManagement | README | `ITS-KeyManagement_manual.md` |
 | ITS-hardware | README | `ITS-hardware_manual.md` |
 | ITS-ledger | README | `ITS-ledger_manual.md` |

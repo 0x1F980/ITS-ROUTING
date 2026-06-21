@@ -7,9 +7,9 @@ ASYM_ROOT="$(cd "$ROOT/../ITS-asymmetric" 2>/dev/null && pwd || true)"
 
 echo "=== verify_math.sh — Lean certificate only ==="
 
-echo "[1/4] lake build ROUTING/mathematics"
+echo "[1/4] lake build routing-math-cert"
 cd "$ROOT/mathematics"
-lake build
+lake build routing-math-cert
 
 echo "[2/4] grep sorry (ROUTING mathematics)"
 if grep -r --include='*.lean' 'sorry' . 2>/dev/null | grep -v '.lake'; then

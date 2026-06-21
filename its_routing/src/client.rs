@@ -4,6 +4,7 @@ use std::thread;
 use std::time::Duration;
 
 use its_transport::field_arith::FieldElement;
+#[cfg(feature = "dev-onion-mix")]
 use its_transport::onion::create_onion_packet;
 use its_transport::{fragment_data, reconstruct_data, EpochCellState, SssPackedShare};
 use its_transport::TransportOtpRatchet;
@@ -14,6 +15,7 @@ use crate::courier::{build_epoch_courier, ZeroizedBuffer};
 use crate::pool_mailbox::PoolMailbox;
 #[cfg(feature = "pool")]
 use crate::cover_transport::{EpochLoop, PoolPlusCoverHarvest};
+#[cfg(feature = "dev-onion-mix")]
 use crate::packet::{deserialize_packet, deserialize_share, payload_to_bytes, serialize_packet, serialize_share};
 use crate::ratchet::resolve_pool_ratchet_seed;
 use crate::rng;

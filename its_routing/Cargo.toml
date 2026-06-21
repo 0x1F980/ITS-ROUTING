@@ -28,9 +28,9 @@ default = ["pool", "aeh", "otm"]
 pool = []
 aeh = ["pool", "otm"]
 dev-direct-udp = []
-dev-onion-mix = ["dev-direct-udp"]
-full = ["aeh", "fingerprint-erasure", "hardware", "ledger", "timelock"]
-hardware = ["dep:its_hardware"]
+dev-onion-mix = ["dev-direct-udp", "its_transport/dev-onion-mix"]
+full = ["aeh", "fingerprint-erasure", "hardware", "ledger", "timelock", "dev-onion-mix"]
+hardware = ["dep:its_hardware", "dev-onion-mix"]
 ledger = ["dep:its_ledger"]
 timelock = ["dep:its_self_enclosed_timelock"]
 otm = ["dep:its_otm_public_attestation"]
@@ -44,15 +44,18 @@ tempfile = "3"
 [[test]]
 name = "tunnel_simulation"
 path = "tests/transport/tunnel.rs"
+required-features = ["dev-onion-mix"]
 
 [[test]]
 name = "stealth_identity_simulation"
 path = "tests/transport/stealth_identity_simulation.rs"
+required-features = ["dev-onion-mix"]
 
 [[test]]
 name = "morphic_proof_simulation"
 path = "tests/transport/morphic_proof_simulation.rs"
+required-features = ["dev-onion-mix"]
 
 [[test]]
-name = "routing_wire_onion_e2e"
-path = "tests/routing_wire_onion_e2e.rs"
+name = "routing_wire_pool_e2e"
+path = "tests/routing_wire_pool_e2e.rs"

@@ -4,6 +4,22 @@
 
 ---
 
+## Gate matrix (cert / dev / ecosystem)
+
+| Target | Script / command | Lean lib / Rust features | Scope |
+|--------|------------------|--------------------------|-------|
+| **Math certificate** | `./scripts/verify_math.sh` | `routing-math-cert` (transitive from `UnattackableCertificate`) | M1–M8; 0 `sorry`; no dev-onion in cert closure |
+| **Dev-onion regression** | `./scripts/verify_ecosystem.sh` (dev jobs) | `routing-math-dev`; `cargo build -p its_routing --features dev-onion-mix` | MixAnonymity, ChaffIndistinguishability; onion mesh pipes |
+| **Refinement / ecosystem** | `./scripts/verify_ecosystem.sh` | `routing-math-refinement`; default `pool` Rust | cargo tests, pool E2E pipes, `EpochCellCorrectness` |
+| **Prod binary (pool only)** | `cargo build -p its_routing --no-default-features --features pool` | No `onion`/`daemon`/`packet` symbols | UES Monocell Pool operator path |
+
+**Rules:**
+- Master unattackability = Lean cert path first; Rust is refinement (phase 2).
+- Dev-onion scripts and tests require explicit `--features dev-onion-mix`.
+- Pool pipes share boilerplate via `scripts/lib/pipe_pool_common.sh`.
+
+---
+
 ## Two gates (math vs refinement)
 
 | Gate | Script | Scope |
@@ -26,14 +42,14 @@ cd ROUTING && ./scripts/verify_math.sh
 | Master unattackable certificate | `UnattackableCertificate.lean` | **Proved** |
 | C1 wire Shannon | `Transport/WireComposition.lean` + `ITS-asymmetric` | **Proved** |
 | C2 integrity | `IntegrityAxiom.lean` | **Axiom** (OTM Lean pending) |
-| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, etc. | **Proved** |
+| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, etc. | **Theorem (**MI stub**)** |
 | I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** |
 | O⁺ under P1–P3 | `OplusClosure.lean` | **Postulate-under-P1–P3** |
 | Offline O_net = ∅ | `OfflineChannel.lean` | **Proved** |
 | EP split | `EndpointSplit.lean` | **Proved** |
 | Observation O / O⁺ / O_phys | `ObservationAlphabet.lean` | **Proved** (scope formalized) |
 
-Full lemma map: [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v3 · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v3
+Full lemma map: [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v4 · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v4
 
 ---
 

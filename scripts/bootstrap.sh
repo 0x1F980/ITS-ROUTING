@@ -38,5 +38,5 @@ clone_repo "ITS-KeyManagement" main
 
 echo "Bootstrap complete under $ROOT (tag=$TAG)"
 echo "Run: ROUTING/scripts/verify_ecosystem.sh $ROOT"
-echo "Run: ROUTING/scripts/pipe_its_routing_e2e.sh"
+echo "Run: ROUTING/scripts/pipe_its_pool_e2e.sh"
 echo "Run: ROUTING/scripts/pipe_its_proxy_e2e.sh  # its-wire/1 ALPN"

@@ -15,7 +15,7 @@
 | W9 | One-command send | VPN / router start | **`its-km send`** | `scripts/pipe_its_km_pool_e2e.sh`; [QUICKSTART.md](QUICKSTART.md) |
 | W10 | App egress | SOCKS 4444 | **`its-pool-proxy :1080`** | `tools/its_pool_proxy.py`; `scripts/pipe_its_socks_pool_e2e.sh` |
 | W11 | Hidden addressing | `.i2p` | **PoolMailbox** (OTM in ciphertext) | `--mailbox-fingerprint`; Lean `ParticipationTheorem.lean` |
-| W12 | Public infrastructure | Volunteer relays | **`deploy/pool-mirror/`** | `scripts/pipe_its_public_mirror_e2e.sh`; `multi_pool_urls` |
+| W12 | Public infrastructure | Volunteer relays | **`deploy/pool-mirror/`** | `scripts/pipe_its_http_pool_e2e.sh`; `multi_pool_urls` |
 | W13 | Reproducible ship | Releases | **9 E2E pipes + verify_ecosystem** | `scripts/verify_ecosystem.sh`; tag `v2.0.0` |
 
 Run all gates:

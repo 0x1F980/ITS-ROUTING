@@ -3,20 +3,30 @@
 ## License: GNU GPLv3 Only
 ## Target: Systems Developers, Incident Responders & Field Engineers
 
+> **Production default:** UES Monocell Pool troubleshooting first; dev onion/UDP in [Appendix A](#appendix-a-dev-onion-udp-legacy).
+
 > **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md).
 
 This document details validation procedures and recovery steps for the `ITS-routing` transport layer.
 
 ---
 
-## 1. Packet Loss Recovery in UDP Transport
+## 1. Pool transport recovery (production)
 
-Because `ITS-routing` utilizes raw UDP sockets to avoid the heavy state machines and connection handshakes of TCP (which leak metadata), packets can be lost in transit.
+### Symptom: `client-send --pool` fails — missing ratchet seed
+```
+Error: pool transport requires --ratchet-seed-file (exactly 32 bytes).
+```
+**Recovery:** Export from ITS-KeyManagement: `its-km export-ratchet-seed --contact <alias> --out /tmp/seed.bin`. Pass the same file to send and receive.
 
-### SSS-Based Reconstruction Fallback:
-*   Instead of relying on packet retransmissions (which create timing spikes that Eve can correlate), `ITS-routing` relies on **Shamir's Secret Sharing (SSS) Redundancy**.
-*   When Alice fragments her message into $n$ shares with a threshold $t$ (e.g., $k=3, n=5$), Bob only needs to receive any $t$ shares to reconstruct the complete plaintext.
-*   **The Safe Recovery:** If up to $n-t$ UDP packets are lost or dropped by the network, Bob recovers the message seamlessly with zero retransmissions. This mathematically defeats the latency leaks of TCP resends.
+### Symptom: Receive timeout / empty `recv.wire`
+**Recovery:**
+1. Confirm both sides share the same `[pool]` config (`pool_file` or `pool_url`, `sss_k`, `sss_n`, `cell_size_L`).
+2. Run `./scripts/pipe_its_pool_e2e.sh` locally to validate the build.
+3. For HTTP mirror deploy, run `./scripts/pipe_its_http_pool_e2e.sh` (includes `deploy/pool-mirror` check).
+
+### Symptom: Decrypt fails after pool receive
+**Recovery:** Verify ratchet seed matches on both sides and SSS threshold is met (`sss_k` shares reconstructed). Re-export seed from KM if drift suspected.
 
 ---
 
@@ -68,3 +78,16 @@ Error: Invalid time-lock file format
 ## 4. Fingerprint-Erasure Strict Stack
 
 If `client-send --file` fails with strict-stack errors, ensure `--fingerprint-erasure` is set and either `--fe-pad` or `[fingerprint_erasure].default_pad` in config points to a valid OTP pad file. See [ITS-routing_manual.md](ITS-routing_manual.md) and upstream ITS-FINGERPRINT_ERASURE docs.
+
+---
+
+## Appendix A: Dev onion / UDP (legacy)
+
+> Requires `cargo build -p its_routing --features dev-onion-mix`.
+
+### Packet Loss Recovery in UDP Transport
+
+Because dev onion routing utilizes raw UDP sockets, packets can be lost in transit. Recovery relies on **Shamir's Secret Sharing (SSS) Redundancy** — Bob needs any `sss_k` shares with no retransmissions.
+
+### Symptom: `start-node requires dev-onion-mix feature`
+**Recovery:** Rebuild with `--features dev-onion-mix` or use pool transport (production default).

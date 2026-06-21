@@ -54,16 +54,16 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 
 0.  **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) (Security Layers & ITS Scope — read first)**
     *   Subcommand → upstream crate scope map; default Γ + OTP + chaff stack; anti-AI FAQ.
+0a. **[ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) (Mathematical Core — read for formal spec)**
+    *   Authoritative axioms, C.I.A. formulas, Sybil/BIS/hops/timelock, Lean module map, v5 closure; prod = 0 hops UES Pool.
 0b. **[ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md) (Formal Verification & W6 Composition)**
     *   Lean/Rust proof map for strict-stack send, OTM, timelock, fingerprint erasure; links to upstream ITS certificates.
 0c. **[ITS-routing_PIPE.md](ITS-routing_PIPE.md) (stdin/stdout piping)**
     *   `-` paths for `time-lock`, `time-unlock`, `fingerprint-erasure`; demo `scripts/pipe_timelock.sh`.
 1.  **[ITS-routing_vision.md](ITS-routing_vision.md) (Network-Level Threat Model & Transition Strategy)**
     *   Threat landscape under active Eve; **prod default = UES Pool (Option B)**. Option A onion routing is **dev-only** (`dev-onion-mix`).
-2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Formally Proven Network & Traffic Obfuscation Proofs)**
-    *   Rigorous mathematical proofs for:
-        *   **Constant-Rate Chaffing + Lorenz Chaotic Jitter:** Proving that the cross-correlation function $R_{xy}(\tau)$ between any two nodes is zero for all non-trivial delays, rendering global timing analysis entirely blind.
-        *   **Morphic Mixing Blind Linear Mixing:** Proof of information-theoretic blindness via Rank-Nullity of underdetermined matrices.
+2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Dev-only onion/mix proofs — historical)**
+    *   Morphic mixing rank-nullity and Lorenz jitter — **dev-only** (`dev-onion-mix`). Production math: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md).
 3.  **[ITS-routing_manual.md](ITS-routing_manual.md) (Command-Line Reference, Configurations & Operations Guide)**
     *   Complete CLI guide for `its-routing` daemon operations, time-lock puzzles, steganographic sending, and configuration file syntax.
 4.  **[ITS-routing_troubleshooting.md](ITS-routing_troubleshooting.md) (Transport Recovery & Operational Procedures)**

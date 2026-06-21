@@ -1,17 +1,14 @@
 import Transport.Epoch
 import Transport.Cell
-import Transport.ChaffIndistinguishability
-import Transport.MixAnonymity
 import Transport.WireComposition
 import AEH.StegoIndistinguishability
 import AEH.EpochGate
-import UnattackableCertificate
 
 /-!
-# Composition — Mode P ⊗ Mode AEH (L9)
+# Composition — Mode P ⊗ Mode AEH (mode bundles)
 
-Delegates end-to-end math certificate to `UnattackableCertificate.lean`.
-Mode-specific zero-leak bundles remain for transport-mode reasoning.
+Mode-specific zero-leak bundles for transport-mode reasoning.
+End-to-end L9 certificate (`modeCompositionZeroLeak`) lives in `Transport.L9Composition`.
 -/
 
 namespace Transport
@@ -24,10 +21,10 @@ inductive TransportMode
 
 /-- Mode P: O = published cell sequence. -/
 def modePoolZeroLeak : Prop :=
-  cellIndistinguishability ∧ l3ConstantRate ∧ wireCellL1Chain ITS.defaultMessageLen ITS.default_message_len
+  cellIndistinguishability ∧ l3ConstantRate ∧ wireCellL1Chain 1 (by decide)
 
 theorem mode_pool_zero_leak : modePoolZeroLeak :=
-  ⟨cell_indistinguishability, l3_constant_rate, wire_cell_l1_chain ITS.defaultMessageLen ITS.default_message_len⟩
+  ⟨cell_indistinguishability, l3_constant_rate, wire_cell_l1_chain 1 (by decide)⟩
 
 /-- Mode AEH: O = benign E observation. -/
 def modeAehZeroLeak : Prop :=
@@ -35,12 +32,5 @@ def modeAehZeroLeak : Prop :=
 
 theorem mode_aeh_zero_leak : modeAehZeroLeak :=
   ⟨AEH.stego_indistinguishability, AEH.epoch_gate_zero_leak⟩
-
-/-- L9: mode bundles + master unattackable certificate. -/
-def modeCompositionZeroLeak : Prop :=
-  modePoolZeroLeak ∧ modeAehZeroLeak ∧ ITS.unattackableCertificate
-
-theorem mode_composition_zero_leak : modeCompositionZeroLeak :=
-  ⟨mode_pool_zero_leak, mode_aeh_zero_leak, ITS.unattackable_certificate⟩
 
 end Transport

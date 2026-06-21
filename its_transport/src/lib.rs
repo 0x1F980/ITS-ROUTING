@@ -1,6 +1,7 @@
 #![no_std]
 
-//! ITS transport core — onion routing, SSS fragment, transport ratchet, tunnel.
+//! ITS transport core — epoch cell pool, SSS fragment, transport ratchet.
+//! Dev-only onion/mix modules require `dev-onion-mix` feature.
 //! `no_std` + alloc; consumed by `its-routing` and `ITS-hardware`.
 
 extern crate alloc;
@@ -15,15 +16,18 @@ pub mod field_arith;
 pub mod poly;
 pub mod trapdoor;
 pub mod masking;
+#[cfg(feature = "dev-onion-mix")]
 pub mod lorenz;
-pub mod tunnel;
+#[cfg(feature = "dev-onion-mix")]
 pub mod stealth_identity;
+#[cfg(feature = "dev-onion-mix")]
 pub mod morphic_proof;
+#[cfg(feature = "dev-onion-mix")]
 pub mod onion;
 pub mod sss_fragment;
 pub mod transport_otp_ratchet;
-pub mod transport_ratchet;
 pub mod epoch_cell;
+pub mod tunnel;
 
 pub mod otm {
     pub use its_otm_public_attestation::otm::{
@@ -37,11 +41,11 @@ pub mod otm {
     };
 }
 
+#[cfg(feature = "dev-onion-mix")]
 pub use onion::{
     create_chaff_onion_packet, create_onion_packet, MorphicMixingNode, MorphicOnionPacket,
     PAYLOAD_SIZE,
 };
 pub use sss_fragment::{fragment_data, reconstruct_data, SssPackedShare};
 pub use transport_otp_ratchet::TransportOtpRatchet;
-pub use transport_ratchet::StateRatchet;
 pub use epoch_cell::EpochCellState;

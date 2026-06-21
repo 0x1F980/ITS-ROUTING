@@ -7,37 +7,18 @@ package «routing-math» where
   version := v!"0.2.0"
 
 @[default_target]
-lean_lib «routing-math» where
+lean_lib «routing-math-cert» where
+  roots := #[`UnattackableCertificate]
+
+lean_lib «routing-math-dev» where
   roots := #[
-    `Transport,
-    `AEH,
+    `Transport.ChaffIndistinguishability,
+    `Transport.MixAnonymity,
+    `Transport.Composition
+  ]
+
+lean_lib «routing-math-refinement» where
+  roots := #[
     `Refinement,
-    `ObservationAlphabet,
-    `IPObservation,
-    `BroadcastIPSymmetry,
-    `RecipientAttributionZero,
-    `FlowAttributionZero,
-    `EndpointEitherOr,
-    `SSSMultiIPCourier,
-    `PlausibleDeniabilityAbsolute,
-    `Adversary,
-    `EndpointSplit,
-    `IntegrityAxiom,
-    `BroadcastForward,
-    `OplusClosure,
-    `OfflineChannel,
-    `AuthorAttributionZero,
-    `UnattackableCertificate,
-    `FewUserDoctrine,
-    `UnifiedEpochStream,
-    `LinkParticipation,
-    `ParticipationTheorem,
-    `PlausibleDeniability,
-    `AvailabilityResilience,
-    `MetadataSymmetry,
-    `ParticipationSymmetry,
-    `ComparativeThreatDoctrine,
-    `CIA_Doctrine,
-    `SybilDoctrine,
-    `MathSupremacyDoctrine
+    `Refinement.EpochCellCorrectness
   ]

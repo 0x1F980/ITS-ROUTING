@@ -2,48 +2,22 @@
 # Primary E2E gate: ITS-asymmetric encrypt → UES Monocell Pool (file) → decrypt.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-ASYM="${ITS_ASYMMETRIC_DIR:-/home/user/ITS-asymmetric}"
-TMP="${TMPDIR:-/tmp}/its_pool_e2e_$$"
-POOL="$TMP/pool"
-mkdir -p "$TMP" "$POOL"
-trap 'rm -rf "$TMP"' EXIT
+# shellcheck source=scripts/lib/pipe_pool_common.sh
+source "$ROOT/scripts/lib/pipe_pool_common.sh"
 
-if ! command -v cargo >/dev/null 2>&1; then
-  echo "cargo required" >&2
-  exit 1
-fi
-
-echo "== build its_asymmetric =="
-FEATS="bundle,parallel,std,compact-wire"
-cargo build --release --manifest-path "$ASYM/Cargo.toml" --bin its_asymmetric --features "$FEATS"
-ITS="$ASYM/target/release/its_asymmetric"
-
-echo "== build its-routing (pool+aeh+otm) =="
-cargo build --release --manifest-path "$ROOT/its_routing/Cargo.toml"
-ROUTING="$ROOT/target/release/its-routing"
+pipe_pool_init "$ROOT" "its_pool_e2e"
 
 echo "== transport epoch_cell tests =="
 cargo test -p its_transport epoch_cell --quiet --manifest-path "$ROOT/Cargo.toml"
 
 echo "== keygen + encrypt =="
-"$ITS" keygen --out-dir "$TMP/bob" 2>/dev/null || "$ITS" keygen --out "$TMP/bob"
+pipe_pool_keygen "$TMP/bob"
 
 MSG="its-pool e2e $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo -n "$MSG" > "$TMP/msg.txt"
-"$ITS" encrypt --pk "$TMP/bob/public.key" --in "$TMP/msg.txt" --out "$TMP/msg.wire"
+pipe_pool_encrypt "$TMP/bob" "$TMP/msg.txt" "$TMP/msg.wire"
 
-dd if=/dev/urandom of="$TMP/ratchet.seed" bs=32 count=1 2>/dev/null
-
-cat > "$TMP/pool.toml" <<EOF
-[pool]
-transport_mode = "pool"
-pool_file = "$POOL"
-cell_size_L = 4096
-epoch_interval_ms = 100
-sss_k = 2
-sss_n = 3
-fountain_enabled = false
-EOF
+pipe_pool_write_config "$TMP/pool.toml" "$POOL"
 
 echo "== client-send --pool =="
 "$ROUTING" -c "$TMP/pool.toml" client-send --pool --file "$TMP/msg.wire" \
@@ -59,8 +33,7 @@ if [[ ! -f "$TMP/recv.wire" ]]; then
 fi
 
 echo "== decrypt received wire =="
-"$ITS" decrypt --sk "$TMP/bob/secret.key" --pk "$TMP/bob/public.key" \
-  --in "$TMP/recv.wire" --out "$TMP/out.txt"
+pipe_pool_decrypt "$TMP/bob" "$TMP/recv.wire" "$TMP/out.txt"
 
 OUT="$(cat "$TMP/out.txt")"
 if [[ "$OUT" != "$MSG" ]]; then

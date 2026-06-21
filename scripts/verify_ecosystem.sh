@@ -169,10 +169,11 @@ else
 fi
 
 echo "=== v5: routing math chaff honesty ==="
-if [[ -f "$ROUTING/ITS-routing_mathematics.md" ]] && grep -q 'ChaffIndistinguishability' "$ROUTING/ITS-routing_mathematics.md"; then
+if [[ -f "$ROUTING/docs/archive/dev-onion/ITS-routing_mathematics.md" ]] \
+  && grep -q 'ChaffIndistinguishability' "$ROUTING/docs/archive/dev-onion/ITS-routing_mathematics.md"; then
   green "v5: chaff ITS cites Lean proof"
 else
-  red "v5: ITS-routing_mathematics.md must cite ChaffIndistinguishability Lean for Shannon ITS chaff"
+  red "v5: docs/archive/dev-onion/ITS-routing_mathematics.md must cite ChaffIndistinguishability Lean for Shannon ITS chaff"
 fi
 
 echo "=== v5: vault ITS-only (no Argon2/ITSKMV2 in KM/ledger src) ==="
@@ -191,9 +192,15 @@ else
   green "v5: transport OTP ratchet (SSS epoch)"
 fi
 
-echo "=== v5: ROUTING Lean transport proofs ==="
-[[ -f "$ROUTING/mathematics/Transport/ChaffIndistinguishability.lean" ]] && green "v5: ChaffIndistinguishability.lean" || red "v5: ChaffIndistinguishability.lean missing"
-[[ -f "$ROUTING/mathematics/Transport/MixAnonymity.lean" ]] && green "v5: MixAnonymity.lean" || red "v5: MixAnonymity.lean missing"
+echo "=== v5: ROUTING Lean dev-onion (routing-math-dev) ==="
+if [[ -d "$ROUTING/mathematics" ]]; then
+  (cd "$ROUTING/mathematics" && lake build routing-math-dev 2>/dev/null) && green "v5: routing-math-dev build" || red "v5: routing-math-dev build failed"
+fi
+
+echo "=== M17: routing-math-refinement ==="
+if [[ -d "$ROUTING/mathematics" ]]; then
+  (cd "$ROUTING/mathematics" && lake build routing-math-refinement 2>/dev/null) && green "M17: routing-math-refinement" || red "M17: routing-math-refinement failed"
+fi
 
 echo "=== v5: pipe_its_routing_e2e.sh present ==="
 [[ -x "$ROUTING/scripts/pipe_its_routing_e2e.sh" ]] && green "v5: pipe_its_routing_e2e.sh" || red "v5: pipe_its_routing_e2e.sh missing or not executable"
@@ -214,11 +221,6 @@ echo "=== v1.5: UNATTACKABLE_MODEL.md present ==="
 
 echo "=== v1.5: SecureEndpointDoctrine.md present ==="
 [[ -f "$ROUTING/ITS-routing_SecureEndpointDoctrine.md" ]] && green "v1.5: SecureEndpointDoctrine" || red "v1.5: ITS-routing_SecureEndpointDoctrine.md missing"
-
-echo "=== v1.5: Lean lake build (UES v1.5) ==="
-if [[ -d "$ROUTING/mathematics" ]]; then
-  (cd "$ROUTING/mathematics" && lake build 2>/dev/null) && green "v1.5: lake build" || red "v1.5: lake build failed"
-fi
 
 echo "=== v1.5: fieldPrime = 2147483647 ==="
 if grep -q '2147483647' "$ROUTING/mathematics/Transport/Basic.lean" 2>/dev/null; then
@@ -300,14 +302,14 @@ else
 fi
 
 echo "=== v1.6: ParticipationSymmetry.lean builds ==="
-if (cd "$ROUTING/mathematics" && lake build ParticipationSymmetry 2>/dev/null); then
+if (cd "$ROUTING/mathematics" && lake env lean ParticipationSymmetry.lean 2>/dev/null); then
   green "v1.6: ParticipationSymmetry.lean"
 else
   red "v1.6: ParticipationSymmetry.lean build failed"
 fi
 
 echo "=== v1.6: ComparativeThreatDoctrine.lean builds ==="
-if (cd "$ROUTING/mathematics" && lake build ComparativeThreatDoctrine 2>/dev/null); then
+if (cd "$ROUTING/mathematics" && lake env lean ComparativeThreatDoctrine.lean 2>/dev/null); then
   green "v1.6: ComparativeThreatDoctrine.lean"
 else
   red "v1.6: ComparativeThreatDoctrine.lean build failed"
@@ -349,11 +351,11 @@ else
   red "v1.7: pipe_its_km_pool_e2e.sh missing"
 fi
 
-echo "=== v1.7: pipe_its_public_mirror_e2e.sh ==="
-if [[ -x "$ROUTING/scripts/pipe_its_public_mirror_e2e.sh" ]]; then
-  "$ROUTING/scripts/pipe_its_public_mirror_e2e.sh" >/dev/null 2>&1 && green "v1.7: pipe_its_public_mirror_e2e.sh" || red "v1.7: pipe_its_public_mirror_e2e.sh failed"
+echo "=== v1.7: pipe_its_http_pool_e2e.sh (public mirror deploy) ==="
+if [[ -x "$ROUTING/scripts/pipe_its_http_pool_e2e.sh" ]]; then
+  "$ROUTING/scripts/pipe_its_http_pool_e2e.sh" >/dev/null 2>&1 && green "v1.7: pipe_its_http_pool_e2e.sh (mirror deploy)" || red "v1.7: pipe_its_http_pool_e2e.sh failed"
 else
-  red "v1.7: pipe_its_public_mirror_e2e.sh missing"
+  red "v1.7: pipe_its_http_pool_e2e.sh missing"
 fi
 
 echo "=== v1.8: pipe_its_socks_pool_e2e.sh ==="

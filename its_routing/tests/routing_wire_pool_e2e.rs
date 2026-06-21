@@ -1,4 +1,4 @@
-//! Full routing + wire E2E: encrypt → fragment send → receive → decrypt.
+//! Full routing + wire E2E: encrypt → UES pool send → receive → decrypt.
 use std::path::PathBuf;
 use std::process::Command;
 use std::thread;
@@ -26,11 +26,11 @@ fn its_asymmetric_bin() -> Option<PathBuf> {
 }
 
 #[test]
-fn routing_wire_onion_e2e() {
+fn routing_wire_pool_e2e() {
     let its = match its_asymmetric_bin() {
         Some(p) => p,
         None => {
-            eprintln!("skip routing_wire_onion_e2e: its_asymmetric not on PATH");
+            eprintln!("skip routing_wire_pool_e2e: its_asymmetric not on PATH");
             return;
         }
     };
