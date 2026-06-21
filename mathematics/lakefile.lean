@@ -13,11 +13,15 @@ lean_lib «routing-math-cert» where
   roots := #[
     `UnattackableCertificate,
     `BroadcastIPDerivation,
+    `PublicPoolMulticast,
+    `CensorshipDisclosure,
+    `RoleAwareDeniability,
     `TimelessSecurity,
     `MediumIndependence,
     `CoercionModel,
     `Transport.TimelockComposition,
-    `MasterTheorem
+    `MasterTheorem,
+    `MasterTheoremV6
   ]
 
 lean_lib «routing-math-dev» where

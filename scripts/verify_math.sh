@@ -55,27 +55,34 @@ else
 fi
 
 if [[ -f "$MATH/MasterTheorem.lean" ]]; then
-  echo "[8/12] M10: smoke MasterTheorem.lean"
+  echo "[8/13] M10: smoke MasterTheorem.lean"
   lake env lean MasterTheorem.lean
 else
-  echo "[8/12] M10: skip MasterTheorem smoke (not found)"
+  echo "[8/13] M10: skip MasterTheorem smoke (not found)"
+fi
+
+if [[ -f "$MATH/MasterTheoremV6.lean" ]]; then
+  echo "[9/13] M17: smoke MasterTheoremV6.lean (v6 ecosystem cert)"
+  lake env lean MasterTheoremV6.lean
+else
+  echo "[9/13] M17: skip MasterTheoremV6 smoke (not found)"
 fi
 
 if [[ -n "${TL_ROOT:-}" && -f "$TL_ROOT/Stl/Security/Deniability.lean" ]]; then
-  echo "[9/12] M14: smoke Stl/Security/Deniability.lean (C4 timelock)"
+  echo "[10/13] M14: smoke Stl/Security/Deniability.lean (C4 timelock)"
   (cd "$TL_ROOT" && lake env lean Stl/Security/Deniability.lean)
 else
-  echo "[9/12] M14: skip timelock Deniability smoke (ITS-timelock stl not found)"
+  echo "[10/13] M14: skip timelock Deniability smoke (ITS-timelock stl not found)"
 fi
 
 if [[ -f "$MATH/CoercionModel.lean" ]]; then
-  echo "[10/12] M15: smoke CoercionModel.lean (coercion model)"
+  echo "[11/13] M15: smoke CoercionModel.lean (coercion model)"
   lake env lean CoercionModel.lean
 else
-  echo "[10/12] M15: skip CoercionModel smoke (not found)"
+  echo "[11/13] M15: skip CoercionModel smoke (not found)"
 fi
 
-echo "[11/12] M13: PROOF_MANIFEST v4 MI column"
+echo "[12/13] M13: PROOF_MANIFEST v6 CORE one-liner"
 if [[ ! -f "$ROOT/PROOF_MANIFEST.md" ]]; then
   echo "FAIL: PROOF_MANIFEST.md missing (M13)"
   exit 1
@@ -89,7 +96,7 @@ if ! grep -q 'finite-MI' "$ROOT/PROOF_MANIFEST.md"; then
   exit 1
 fi
 
-echo "[12/12] M16: cert path isolation (no dev-onion imports)"
+echo "[13/13] M16: cert path isolation (no dev-onion imports)"
 DEV_IMPORTS=$(
   grep -r --include='*.lean' -l -E 'import.*(MixAnonymity|ChaffIndistinguishability)' "$MATH" 2>/dev/null \
     | grep -v '.lake' || true
@@ -106,4 +113,4 @@ if grep -E 'MixAnonymity|ChaffIndistinguishability' "$MATH/lakefile.lean" \
 fi
 
 echo ""
-echo "ALL MATH CHECKS PASSED (M1–M16)"
+echo "ALL MATH CHECKS PASSED (M1–M17)"

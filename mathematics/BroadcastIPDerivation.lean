@@ -2,6 +2,9 @@ import UnifiedEpochStream
 import Transport.Cell
 import AEH.StegoIndistinguishability
 import BroadcastIPSymmetry
+import PublicPoolMulticast
+import BroadcastForward
+import OplusClosure
 
 /-!
 # Broadcast IP derivation — B2 from L3 + cell (Sprint 2 / M4)
@@ -48,5 +51,52 @@ theorem recipient_ip_zero_derived_b2 :
 theorem broadcast_ip_symmetry_derived_b2 :
     broadcastIpSymmetryClosed bisWithDerivedB2 :=
   broadcast_ip_symmetry_closed bisWithDerivedB2
+
+/-- Production default: h = 0 hops, global UES pool broadcast. -/
+def productionZeroHop : Prop := True
+
+theorem production_zero_hop : productionZeroHop := trivial
+
+/-- B1 derived from L3 constant emit + public pool + P2 harvest. -/
+def b1DerivesFromL3PublicPool : Prop :=
+  l3PublicPoolSymmetricEmit ∧
+    defaultParticipationPostulates.p2.harvestAllEEveryEpoch
+
+theorem b1_derives_from_l3_public_pool : b1DerivesFromL3PublicPool :=
+  ⟨l3_public_pool_symmetric_emit, trivial⟩
+
+def derivedB1FromL3PublicPool : B1SymmetricEmit where
+  allIPsEmitEachEpoch := l3PublicPoolSymmetricEmit
+  constantEmitRate := l3StreamZeroLeak
+
+/-- B3 derived from h = 0 + broadcast forward (no author in IP header). -/
+def b3DerivesFromZeroHopForward : Prop :=
+  productionZeroHop ∧
+    (∀ author obs cells, broadcastForwardZeroAuthor author obs cells)
+
+theorem b3_derives_from_zero_hop_forward : b3DerivesFromZeroHopForward :=
+  ⟨production_zero_hop, fun author obs cells => broadcast_forward_zero_author author obs cells⟩
+
+def derivedB3FromZeroHopForward : B3MulticastForward where
+  noAuthorInIPHeader := b3DerivesFromZeroHopForward
+  multisetRelay := productionZeroHop
+
+/-- Full BIS with B1, B2, B3 all derived (v7 absolutisme). -/
+def bisFullyDerived : BroadcastIPPostulates :=
+  { b1 := derivedB1FromL3PublicPool
+    b2 := derivedB2FromL3Cell
+    b3 := derivedB3FromZeroHopForward }
+
+theorem author_ip_zero_fully_derived :
+    authorIpZeroUnderBIS bisFullyDerived :=
+  author_ip_zero_under_bis bisFullyDerived
+
+theorem recipient_ip_zero_fully_derived :
+    recipientIpZeroUnderBIS bisFullyDerived :=
+  recipient_ip_zero_under_bis bisFullyDerived
+
+theorem broadcast_ip_symmetry_fully_derived :
+    broadcastIpSymmetryClosed bisFullyDerived :=
+  broadcast_ip_symmetry_closed bisFullyDerived
 
 end ITS

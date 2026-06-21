@@ -4,10 +4,10 @@
 
 ## Target: Mathematicians, cryptographers, traffic-analysis auditors
 
-**Status:** v4 Lean baseline + v5 closure roadmap (honest gaps marked)  
-**Formal certificate:** [`mathematics/UnattackableCertificate.lean`](mathematics/UnattackableCertificate.lean) (v4 smoke)  
-**Verify:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke certificate  
-**Lean roots:** [`mathematics/lakefile.lean`](mathematics/lakefile.lean)
+**Status:** v5 ecosystem certificate **proved** · v6 absolutisme doc-sync · v7 Lean closure (B1/B3, Absolut A, roles)  
+**Formal certificate:** [`mathematics/MasterTheorem.lean`](mathematics/MasterTheorem.lean) (v5) · [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (v6)  
+**Verify:** `./scripts/verify_math.sh` — M1–M17, `lake build`, 0 `sorry`, smoke certificates  
+**Lean roots:** [`mathematics/lakefile.lean`](mathematics/lakefile.lean) — `routing-math-cert` · `routing-math-dev` · `routing-math-refinement`
 
 **Related:** [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) · [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
 
@@ -20,7 +20,7 @@
 
 Define the **complete, documentable mathematical model** for how ITS-routing achieves maximal **C.I.A.** under active Eve who owns 99.999%+ Sybil nodes, with **minimal overhead** (0 hops, 1 epoch, 1 cell) — making Tor, I2P, and Nym mixnets the objectively weaker choice under the same threat model.
 
-**Math is the sole trust source.** Eve's pool/relay/ISP software and hardware are **transcript** (delivery only). Either Alice (encryptor) **or** Bob (verify-oracle) runs the math-trusted executor.
+**Math is the sole trust source.** Eve's pool/relay/ISP software and hardware are **transcript** (delivery only). Per message pair, **either** the sender (encryptor) **or** the receiver (verify-oracle) runs the math-trusted executor — Alice–Bob, Alice–Charlie, or any ITS endpoint pair (A2′).
 
 ---
 
@@ -30,12 +30,48 @@ Define the **complete, documentable mathematical model** for how ITS-routing ach
 |----|--------|
 | **A0** | Eve owns ≥ 99.999% of all nodes; all pool/relay/ISP SW/HW is backdoored **transcript**. |
 | **A1** | Eve has unbounded computational power and unbounded time. |
-| **A2** | **Either** Alice (encryptor) **or** Bob (verify-oracle) runs the math-trusted executor correctly. |
+| **A2** | **Either** the sender (encryptor) **or** the receiver (verify-oracle) runs the math-trusted executor correctly — per message pair. |
+| **A2′** | \(\text{SecureEncryptor}(\text{sender}) \lor \text{SecureVerifyOracle}(\text{receiver})\) for **any** ITS pair (Alice–Bob, Alice–Charlie, …). Charlie as third ITS reader/witness is in scope. |
 | **A3** | Security claims = **information-theoretic algebra only** (Shannon + WC-MAC + no-provenance channel). |
 
-Everything Eve owns affects **A (availability)** — never **C/I** in channel observation \(O\), when A2 holds.
+Everything Eve owns affects **A (availability)** — never **C/I** in channel observation \(O\), when A2/A2′ holds.
+
+**Outside (minimal, explicit):** both endpoints compromised before channel; side-channels; physical coercion on unsecured device; \(O_{\text{net}}=\emptyset\) total blackout (sneakernet recovery — not silent online pool censorship).
 
 **Lean:** `MathSupremacyDoctrine.lean`, `EndpointEitherOr.lean`, `EndpointSplit.lean`
+
+---
+
+## §0b — Endpoint scope (A2′)
+
+For each message pair \((s, r)\):
+
+\[
+\text{SecureEncryptor}(s) \lor \text{SecureVerifyOracle}(r)
+\]
+
+**Example:** Alice hosts content; Bob₁…Bobₙ and Charlie (witness) harvest via public pool — A2′ applies per pair (Alice–Bobᵢ, Alice–Charlie). Compromise of **both** endpoints in a pair is **Outside** channel C/I.
+
+**Lean:** `EndpointEitherOr.lean`, `EndpointSplit.secureEndpointAxiom` (Outside boundary)
+
+---
+
+## §Expectations — absolutisme matrix
+
+| Forventning | Formel / claim | Lean | Klasse |
+|-------------|----------------|------|--------|
+| Absolut C i \(O\) | \(I(M;O)=0\), \(I(S;O)=0\) | `FiniteMutualInfo`, `UnifiedEpochStream` | **Proved** |
+| Absolut I | \(P(\text{forge})\le 1/p\) | `Otm.OtmIntegrity` | **Proved** |
+| Ingen route | \(I(\text{flow};O)=0\), \(I(\text{flow};IP_{obs})=0\) | `FlowAttributionZero` | **Proved** |
+| Ingen sidste exit | \(h=0\), `noGuiltyNode` | `PlausibleDeniabilityAbsolute`, `RoleAwareDeniability` | **Proved** |
+| Sybil irrelevant | \(I(M;O_{E\cup Sybil})=0\) | `SybilDoctrine` | **Proved** |
+| Enten-ende | Alice ∨ Bob (eller Charlie) | `EndpointEitherOr` | **Proved** |
+| IP anonymitet | \(I(\text{author};IP_{obs})=0\) | BIS B1+B3 derived (`BroadcastIPDerivation.bisFullyDerived`) | **Proved** (v7) |
+| Absolut A | censur ⇒ videregivelse ∨ reconstruct | `CensorshipDisclosure.aAbsolute` | **Proved** (v7) |
+| Ingen skyldig forwarder | `noGuiltyNode` på \(O_{fwd}\) | `RoleAwareDeniability.lean` | **Proved** (v7) |
+| Host vs reader | \(I(\text{reader}_i; O)=0\) | multi-recipient + SOCKS | **Proved** |
+
+**DoD cross-ref:** [`its_dod_postulates_v7_ca308ef5.plan.md`](../.cursor/plans/its_dod_postulates_v7_ca308ef5.plan.md) — P0–P8 mapping in [aca03375 plan](../.cursor/plans/mathematical_core_doc_aca03375.plan.md).
 
 ---
 
@@ -117,15 +153,9 @@ I(\ell;\, O^+_{\text{rate,volume}}) = 0
 
 | Lean | `MetadataSymmetry.lean`, `LinkParticipation.lean` |
 
-### v4 gap — mutual information stub
+### Sprint 1 done — finite mutual information
 
-In v4, most \(I(\cdot;\cdot)=0\) claims chain through:
-
-```lean
-def mutualInfo (secret observed : Nat) : Nat := 0  -- Adversary.lean
-```
-
-**v5 closure:** `Transport/FiniteMutualInfo.lean` imports `Asymmetric.PosteriorUniform` — MI derived, never `:= 0`.
+`Transport/FiniteMutualInfo.lean` derives \(I(\cdot;\cdot)=0\) from uniform posterior (`Asymmetric.PosteriorUniform`) — **`Adversary.lean` re-exports**, no `mutualInfo := 0` stub.
 
 ---
 
@@ -208,7 +238,7 @@ I(\text{author};\, IP_{obs}) = 0, \quad I(\text{recipient};\, IP_{obs}) = 0
 | **B2** | ITS cells indistinguishable from chaff |
 | **B3** | Multicast forward without author in IP header |
 
-| Lean | `BroadcastIPSymmetry.lean` — v5: derive B2 from L3 + cell (`BroadcastIPDerivation.lean`) |
+| Lean | `BroadcastIPSymmetry.lean` — v7: **B1+B2+B3 derived** in `BroadcastIPDerivation.bisFullyDerived` (L3 + public pool + P1–P3 + h=0 forward) |
 
 ### Absolute deniability
 
@@ -234,6 +264,27 @@ I(\text{author};\, \text{which-IP}) = 0
 
 ---
 
+## §IIIb — NoLastHop (ITS vs Tor exit)
+
+Tor assigns guilt to the **last relay**. ITS production: **\(h = 0\) hops**, global UES pool broadcast — no hop chain, no exit node.
+
+\[
+\text{forward}(h,\, \mathcal{D}) \land h = 0 \Rightarrow I(\text{author};\, O) = 0
+\]
+
+**Multi-reader / SOCKS:** Bob₁…Bobₙ read Alice-hosted content via public pool:
+
+\[
+\forall i.\, I(\text{reader}_i;\, O) = 0
+\]
+
+Alice as **publisher/host** is a deliberate content origin — **not** a mix-network exit. `RoleAwareDeniability` separates Forwarder / Publisher / Reader roles.
+
+| Lean | `BroadcastForward.lean`, `RoleAwareDeniability.lean`, `ObservationAlphabet.NodeRole` |
+| Doc | [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) |
+
+---
+
 ## §IV — I: Integrity (maximal ITS)
 
 \[
@@ -244,16 +295,26 @@ Wegman-Carter OTM over \(\mathbb{F}_p\) — information-theoretic, not Ed25519/R
 
 OTM verify runs **only** on Bob's math-trusted verify-oracle — never on Eve's nodes.
 
-| Lean (v4) | `IntegrityAxiom.lean` — **stub** (`forgeProbFloor := 1`, `1 ≤ p`) |
-| Lean (v5) | `ITS-OTM_public_attestation/mathematics/` → import `Otm.OtmIntegrity` |
+| Lean | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (cross-repo OTM import) |
 
 ---
 
-## §V — A: Availability (best possible — not ITS)
+## §V — A: Availability (ITS-grade Absolut A — v7)
+
+Operational resilience is **not** \(I=0\), but Eve **cannot silently censor** online without observable disclosure:
 
 \[
-\boxed{\text{Availability is \textbf{not} } I=0 — \text{Eve can delete packets}}
+\boxed{\text{omit}(C_e, s) \Rightarrow \big(\exists m.\, \text{Harvest}(m,e)=C_e\big) \lor \big(\Delta O^+_{\text{rate}}(e) \neq 0\big) \lor \big(f+k \le n \land \text{reconstruct}\big)}
 \]
+
+| Mechanism | Lean |
+|-----------|------|
+| Public pool multicast + mirror mismatch | `PublicPoolMulticast.lean` |
+| Silent omit impossible | `CensorshipDisclosure.silentOmitImpossible` |
+| SSS reconstruction bound | `AvailabilityResilience.lean` |
+| Absolut A conjunct in v6 cert | `CensorshipDisclosure.aAbsolute` |
+
+**Outside for A:** total physical blackout \(O_{\text{net}}=\emptyset\) — sneakernet recovery (`OfflineChannel.lean`), not silent online deletion.
 
 ### SSS reconstruction bound
 
@@ -318,9 +379,9 @@ Under coercion: alternative plaintexts algebraically consistent (SSS underdeterm
 
 | Lean | `Stl/Security/Deniability.lean` |
 
-### v5 gap
+### v5 — in master cert
 
-~~C4 **not** in ROUTING master certificate today.~~ **Sprint 3 closed:** cross-import `stl`, `CoercionModel.lean`, `Transport/TimelockComposition.lean`, real `c4TimelockDeniability` in `networkEcosystemCertificateV5`.
+C4 **in** `networkEcosystemCertificateV5`: cross-import `stl`, `CoercionModel.lean`, `Transport/TimelockComposition.lean`, `c4TimelockDeniability`.
 
 ---
 
@@ -364,31 +425,39 @@ C = c_1 P_1 + c_2 P_2 \pmod p, \quad P_i = M_i + K_i
 
 ## §IX — Master theorem
 
-### v4 (today — smoke target)
+### v4 (historical smoke)
 
 ```lean
-def unattackableCertificate : Prop :=
-  c1WireShannon ∧
-  c2Integrity ∧           -- stub in v4
-  c3Transport ∧
-  c4AbsoluteDeniability ∧
-  ... -- see UnattackableCertificate.lean
+def unattackableCertificate : Prop := ...  -- UnattackableCertificate.lean
 ```
 
-### v5 target (ecosystem certificate)
+### v5 — ecosystem certificate (**proved**)
 
 ```lean
 def networkEcosystemCertificateV5 : Prop :=
-  c1WireShannon ∧                    -- ITS-asymmetric
-  c2OtmIntegrity ∧                   -- ITS-OTM Lean
-  networkItsCertificateV5 ∧            -- ROUTING C3 + attribution
-  c4TimelockDeniability ∧             -- ITS-timelock Stl
+  c1WireShannon ∧
+  c2OtmIntegrity ∧
+  networkItsCertificateV5 ∧
+  c4TimelockDeniability ∧
   trustedBoundary ∧
   timelessSecurity ∧
-  mediumIndependence
+  mediumIndependence ∧
+  Transport.timelockTransportComposition
 ```
 
-**Smoke (v5):** `lake env lean MasterTheorem.lean`
+**Smoke:** `lake env lean MasterTheorem.lean`
+
+### v6 — absolutisme certificate (**proved**)
+
+```lean
+def networkEcosystemCertificateV6 : Prop :=
+  networkEcosystemCertificateV5 ∧
+  aAbsolute ∧
+  bisFullyDerivedClosed ∧
+  roleAwareDeniability bisFullyDerived
+```
+
+**Smoke:** `lake env lean MasterTheoremV6.lean` · verify gate **M17**
 
 ---
 
@@ -408,7 +477,7 @@ Under axioms A0–A1 and file/message to known contact:
 
 **Conclusion:** Choosing Tor/I2P/Nym when explicitly requiring A0–A1 for C/I on file/message is the objectively weaker design — not because overlays are poorly engineered, but because their **security lemma class is weaker by definition**.
 
-Future doc: [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) (lemma-ID per claim).
+Future doc: [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) (lemma-ID per claim — **available**).
 
 ---
 
@@ -459,6 +528,8 @@ TIMELESS:        C/I independent of compute epoch
 PROD HOPS:       h = 0, 1 epoch, 1 cell
 
 MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ medium
+
+MASTER v6:       U_6 = U_5 ∧ A_abs ∧ BIS_derived ∧ roleAwareDeniability
 ```
 
 ---
@@ -477,8 +548,10 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 | Flow zero | `FlowAttributionZero.lean` | **Proved** |
 | Sybil | `SybilDoctrine.lean` | **Proved** (finite-MI) |
 | N=1 | `FewUserDoctrine.lean` | **Proved** (finite-MI) |
-| BIS IP | `BroadcastIPSymmetry.lean` | **Structural postulates** |
+| BIS IP | `BroadcastIPSymmetry.lean` + `BroadcastIPDerivation.bisFullyDerived` | **Proved** (B1+B2+B3 derived) |
 | Forward hop | `BroadcastForward.lean` | **Proved** (finite-MI) |
+| Absolut A | `CensorshipDisclosure.lean`, `PublicPoolMulticast.lean` | **Proved** (v6 cert) |
+| Role deniability | `RoleAwareDeniability.lean` | **Proved** (v6 cert) |
 | SSS courier | `SSSMultiIPCourier.lean` | **Proved** |
 | Either EP | `EndpointEitherOr.lean` | **Proved** |
 | MathSupremacy | `MathSupremacyDoctrine.lean` | **Proved** |
@@ -491,6 +564,7 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 | C4 coercion | `CoercionModel.lean` → `Stl.Security.Deniability` | **Proved** (import) |
 | Timelock compose | `Transport/TimelockComposition.lean` | **Proved** |
 | Master v5 | `MasterTheorem.lean` | **Proved** (ecosystem cert) |
+| Master v6 | `MasterTheoremV6.lean` | **Proved** (absolutisme cert) |
 | Dev mix hops | `Transport/MixAnonymity.lean` | **Not in master cert** |
 | Dev onion chaff | `Transport/ChaffIndistinguishability.lean` | **Not in master cert** |
 
@@ -504,18 +578,24 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 
 ---
 
-## §XIII — v5 closure checklist (blocks math-complete ship)
+## §XIII — Closure checklist
 
-| # | Task | Unblocks |
-|---|------|----------|
-| 1 | `Transport/FiniteMutualInfo.lean` — eliminate `mutualInfo := 0` | All I=0 claims | **Done (Sprint 1)** |
-| 2 | `ITS-OTM/mathematics/` + lake import | C2 / I |
-| 3 | `BroadcastIPDerivation.lean` — derive B2 | BIS |
-| 4 | `TimelessSecurity.lean`, `MediumIndependence.lean` | Time + medium |
-| 5 | Stl cross-import + `CoercionModel.lean` | C4 / TTL | **Done (Sprint 3)** |
-| 6 | `MasterTheorem.lean` + `networkEcosystemCertificateV5` | One certificate | **Done (Sprint 2–3)** |
-| 7 | Isolate `MixAnonymity` / `ChaffIndistinguishability` from master path | Anti-spaghetti | **Done (Sprint 0)** |
-| 8 | `verify_math.sh` M9–M16 green | Machine verification | **Done (Sprint 0 cleanup)** |
+| # | Task | Status |
+|---|------|--------|
+| 1 | `Transport/FiniteMutualInfo.lean` — eliminate `mutualInfo := 0` | **Done (Sprint 1)** |
+| 2 | `ITS-OTM/mathematics/` + lake import | **Done** |
+| 3 | `BroadcastIPDerivation.lean` — derive B2 | **Done** |
+| 4 | `TimelessSecurity.lean`, `MediumIndependence.lean` | **Done** |
+| 5 | Stl cross-import + `CoercionModel.lean` | **Done (Sprint 3)** |
+| 6 | `MasterTheorem.lean` + `networkEcosystemCertificateV5` | **Done (Sprint 2–3)** |
+| 7 | Isolate `MixAnonymity` / `ChaffIndistinguishability` from master path | **Done (Sprint 0)** |
+| 8 | `verify_math.sh` M9–M16 green | **Done** |
+| 9 | OTM WC-MAC soundness depth | **v7+** |
+| 10 | B1/B3 derive from L3+pool+P1–P3 | **Done (v7)** |
+| 11 | CensorshipDisclosure + PublicPoolMulticast | **Done (v7)** |
+| 12 | RoleAwareDeniability (host/reader/forwarder) | **Done (v7)** |
+| 13 | `networkEcosystemCertificateV6` | **Done (v7)** |
+| 14 | CORE §Expectations + NoLastHop doc-sync | **Done (v6)** |
 
 ---
 
@@ -546,9 +626,19 @@ flowchart TB
   Wire --> UES
   UES --> Attr
   Attr --> BIS
+  subgraph v7 [v7_absolutisme_Lean]
+    BISfull[B1_B2_B3_derived]
+    AbsA[CensorshipDisclosure_AbsolutA]
+    Roles[RoleAwareDeniability]
+    U6[networkEcosystemCertificateV6]
+  end
   OTM --> Master["MasterTheorem v5"]
   TL --> Master
   mathCore --> Master
+  Master --> U6
+  BISfull --> U6
+  AbsA --> U6
+  Roles --> U6
   devOnly -.->|"not in cert"| Master
   rust -.->|"refinement gates"| Master
 ```
@@ -565,11 +655,11 @@ flowchart TB
 
 **Dansk:**
 
-> Eve ejer 99,999%+ af nettet og kan gøre hvad hun vil med infrastrukturen — hun lærer matematisk nul om hvem der sendte, modtog, hvad der stod i beskeden, og hvilken vej den gik; det gælder med én bruger, nul hops og én epoch, fordi anonymitet er celle-fordelingen 𝒟 — ikke overlay-masse — og skal være maskin-verificeret i Lean.
+> Eve ejer 99,999%+ af nettet og kan gøre hvad hun vil med infrastrukturen — hun lærer matematisk nul om hvem der sendte, modtog, hvad der stod i beskeden, og hvilken vej den gik; **ingen sidste exit, ingen skyldig node** i \(O \cup IP_{obs}\); det gælder med én bruger, nul hops og én epoch, fordi anonymitet er celle-fordelingen 𝒟 — ikke overlay-masse — og skal være maskin-verificeret i Lean.
 
 **English:**
 
-> Eve owns 99.999%+ of the network and may manipulate all infrastructure — she learns information-theoretically zero about sender, recipient, message content, and path; this holds with one user, zero hops, and one epoch, because anonymity is the cell distribution 𝒟 — not overlay mass — and must be machine-verified in Lean, not assumed from Eve's software.
+> Eve owns 99.999%+ of the network and may manipulate all infrastructure — she learns information-theoretically zero about sender, recipient, message content, and path; **no last exit, no guilty node** in \(O \cup IP_{obs}\); this holds with one user, zero hops, and one epoch, because anonymity is the cell distribution 𝒟 — not overlay mass — and must be machine-verified in Lean, not assumed from Eve's software.
 
 ---
 
@@ -578,7 +668,7 @@ flowchart TB
 | # | Lemma | Mode | Lean | Status |
 |---|-------|------|------|--------|
 | L1 | Wire + cell indistinguishability | both | `WireComposition`, `Cell` | Proved (C1 import) |
-| L2 | OTM WC-MAC | both | `IntegrityAxiom` | Stub → v5 OTM |
+| L2 | OTM WC-MAC | both | `IntegrityAxiom` → `Otm.OtmIntegrity` | Proved (C2 import) |
 | L3 | C_e ~ 𝒟, constant emit | P | `UnifiedEpochStream` | Proved |
 | L4 | φ ~ 𝒟_benign | AEH | `AEH/StegoIndistinguishability` | Proved |
 | L5 | I(S; release) = 0 | AEH | `AEH/EpochGate` | Proved |

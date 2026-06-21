@@ -1,8 +1,10 @@
-# ROUTING — Proof manifest (v4 — absolute deniability + math certificate)
+# ROUTING — Proof manifest (v6 — absolutisme + v5 ecosystem cert)
 
-**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — axioms, formula manifest, Lean module map, v5 gaps
+**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v6: axioms, §Expectations matrix, NoLastHop, Absolut A, Lean module map, v6/v7 checklist
 
-**Math gate:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke `UnattackableCertificate.lean`  
+**Master cert:** `networkEcosystemCertificateV6` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₅ ∧ aAbsolute ∧ bisFullyDerived ∧ roleAwareDeniability)
+
+**Math gate:** `./scripts/verify_math.sh` — M1–M17, `lake build`, 0 `sorry`, smoke `MasterTheoremV6.lean`  
 **Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22, Rust refinement  
 **Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17–M22 / X4 / P8.* status
 
@@ -27,6 +29,11 @@
 | Timeless C/I (P6.*) | `TimelessSecurity.lean` | **Proved** | **Proved** |
 | Medium independence (P2.3) | `MediumIndependence.lean` | **Proved** | **Proved** |
 | **M10 — networkEcosystemCertificateV5** | `MasterTheorem.lean` | **Proved** (C4 Stl import) | N/A |
+| **M17 — networkEcosystemCertificateV6** | `MasterTheoremV6.lean` | **Proved** (Absolut A + BIS full + roles) | N/A |
+| B1+B3 from L3+pool+P1–P3 | `BroadcastIPDerivation.bisFullyDerived` | **Proved** | **Proved** |
+| Absolut A (censorship disclosure) | `CensorshipDisclosure.aAbsolute` | **Proved** | N/A |
+| Public pool multicast | `PublicPoolMulticast.lean` | **Proved** | N/A |
+| Role-aware noGuiltyNode | `RoleAwareDeniability.lean` | **Proved** | **Proved** |
 | **C4 timelock deniability** | `CoercionModel.lean`, `Transport/TimelockComposition.lean` → `Stl.Security.Deniability` | **Proved** (cross-repo) | N/A |
 | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
 | Either EP secure (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |

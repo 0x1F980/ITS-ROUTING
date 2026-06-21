@@ -59,4 +59,20 @@ def recipientInChannelScope : Prop := True
 
 theorem recipient_in_channel_scope : recipientInChannelScope := trivial
 
+/-- Node role tags for role-aware deniability (v7). -/
+inductive NodeRole
+  | forwarder
+  | publisher
+  | reader
+  deriving Repr, DecidableEq
+
+/-- Forwarder pool node observation slot. -/
+def forwarderObs : Nat := 2
+
+/-- Publisher (Alice host) — bevidst udgiver, not mix exit. -/
+def publisherObs : Nat := 3
+
+/-- Reader i — multi-recipient / SOCKS observation slot. -/
+def readerObs (i : Nat) : Nat := 20 + i
+
 end ITS
