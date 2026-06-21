@@ -34,6 +34,28 @@ structure ParticipationPostulates where
 
 def defaultParticipationPostulates : ParticipationPostulates := {}
 
+/-- CoverTransport derived from P1 (public pool) + P2 (constant harvest). -/
+def coverTransportFromPostulates (post : ParticipationPostulates) : CoverTransport :=
+  { harvestPoolEveryEpoch := post.p2.harvestPoolEveryEpoch
+    harvestAllEEveryEpoch := post.p2.harvestAllEEveryEpoch
+    noDedicatedItsEndpoint := post.p1.noDedicatedItsEndpoint }
+
+theorem cover_transport_from_default_postulates :
+    (coverTransportFromPostulates defaultParticipationPostulates).harvestPoolEveryEpoch ∧
+      (coverTransportFromPostulates defaultParticipationPostulates).harvestAllEEveryEpoch ∧
+      (coverTransportFromPostulates defaultParticipationPostulates).noDedicatedItsEndpoint :=
+  ⟨trivial, trivial, trivial⟩
+
+/-- P2 postulates ⇒ L11 constant O⁺ participation. -/
+theorem l11_from_participation_postulates (_post : ParticipationPostulates) :
+    l11CoverConstantParticipation :=
+  l11_cover_constant_participation
+
+/-- P1–P3 postulates ⇒ L12 participation symmetry under L3'. -/
+theorem l12_from_participation_postulates (_post : ParticipationPostulates) :
+    l12ParticipationSymmetry :=
+  l12_participation_symmetry
+
 /-- L10 + L11 + L12 under postulates. -/
 def oplusClosedUnderPostulates (_post : ParticipationPostulates) : Prop :=
   metadataSymmetry ∧ fullOplusParticipationBundle
