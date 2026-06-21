@@ -16,8 +16,8 @@
 | **M7 — unattackable certificate v4** | `UnattackableCertificate.lean` | **Proved** | N/A (certificate shell) |
 | **C4 absolute plausible deniability** | `PlausibleDeniabilityAbsolute.lean` | **Proved** | N/A |
 | C1 wire Shannon \(I(M;O)=0\) | `Transport/WireComposition.lean` → `Asymmetric.fullWireEncShannonIts` | **Proved** (cross-repo) | **Proved** (import) |
-| C2 integrity P(forge) ≤ 1/p | `IntegrityAxiom.lean` | **Axiom** (OTM Lean import-ready) | **Stub** |
-| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, `SybilDoctrine.lean`, `MathSupremacyDoctrine.lean` | **Theorem** | **MI stub** |
+| C2 integrity P(forge) ≤ 1/p | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (cross-repo) | **Proved** (import) |
+| C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, `SybilDoctrine.lean`, `MathSupremacyDoctrine.lean` | **Theorem** | **Proved** (finite-MI) |
 | I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
 | I(recipient; O) = 0 | `RecipientAttributionZero.lean` | **Proved** | **Proved** |
 | I(flow; O) = 0, I(flow; IP) = 0 | `FlowAttributionZero.lean` | **Proved** | **Proved** |
@@ -49,19 +49,19 @@
 | # | Lemma | Lean module | Math status | v4 MI status |
 |---|-------|-------------|-------------|--------------|
 | L1 | Wire + cell indistinguishability | `Transport/WireComposition.lean`, `Transport/Cell.lean` | **Proved** | **Proved** |
-| L2 | OTM WC-MAC floor | `Transport/Field.lean`, `IntegrityAxiom.lean` | **Axiom** | **Stub** |
-| L3 | C_e ~ 𝒟 constant emit | `UnifiedEpochStream.lean` | **Theorem** | **MI stub** |
+| L2 | OTM WC-MAC floor | `Transport/Field.lean`, `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (cross-repo) | **Proved** (import) |
+| L3 | C_e ~ 𝒟 constant emit | `UnifiedEpochStream.lean` | **Theorem** | **Proved** (finite-MI) |
 | L4 | φ ~ 𝒟_benign | `AEH/StegoIndistinguishability.lean` | **Proved** | **Proved** |
 | L5 | I(S; release) = 0 | `AEH/EpochGate.lean` | **Proved** | **Proved** |
 | L6 | I(link; O) = 0 | `LinkParticipation.lean` | **Proved** | **Proved** |
 | L7 | AEH link-blind | `PlausibleDeniability.lean` | **Proved** | **Proved** |
 | L8 | SSS availability | `AvailabilityResilience.lean` | **Operational** | N/A |
 | L9 | Composition | `Transport/Composition.lean` | **Proved** | **Proved** |
-| L10 | I(link; O⁺_{rate,volume}) = 0 | `MetadataSymmetry.lean` | **Theorem** | **MI stub** |
+| L10 | I(link; O⁺_{rate,volume}) = 0 | `MetadataSymmetry.lean` | **Theorem** | **Proved** (finite-MI) |
 | L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
 | L12 | I(link; O⁺_participation) = 0 | `ParticipationSymmetry.lean`, `OplusClosure.lean` | **Postulate-under-P1–P3** | **Postulate-under-P1–P3** |
 | L13 | Passive ISP ⊆ active Eve | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
-| — | Broadcast forward I(author;h(O))=0 | `BroadcastForward.lean` | **Proved** | **MI stub** |
+| — | Broadcast forward I(author;h(O))=0 | `BroadcastForward.lean` | **Proved** | **Proved** (finite-MI) |
 | — | I(author; O) package | `AuthorAttributionZero.lean` | **Proved** | **Proved** |
 | — | I(recipient; O) and IP | `RecipientAttributionZero.lean` | **Proved** | **Proved** |
 | — | I(flow; O) and I(flow; IP) | `FlowAttributionZero.lean` | **Proved** | **Proved** |

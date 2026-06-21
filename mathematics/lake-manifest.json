@@ -3,6 +3,13 @@
  "packages":
  [{"type": "path",
    "scope": "",
+   "name": "«otm-math»",
+   "manifestFile": "lake-manifest.json",
+   "inherited": false,
+   "dir": "./../../ITS-OTM_public_attestation/mathematics",
+   "configFile": "lakefile.lean"},
+  {"type": "path",
+   "scope": "",
    "name": "«asymmetric-math»",
    "manifestFile": "lake-manifest.json",
    "inherited": false,

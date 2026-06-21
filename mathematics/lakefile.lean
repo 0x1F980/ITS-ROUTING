@@ -2,6 +2,7 @@ import Lake
 open Lake DSL
 
 require «asymmetric-math» from "../../ITS-asymmetric/mathematics"
+require «otm-math» from "../../ITS-OTM_public_attestation/mathematics"
 
 package «routing-math» where
   version := v!"0.2.0"

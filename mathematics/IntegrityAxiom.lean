@@ -1,22 +1,21 @@
 import Transport.Field
+import Otm.OtmIntegrity
 
 /-!
-# Integrity axiom (C2) — OTM WC-MAC until OTM Lean import exists
+# Integrity (C2) — OTM WC-MAC from ITS-OTM Lean
 
-Postulate: P(forge) ≤ 1/p on secure verify-oracle.
-Marked import-ready when ITS-OTM Lean lands in ecosystem.
+P(forge) ≤ 1/p on secure verify-oracle. Imported from `ITS-OTM_public_attestation/mathematics`.
 -/
 
 namespace ITS
 
-/-- C2 integrity claim (axiom until OTM Lean linked). -/
-def integrityAxiom : Prop :=
-  Transport.forgeProbFloor ≤ Transport.fieldPrime
+/-- C2 integrity claim from OTM WC-MAC Lean module. -/
+def integrityAxiom : Prop := Otm.otmIntegrity
 
 theorem integrity_axiom : integrityAxiom :=
-  Transport.forge_prob_bounded
+  Otm.otm_integrity
 
-/-- Import-ready marker for future OTM Lean module. -/
+/-- OTM Lean module linked in ecosystem lakefile. -/
 def otmLeanImportReady : Prop := True
 
 theorem otm_lean_import_ready : otmLeanImportReady := trivial
