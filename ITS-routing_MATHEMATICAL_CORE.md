@@ -320,7 +320,7 @@ Under coercion: alternative plaintexts algebraically consistent (SSS underdeterm
 
 ### v5 gap
 
-C4 **not** in ROUTING master certificate today. **v5 closure:** cross-import `timelock-math`, `Transport/TimelockComposition.lean`, `networkEcosystemCertificateV5`.
+~~C4 **not** in ROUTING master certificate today.~~ **Sprint 3 closed:** cross-import `stl`, `CoercionModel.lean`, `Transport/TimelockComposition.lean`, real `c4TimelockDeniability` in `networkEcosystemCertificateV5`.
 
 ---
 
@@ -488,6 +488,9 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 | L9 composition | `Transport/Composition.lean` | **Proved** |
 | Offline | `OfflineChannel.lean` | **Proved** |
 | Master v4 | `UnattackableCertificate.lean` | **Smoke target** |
+| C4 coercion | `CoercionModel.lean` → `Stl.Security.Deniability` | **Proved** (import) |
+| Timelock compose | `Transport/TimelockComposition.lean` | **Proved** |
+| Master v5 | `MasterTheorem.lean` | **Proved** (ecosystem cert) |
 | Dev mix hops | `Transport/MixAnonymity.lean` | **Not in master cert** |
 | Dev onion chaff | `Transport/ChaffIndistinguishability.lean` | **Not in master cert** |
 
@@ -509,8 +512,8 @@ MASTER v5:       U_5 = C1 ∧ C2 ∧ C3 ∧ C4 ∧ D_abs ∧ T ∧ timeless ∧ 
 | 2 | `ITS-OTM/mathematics/` + lake import | C2 / I |
 | 3 | `BroadcastIPDerivation.lean` — derive B2 | BIS |
 | 4 | `TimelessSecurity.lean`, `MediumIndependence.lean` | Time + medium |
-| 5 | Stl cross-import + `CoercionModel.lean` | C4 / TTL |
-| 6 | `MasterTheorem.lean` + `networkEcosystemCertificateV5` | One certificate |
+| 5 | Stl cross-import + `CoercionModel.lean` | C4 / TTL | **Done (Sprint 3)** |
+| 6 | `MasterTheorem.lean` + `networkEcosystemCertificateV5` | One certificate | **Done (Sprint 2–3)** |
 | 7 | Isolate `MixAnonymity` / `ChaffIndistinguishability` from master path | Anti-spaghetti |
 | 8 | `verify_math.sh` M9–M16 green | Machine verification |
 

@@ -3,12 +3,14 @@ import BroadcastIPDerivation
 import TimelessSecurity
 import MediumIndependence
 import IntegrityAxiom
+import CoercionModel
+import Transport.TimelockComposition
 
 /-!
-# Master theorem v5 — network ecosystem certificate (Sprint 2 / M5, M10)
+# Master theorem v5 — network ecosystem certificate (Sprint 3 / M10)
 
 Single certificate composing C1 (asymmetric), C2 (OTM), ROUTING C3 + attribution,
-C4 timelock placeholder (Sprint 3), trusted boundary, timeless security, and
+C4 timelock (Stl cross-import), trusted boundary, timeless security, and
 medium independence.
 -/
 
@@ -41,10 +43,12 @@ theorem network_its_certificate_v5 : networkItsCertificateV5 :=
    broadcast_ip_symmetry_closed bisWithDerivedB2,
    b2_derives_from_l3_cell⟩
 
-/-- C4 timelock deniability — Sprint 3 Stl cross-import placeholder. -/
-def c4TimelockDeniability : Prop := True
+/-- C4 timelock deniability — Stl.Security.Deniability + coercion model (Sprint 3). -/
+def c4TimelockDeniability : Prop :=
+  coercionModel ∧ Transport.timelockC4Bundle
 
-theorem c4_timelock_deniability : c4TimelockDeniability := trivial
+theorem c4_timelock_deniability : c4TimelockDeniability :=
+  ⟨coercion_model, Transport.timelock_c4_bundle⟩
 
 def networkEcosystemCertificateV5 : Prop :=
   c1WireShannon ∧
@@ -53,7 +57,8 @@ def networkEcosystemCertificateV5 : Prop :=
     c4TimelockDeniability ∧
     trustedBoundary ∧
     timelessSecurity ∧
-    mediumIndependence
+    mediumIndependence ∧
+    Transport.timelockTransportComposition
 
 theorem network_ecosystem_certificate_v5 : networkEcosystemCertificateV5 :=
   ⟨Transport.wire_payload_confidentiality defaultMessageLen default_message_len,
@@ -62,6 +67,7 @@ theorem network_ecosystem_certificate_v5 : networkEcosystemCertificateV5 :=
    c4_timelock_deniability,
    trusted_boundary,
    timeless_security,
-   medium_independence⟩
+   medium_independence,
+   Transport.timelock_transport_composition⟩
 
 end ITS

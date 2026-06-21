@@ -25,7 +25,8 @@
 | B2 from L3 + cell | `BroadcastIPDerivation.lean` | **Proved** | **Proved** |
 | Timeless C/I (P6.*) | `TimelessSecurity.lean` | **Proved** | **Proved** |
 | Medium independence (P2.3) | `MediumIndependence.lean` | **Proved** | **Proved** |
-| **M10 — networkEcosystemCertificateV5** | `MasterTheorem.lean` | **Proved** (C4 placeholder) | N/A |
+| **M10 — networkEcosystemCertificateV5** | `MasterTheorem.lean` | **Proved** (C4 Stl import) | N/A |
+| **C4 timelock deniability** | `CoercionModel.lean`, `Transport/TimelockComposition.lean` → `Stl.Security.Deniability` | **Proved** (cross-repo) | N/A |
 | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
 | Either EP secure (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
 | No guilty node (all deniable) | `PlausibleDeniabilityAbsolute.noGuiltyNode` | **Proved** | **Proved** |
@@ -73,7 +74,9 @@
 | — | B2 from L3 + cell | `BroadcastIPDerivation.lean` | **Proved** | **Proved** |
 | — | Timeless security P6.* | `TimelessSecurity.lean` | **Proved** | **Proved** |
 | — | Medium independence | `MediumIndependence.lean` | **Proved** | **Proved** |
-| — | Master v5 ecosystem cert | `MasterTheorem.lean` | **Proved** (C4 Sprint 3) | N/A |
+| — | Master v5 ecosystem cert | `MasterTheorem.lean` | **Proved** (C4 Stl import) | N/A |
+| — | C4 coercion model (P5.1) | `CoercionModel.lean` → `Stl.Security.Deniability` | **Proved** (cross-repo) | N/A |
+| — | Timelock composition (P5.2–P5.3) | `Transport/TimelockComposition.lean` | **Proved** | N/A |
 | — | SSS multi-IP courier | `SSSMultiIPCourier.lean` | **Proved** | **Proved** |
 | — | Either EP (Alice ∨ Bob) | `EndpointEitherOr.lean` | **Proved** | **Proved** |
 | — | Absolute deniability master | `PlausibleDeniabilityAbsolute.lean` | **Proved** | **Proved** |

@@ -3,6 +3,13 @@
  "packages":
  [{"type": "path",
    "scope": "",
+   "name": "stl",
+   "manifestFile": "lake-manifest.json",
+   "inherited": false,
+   "dir": "./../../ITS-self_enclosed_timelock/mathematics/stl",
+   "configFile": "lakefile.lean"},
+  {"type": "path",
+   "scope": "",
    "name": "«otm-math»",
    "manifestFile": "lake-manifest.json",
    "inherited": false,
@@ -14,6 +21,14 @@
    "manifestFile": "lake-manifest.json",
    "inherited": false,
    "dir": "./../../ITS-asymmetric/mathematics",
+   "configFile": "lakefile.lean"},
+  {"type": "path",
+   "scope": "",
+   "name": "«its-math»",
+   "manifestFile": "lake-manifest.json",
+   "inherited": true,
+   "dir":
+   "./../../ITS-self_enclosed_timelock/mathematics/stl/./../../../ITS-session/mathematics",
    "configFile": "lakefile.lean"}],
  "name": "«routing-math»",
  "lakeDir": ".lake"}

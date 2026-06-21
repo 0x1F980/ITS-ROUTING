@@ -49,7 +49,8 @@
 | **I(author; IP_obs), I(recipient; IP_obs)** | Ingen IP-afsender/modtager | **Theorem under BIS** — `BroadcastIPSymmetry.lean`; B2 **derived** — `BroadcastIPDerivation.lean` |
 | **Timeless C/I (P6.*)** | Compute-epoch uafhængig | **Theorem** — `TimelessSecurity.lean` |
 | **Medium independence (P2.3)** | Wire-seal på pool/AEH/offline | **Theorem** — `MediumIndependence.lean` |
-| **M10 ecosystem cert v5** | C1∧C2∧C3∧C4∧T∧timeless∧medium | **Theorem** — `MasterTheorem.lean` (C4 Sprint 3) |
+| **M10 ecosystem cert v5** | C1∧C2∧C3∧C4∧T∧timeless∧medium | **Theorem** — `MasterTheorem.lean` (C4 Stl import) |
+| **C4 timelock (P5.*)** | Coercion + RSW aux + master compose | **Theorem** — `CoercionModel.lean`, `Transport/TimelockComposition.lean` |
 | **Ingen skyldig node** | Alle plausibelt benægtelige | **Theorem** — `PlausibleDeniabilityAbsolute.noGuiltyNode` |
 | **Either EP** | Alice encryptor **∨** Bob verify-oracle | **Theorem** — `EndpointEitherOr.lean` |
 | **Sybil 99.999%+** | 0 ekstra bits om M | **Proved (finite-MI)** — `SybilDoctrine.lean` |
