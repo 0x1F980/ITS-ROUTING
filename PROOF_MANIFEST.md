@@ -1,10 +1,10 @@
-# ROUTING — Proof manifest (v6 — absolutisme + v5 ecosystem cert)
+# ROUTING — Proof manifest (v8 — ITS-A forward proof + v7 ecosystem cert)
 
-**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v6: axioms, §Expectations matrix, NoLastHop, Absolut A, Lean module map, v6/v7 checklist
+**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v8: axioms, §Expectations, ForwardProof ITS-A, Lean module map
 
-**Master cert:** `networkEcosystemCertificateV7` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₆ ∧ participationPostulatesDerived ∧ secureEndpointAxiom ∧ publicPoolMulticastClosed)
+**Master cert:** `networkEcosystemCertificateV8` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₇ ∧ `aItsForwardProofClosed`)
 
-**Math gate:** `./scripts/verify_math.sh` — M1–M17, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke `MasterTheoremV6.lean`  
+**Math gate:** `./scripts/verify_math.sh` — M1–M19, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke `ForwardProof.lean` + `MasterTheoremV6.lean`  
 **Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22, Rust refinement  
 **Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17–M22 / X4 / P8.* status
 
@@ -31,10 +31,11 @@
 | **M10 — networkEcosystemCertificateV5** | `MasterTheorem.lean` | **Proved** (C4 Stl import) | N/A |
 | **M17 — networkEcosystemCertificateV6** | `MasterTheoremV6.lean` | **Proved** (Absolut A + BIS full + roles) | N/A |
 | **M17+ — networkEcosystemCertificateV7** | `MasterTheoremV6.lean` | **Proved** (zero `Prop := True`; P1–P3 derived) | N/A |
+| **M19 — ITS-A forward proof** | `ForwardProof.lean` | **Proved** (ProofFwd + alternateRoute) | N/A |
+| **M19+ — networkEcosystemCertificateV8** | `MasterTheoremV6.lean` | **Proved** (U₇ ∧ aItsForwardProofClosed) | N/A |
 | P1–P3 participation postulates | `OplusClosure.participationPostulatesDerived` | **Proved** (L3 + pool + L3') | **Proved** |
 | B1+B3 from L3+pool+P1–P3 | `BroadcastIPDerivation.bisFullyDerived` | **Proved** | **Proved** |
-| Absolut A (censorship disclosure) | `CensorshipDisclosure.aAbsolute` | **Proved** | N/A |
-| Availability ledger enforcement | `AvailabilityLedger.aAbsoluteWithLedgerEnforcement` | **Proved** | N/A |
+| Absolut A + forward proof | `CensorshipDisclosure.lean`, `ForwardProof.lean` | **Proved** (v8) | N/A |
 | Public pool multicast | `PublicPoolMulticast.lean` | **Proved** | N/A |
 | Role-aware noGuiltyNode | `RoleAwareDeniability.lean` | **Proved** | **Proved** |
 | **C4 timelock deniability** | `CoercionModel.lean`, `Transport/TimelockComposition.lean` → `Stl.Security.Deniability` | **Proved** (cross-repo) | N/A |
@@ -45,8 +46,7 @@
 | Offline / sneakernet O_net = ∅ | `OfflineChannel.lean` | **Proved** | **Proved** |
 | L9 mode composition P ⊗ AEH | `Transport/Composition.lean` | **Proved** | **Proved** |
 | L13 comparative threat | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
-| A availability (operational) | `AvailabilityResilience.lean` | **Operational** (not ITS) | N/A |
-| A ledger slash / send-rights revoke | `AvailabilityLedger.lean` | **Proved** (links `aAbsolute`) | N/A |
+| A availability (ITS forward proof) | `ForwardProof.lean`, `AvailabilityResilience.lean` | **Proved** (v8) | N/A |
 
 ---
 

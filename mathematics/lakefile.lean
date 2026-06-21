@@ -31,6 +31,7 @@ lean_lib «routing-math-cert» where
     `EndpointSplit,
     `FewUserDoctrine,
     `FlowAttributionZero,
+    `ForwardProof,
     `IntegrityAxiom,
     `IPObservation,
     `LinkParticipation,

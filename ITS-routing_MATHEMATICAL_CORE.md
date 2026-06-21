@@ -67,7 +67,7 @@ For each message pair \((s, r)\):
 | Sybil irrelevant | \(I(M;O_{E\cup Sybil})=0\) | `SybilDoctrine` | **Proved** |
 | Enten-ende | Alice ∨ Bob (eller Charlie) | `EndpointEitherOr` | **Proved** |
 | IP anonymitet | \(I(\text{author};IP_{obs})=0\) | BIS B1+B3 derived (`BroadcastIPDerivation.bisFullyDerived`) | **Proved** (v7) |
-| Absolut A | censur ⇒ videregivelse ∨ reconstruct | `CensorshipDisclosure.aAbsolute` | **Proved** (v7) |
+| Absolut A / ITS forward proof | censur ⇒ witness route ∨ reconstruct | `ForwardProof.lean`, `CensorshipDisclosure.aAbsolute` | **Proved** (v8) |
 | Ingen skyldig forwarder | `noGuiltyNode` på \(O_{fwd}\) | `RoleAwareDeniability.lean` | **Proved** (v7) |
 | Host vs reader | \(I(\text{reader}_i; O)=0\) | multi-recipient + SOCKS | **Proved** |
 | P1–P3 participation | harvest pool/E, no dedicated EP | `OplusClosure.participationPostulatesDerived` | **Proved** (v7) |
@@ -301,22 +301,33 @@ OTM verify runs **only** on Bob's math-trusted verify-oracle — never on Eve's 
 
 ---
 
-## §V — A: Availability (ITS-grade Absolut A — v7)
+## §V — A: ITS availability via forward proof (v8)
 
-Operational resilience is **not** \(I=0\), but Eve **cannot silently censor** online without observable disclosure:
+Proof of forwarding = existence in canonical public log, harvestable from a witness mirror.
+No personal ACK; alternate route = next mirror in \(\mathcal{M}\) (`multi_pool_urls`).
 
 \[
-\boxed{\text{omit}(C_e, s) \Rightarrow \big(\exists m.\, \text{Harvest}(m,e)=C_e\big) \lor \big(\Delta O^+_{\text{rate}}(e) \neq 0\big) \lor \big(f+k \le n \land \text{reconstruct}\big)}
+\boxed{\text{ProofFwd}(e,c) \Leftrightarrow \text{Publish}(e,c) \land \exists m.\,\text{Harvest}(m,e)=c}
+\]
+
+\[
+\neg\text{Local}(s,e,c) \land \text{ProofFwd}(e,c) \Rightarrow \text{AlternateRoute}(s,e,c)
+\]
+
+\[
+\text{omit}(C_e, s) \Rightarrow \big(\exists m.\, \text{Harvest}(m,e)=C_e\big) \lor \big(\Delta O^+_{\text{rate}}(e) \neq 0\big) \lor \big(f+k \le n \land \text{reconstruct}\big)
 \]
 
 | Mechanism | Lean |
 |-----------|------|
+| Forward proof + alternate mirror route | `ForwardProof.lean` |
 | Public pool multicast + mirror mismatch | `PublicPoolMulticast.lean` |
 | Silent omit impossible | `CensorshipDisclosure.silentOmitImpossible` |
 | SSS reconstruction bound | `AvailabilityResilience.lean` |
-| Absolut A conjunct in v6 cert | `CensorshipDisclosure.aAbsolute` |
+| ITS-A in master cert v8 | `networkEcosystemCertificateV8` |
 
-**Outside for A:** total physical blackout \(O_{\text{net}}=\emptyset\) — sneakernet recovery (`OfflineChannel.lean`), not silent online deletion.
+**Unattackable scope:** selective omit to `s` + witness `w` (A2′ Charlie) harvests canonical cell ⇒ `ProofFwd`.  
+**Outside:** \(O_{\text{net}}=\emptyset\); all mirrors Eve-only with no independent witness.
 
 ### SSS reconstruction bound
 
@@ -337,27 +348,6 @@ Security reduces to wire on medium + OTM on Bob.
 | Lean | `OfflineChannel.lean` |
 
 Recovery without breaking C/I: fountain + multi-mirror + AEH + sneakernet (operational gates in `verify_ecosystem.sh`).
-
-### Ledger availability enforcement (strike / slash)
-
-Repeated availability attacks tied to actor identity incur ledger strikes; at threshold \(N\)
-send rights are revoked (fratagelse af afsendelsesret — no pool epoch publish).
-
-\[
-\text{strikes}(a) \geq N \Rightarrow \neg\text{poolPublishAllowed}(a)
-\]
-
-Attack observables map to CensorshipDisclosure tags (not ad-hoc flags):
-
-| Attack tag | Disclosure observable |
-|------------|----------------------|
-| selective omit / mirror mismatch | `mirrorMismatchOnSelectiveOmit` |
-| rate delta gap | `l3GapRateDelta` |
-| SSS deletion exceeds bound | reconstruct bound ∨ `l3GapRateDelta` |
-
-| Lean | `AvailabilityLedger.lean` — `sendRightsRevoked`, `slashOnDisclosedAttack`, `aAbsoluteWithLedgerEnforcement` |
-| Operational | `its_routing::availability_ledger` — pre-publish gate in pool send |
-| Persistence contract | ITS-ledger `AvailabilityStrikeStore` (stub; full vault log TBD) |
 
 ---
 
@@ -580,7 +570,6 @@ MASTER v6:       U_6 = U_5 ∧ A_abs ∧ BIS_derived ∧ roleAwareDeniability
 | MathSupremacy | `MathSupremacyDoctrine.lean` | **Proved** |
 | C2 integrity | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (OTM import) |
 | A availability | `AvailabilityResilience.lean` | **Operational** |
-| A ledger enforcement | `AvailabilityLedger.lean` | **Proved** (strike → revoke) |
 | AEH L4/L5 | `AEH/StegoIndistinguishability.lean`, `AEH/EpochGate.lean` | **Proved** |
 | L9 composition | `Transport/Composition.lean` | **Proved** |
 | Offline | `OfflineChannel.lean` | **Proved** |

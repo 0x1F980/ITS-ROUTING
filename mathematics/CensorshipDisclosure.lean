@@ -1,4 +1,5 @@
 import PublicPoolMulticast
+import ForwardProof
 import AvailabilityResilience
 import UnifiedEpochStream
 import MetadataSymmetry
@@ -39,14 +40,20 @@ theorem silent_omit_impossible : silentOmitImpossible :=
    l3_stream_zero_leak,
    fun f ce s hf => Or.inl (sss_reconstruction_bound f hf)⟩
 
-/-- Full censorship-disclosure bundle for master cert v6. -/
+/-- Forward-proof availability: witness mirror ⇒ ProofFwd (v8 ITS-A). -/
+def forwardProofAvailability : Prop := availabilityITSForward
+
+theorem forward_proof_availability : forwardProofAvailability :=
+  availability_its_forward
+
+/-- Full censorship-disclosure bundle for master cert v6+. -/
 def censorshipDisclosed : Prop :=
-  silentOmitImpossible ∧ availabilityOperational
+  silentOmitImpossible ∧ forwardProofAvailability
 
 theorem censorship_disclosed : censorshipDisclosed :=
-  ⟨silent_omit_impossible, availability_operational⟩
+  ⟨silent_omit_impossible, forward_proof_availability⟩
 
-/-- ITS-grade maximal A: censorship ⇒ disclosure ∨ reconstruct bound. -/
+/-- ITS-grade maximal A: censorship ⇒ witness route ∨ rate delta ∨ reconstruct. -/
 def aAbsolute : Prop := censorshipDisclosed
 
 theorem a_absolute : aAbsolute := censorship_disclosed

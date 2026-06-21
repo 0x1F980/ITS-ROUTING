@@ -5,9 +5,10 @@ import RoleAwareDeniability
 import OplusClosure
 import EndpointSplit
 import PublicPoolMulticast
+import ForwardProof
 
 /-!
-# Master theorem v6 — network ecosystem certificate (v7 absolutisme)
+# Master theorem v6/v8 — network ecosystem certificate (v7 absolutisme + v8 ITS-A)
 
 \[
 U_6 = U_5 \land A_{\text{abs}} \land \text{BIS}_{\text{derived}} \land \text{roleAwareDeniability}
@@ -52,5 +53,18 @@ theorem network_ecosystem_certificate_v7 : networkEcosystemCertificateV7 :=
    participation_postulates_derived,
    secure_endpoint_axiom,
    public_pool_multicast_closed⟩
+
+/-- v8 — ITS availability via forward proof (ProofFwd + alternate mirror route). -/
+def aItsForwardProofClosed : Prop :=
+  availabilityITSForward ∧ publicPoolMulticastClosed
+
+theorem a_its_forward_proof_closed : aItsForwardProofClosed :=
+  ⟨availability_its_forward, public_pool_multicast_closed⟩
+
+def networkEcosystemCertificateV8 : Prop :=
+  networkEcosystemCertificateV7 ∧ aItsForwardProofClosed
+
+theorem network_ecosystem_certificate_v8 : networkEcosystemCertificateV8 :=
+  ⟨network_ecosystem_certificate_v7, a_its_forward_proof_closed⟩
 
 end ITS
