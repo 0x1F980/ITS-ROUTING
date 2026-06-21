@@ -32,6 +32,7 @@ lean_lib «routing-math-cert» where
     `FewUserDoctrine,
     `FlowAttributionZero,
     `ForwardProof,
+    `ForwardReceiveGate,
     `IntegrityAxiom,
     `IPObservation,
     `LinkParticipation,
@@ -64,7 +65,9 @@ lean_lib «routing-math-cert» where
     `Transport.TimelockComposition,
     `Transport.WireComposition,
     `UnattackableCertificate,
-    `UnifiedEpochStream
+    `UnifiedEpochStream,
+    `ValidForwardParty,
+    `WitnessConsensus
   ]
 
 lean_lib «routing-math-dev» where

@@ -8,7 +8,7 @@ TL_ROOT="$(cd "$ROOT/../ITS-self_enclosed_timelock/mathematics/stl" 2>/dev/null 
 OTM_ROOT="$(cd "$ROOT/../ITS-OTM_public_attestation" 2>/dev/null && pwd || true)"
 MATH="$ROOT/mathematics"
 
-echo "=== verify_math.sh — Lean certificate (M1–M19) ==="
+echo "=== verify_math.sh — Lean certificate (M1–M20) ==="
 
 echo "[1/12] M1–M8: lake build routing-math-cert"
 cd "$MATH"
@@ -69,27 +69,34 @@ else
 fi
 
 if [[ -f "$MATH/ForwardProof.lean" ]]; then
-  echo "[10/15] M19: smoke ForwardProof.lean (ITS-A forward proof)"
+  echo "[10/16] M19: smoke ForwardProof.lean (ITS-A forward proof)"
   lake env lean ForwardProof.lean
 else
-  echo "[10/15] M19: skip ForwardProof smoke (not found)"
+  echo "[10/16] M19: skip ForwardProof smoke (not found)"
+fi
+
+if [[ -f "$MATH/ValidForwardParty.lean" ]]; then
+  echo "[11/16] M20: smoke ValidForwardParty.lean (ITS-A whitelist)"
+  lake env lean ValidForwardParty.lean
+else
+  echo "[11/16] M20: skip ValidForwardParty smoke (not found)"
 fi
 
 if [[ -n "${TL_ROOT:-}" && -f "$TL_ROOT/Stl/Security/Deniability.lean" ]]; then
-  echo "[11/15] M14: smoke Stl/Security/Deniability.lean (C4 timelock)"
+  echo "[12/16] M14: smoke Stl/Security/Deniability.lean (C4 timelock)"
   (cd "$TL_ROOT" && lake env lean Stl/Security/Deniability.lean)
 else
-  echo "[11/15] M14: skip timelock Deniability smoke (ITS-timelock stl not found)"
+  echo "[12/16] M14: skip timelock Deniability smoke (ITS-timelock stl not found)"
 fi
 
 if [[ -f "$MATH/CoercionModel.lean" ]]; then
-  echo "[12/15] M15: smoke CoercionModel.lean (coercion model)"
+  echo "[13/16] M15: smoke CoercionModel.lean (coercion model)"
   lake env lean CoercionModel.lean
 else
-  echo "[12/15] M15: skip CoercionModel smoke (not found)"
+  echo "[13/16] M15: skip CoercionModel smoke (not found)"
 fi
 
-echo "[13/15] M13: PROOF_MANIFEST v8 CORE one-liner"
+echo "[14/16] M13: PROOF_MANIFEST v9 CORE one-liner"
 if [[ ! -f "$ROOT/PROOF_MANIFEST.md" ]]; then
   echo "FAIL: PROOF_MANIFEST.md missing (M13)"
   exit 1
@@ -103,7 +110,7 @@ if ! grep -q 'finite-MI' "$ROOT/PROOF_MANIFEST.md"; then
   exit 1
 fi
 
-echo "[14/15] M16: cert path isolation (no dev-onion imports)"
+echo "[15/16] M16: cert path isolation (no dev-onion imports)"
 DEV_IMPORTS=$(
   grep -r --include='*.lean' -l -E 'import.*(MixAnonymity|ChaffIndistinguishability)' "$MATH" 2>/dev/null \
     | grep -v '.lake' || true
@@ -119,11 +126,11 @@ if grep -E 'MixAnonymity|ChaffIndistinguishability' "$MATH/lakefile.lean" \
   exit 1
 fi
 
-echo "[15/15] M18: no Prop := True stub in ROUTING mathematics"
+echo "[16/16] M18: no Prop := True stub in ROUTING mathematics"
 if grep -r --include='*.lean' 'Prop := True' "$MATH" 2>/dev/null | grep -v '.lake'; then
   echo "FAIL: Prop := True stub found (prove or document Outside)"
   exit 1
 fi
 
 echo ""
-echo "ALL MATH CHECKS PASSED (M1–M19)"
+echo "ALL MATH CHECKS PASSED (M1–M20)"

@@ -1,10 +1,10 @@
-# ROUTING — Proof manifest (v8 — ITS-A forward proof + v7 ecosystem cert)
+# ROUTING — Proof manifest (v9 — ITS-A whitelist + witness consensus + receive gate)
 
-**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v8: axioms, §Expectations, ForwardProof ITS-A, Lean module map
+**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v9: axioms, §Expectations, ValidFwd whitelist, witness consensus, receive gate
 
-**Master cert:** `networkEcosystemCertificateV8` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₇ ∧ `aItsForwardProofClosed`)
+**Master cert:** `networkEcosystemCertificateV9` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₈ ∧ `validForwardPartyClosed` ∧ `witnessConsensusClosed` ∧ `forwardReceiveGateClosed`)
 
-**Math gate:** `./scripts/verify_math.sh` — M1–M19, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke `ForwardProof.lean` + `MasterTheoremV6.lean`  
+**Math gate:** `./scripts/verify_math.sh` — M1–M20, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke `ForwardProof.lean` + `ValidForwardParty.lean` + `MasterTheoremV6.lean`  
 **Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22, Rust refinement  
 **Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17–M22 / X4 / P8.* status
 
@@ -33,6 +33,10 @@
 | **M17+ — networkEcosystemCertificateV7** | `MasterTheoremV6.lean` | **Proved** (zero `Prop := True`; P1–P3 derived) | N/A |
 | **M19 — ITS-A forward proof** | `ForwardProof.lean` | **Proved** (ProofFwd + alternateRoute) | N/A |
 | **M19+ — networkEcosystemCertificateV8** | `MasterTheoremV6.lean` | **Proved** (U₇ ∧ aItsForwardProofClosed) | N/A |
+| **M20 — ValidFwd whitelist** | `ValidForwardParty.lean` | **Proved** (omit ⇒ de-whitelist) | N/A |
+| **M20 — witness k-of-n consensus** | `WitnessConsensus.lean` | **Proved** (consensus ⇒ ProofFwd) | N/A |
+| **M20 — forward-receive gate** | `ForwardReceiveGate.lean` | **Proved** (M_valid alternate path) | N/A |
+| **M20+ — networkEcosystemCertificateV9** | `MasterTheoremV6.lean` | **Proved** (U₈ ∧ v9 ITS-A bundle) | N/A |
 | P1–P3 participation postulates | `OplusClosure.participationPostulatesDerived` | **Proved** (L3 + pool + L3') | **Proved** |
 | B1+B3 from L3+pool+P1–P3 | `BroadcastIPDerivation.bisFullyDerived` | **Proved** | **Proved** |
 | Absolut A + forward proof | `CensorshipDisclosure.lean`, `ForwardProof.lean` | **Proved** (v8) | N/A |
@@ -46,7 +50,7 @@
 | Offline / sneakernet O_net = ∅ | `OfflineChannel.lean` | **Proved** | **Proved** |
 | L9 mode composition P ⊗ AEH | `Transport/Composition.lean` | **Proved** | **Proved** |
 | L13 comparative threat | `ComparativeThreatDoctrine.lean` | **Proved** | **Proved** |
-| A availability (ITS forward proof) | `ForwardProof.lean`, `AvailabilityResilience.lean` | **Proved** (v8) | N/A |
+| A availability (ITS forward proof + v9 gate) | `ForwardProof.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`, `ForwardReceiveGate.lean` | **Proved** (v9) | N/A |
 
 ---
 

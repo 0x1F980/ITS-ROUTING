@@ -6,9 +6,13 @@ import OplusClosure
 import EndpointSplit
 import PublicPoolMulticast
 import ForwardProof
+import AvailabilityLedger
+import ValidForwardParty
+import WitnessConsensus
+import ForwardReceiveGate
 
 /-!
-# Master theorem v6/v8 — network ecosystem certificate (v7 absolutisme + v8 ITS-A)
+# Master theorem v6/v9 — network ecosystem certificate (v7 absolutisme + v8/v9 ITS-A)
 
 \[
 U_6 = U_5 \land A_{\text{abs}} \land \text{BIS}_{\text{derived}} \land \text{roleAwareDeniability}
@@ -66,5 +70,28 @@ def networkEcosystemCertificateV8 : Prop :=
 
 theorem network_ecosystem_certificate_v8 : networkEcosystemCertificateV8 :=
   ⟨network_ecosystem_certificate_v7, a_its_forward_proof_closed⟩
+
+/-- v9 — math-driven whitelist + witness consensus + forward-receive gate. -/
+def networkEcosystemCertificateV9 : Prop :=
+  networkEcosystemCertificateV8 ∧
+    validForwardPartyClosed ∧
+    witnessConsensusClosed ∧
+    forwardReceiveGateClosed
+
+theorem network_ecosystem_certificate_v9 : networkEcosystemCertificateV9 :=
+  ⟨network_ecosystem_certificate_v8,
+   valid_forward_party_closed,
+   witness_consensus_closed,
+   forward_receive_gate_closed⟩
+
+/-- Bridge AvailabilityLedger send-rights into ValidForwardParty view. -/
+def sendRightsViewOf (L : AvailabilityLedgerState) : SendRightsView :=
+  ⟨fun a => sendRightsRevoked L a⟩
+
+theorem valid_mirror_of_ledger
+    (V : PoolView) (L : CanonicalLog) (led : AvailabilityLedgerState) (m W : Nat)
+    (hvm : validMirror V L (sendRightsViewOf led) m W) :
+    validForwardParty V L m W ∧ ¬ sendRightsRevoked led m :=
+  ⟨hvm.1, hvm.2⟩
 
 end ITS

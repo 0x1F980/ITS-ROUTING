@@ -175,6 +175,7 @@ impl EpochCourier for HttpPoolCourier {
 }
 
 /// Publish the same cell to multiple pool couriers (multi-path A-resilience).
+/// Operational alternate path: harvest from next mirror in M_valid (Lean: ValidForwardParty).
 pub struct MultiCourier {
     couriers: Vec<Box<dyn EpochCourier + Send + Sync>>,
 }

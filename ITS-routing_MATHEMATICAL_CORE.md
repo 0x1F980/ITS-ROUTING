@@ -68,6 +68,8 @@ For each message pair \((s, r)\):
 | Enten-ende | Alice ∨ Bob (eller Charlie) | `EndpointEitherOr` | **Proved** |
 | IP anonymitet | \(I(\text{author};IP_{obs})=0\) | BIS B1+B3 derived (`BroadcastIPDerivation.bisFullyDerived`) | **Proved** (v7) |
 | Absolut A / ITS forward proof | censur ⇒ witness route ∨ reconstruct | `ForwardProof.lean`, `CensorshipDisclosure.aAbsolute` | **Proved** (v8) |
+| ValidFwd whitelist + receive gate | \(\mathcal{M}_{\text{valid}}\), receiveGate | `ValidForwardParty.lean`, `ForwardReceiveGate.lean` | **Proved** (v9) |
+| Witness k-of-n consensus | consensusAtEpoch ⇒ ProofFwd | `WitnessConsensus.lean` | **Proved** (v9) |
 | Ingen skyldig forwarder | `noGuiltyNode` på \(O_{fwd}\) | `RoleAwareDeniability.lean` | **Proved** (v7) |
 | Host vs reader | \(I(\text{reader}_i; O)=0\) | multi-recipient + SOCKS | **Proved** |
 | P1–P3 participation | harvest pool/E, no dedicated EP | `OplusClosure.participationPostulatesDerived` | **Proved** (v7) |
@@ -301,10 +303,26 @@ OTM verify runs **only** on Bob's math-trusted verify-oracle — never on Eve's 
 
 ---
 
-## §V — A: ITS availability via forward proof (v8)
+## §V — A: ITS availability via forward proof + whitelist (v9)
 
 Proof of forwarding = existence in canonical public log, harvestable from a witness mirror.
-No personal ACK; alternate route = next mirror in \(\mathcal{M}\) (`multi_pool_urls`).
+No personal ACK; alternate route = next mirror in \(\mathcal{M}_{\text{valid}}\) (`multi_pool_urls`).
+
+\[
+\text{ValidFwd}(m,W) \Leftrightarrow \forall e \leq W.\, \text{Publish}(e,c) \Rightarrow \text{Harvest}(m,e)=c
+\]
+
+\[
+\mathcal{M}_{\text{valid}} = \{ m \mid \text{ValidFwd}(m) \land \neg\text{sendRightsRevoked}(m) \}
+\]
+
+\[
+\text{receiveGate}(m,e) \Leftrightarrow \text{ValidFwd}(m, [0,e-1])
+\]
+
+\[
+\text{consensusAtEpoch}(e,c,k) \Leftrightarrow \exists \mathcal{W}_{A2'}.\, |\{w \in \mathcal{W} : \text{Harvest}(w,e)=c\}| \geq k
+\]
 
 \[
 \boxed{\text{ProofFwd}(e,c) \Leftrightarrow \text{Publish}(e,c) \land \exists m.\,\text{Harvest}(m,e)=c}
@@ -315,19 +333,22 @@ No personal ACK; alternate route = next mirror in \(\mathcal{M}\) (`multi_pool_u
 \]
 
 \[
-\text{omit}(C_e, s) \Rightarrow \big(\exists m.\, \text{Harvest}(m,e)=C_e\big) \lor \big(\Delta O^+_{\text{rate}}(e) \neq 0\big) \lor \big(f+k \le n \land \text{reconstruct}\big)
+\text{omit}(C_e, s) \Rightarrow \big(\exists m \in \mathcal{M}_{\text{valid}}.\, \text{Harvest}(m,e)=C_e\big) \lor \big(\Delta O^+_{\text{rate}}(e) \neq 0\big) \lor \big(f+k \le n \land \text{reconstruct}\big)
 \]
 
 | Mechanism | Lean |
 |-----------|------|
 | Forward proof + alternate mirror route | `ForwardProof.lean` |
+| ValidFwd whitelist + de-whitelist on omit | `ValidForwardParty.lean` |
+| k-of-n witness consensus (A2′ Charlie) | `WitnessConsensus.lean` |
+| Forward-to-receive gate | `ForwardReceiveGate.lean` |
 | Public pool multicast + mirror mismatch | `PublicPoolMulticast.lean` |
 | Silent omit impossible | `CensorshipDisclosure.silentOmitImpossible` |
 | SSS reconstruction bound | `AvailabilityResilience.lean` |
-| ITS-A in master cert v8 | `networkEcosystemCertificateV8` |
+| ITS-A in master cert v9 | `networkEcosystemCertificateV9` |
 
-**Unattackable scope:** selective omit to `s` + witness `w` (A2′ Charlie) harvests canonical cell ⇒ `ProofFwd`.  
-**Outside:** \(O_{\text{net}}=\emptyset\); all mirrors Eve-only with no independent witness.
+**Unattackable scope:** selective omit to `s` + k-of-n witness consensus (A2′ Charlie) ⇒ `ProofFwd`; alternate path from \(\mathcal{M}_{\text{valid}}\) only — no hop guilt.  
+**Outside:** \(O_{\text{net}}=\emptyset\); all mirrors Eve-only with no independent witness; \(\mathcal{M}_{\text{valid}}=\emptyset\).
 
 ### SSS reconstruction bound
 

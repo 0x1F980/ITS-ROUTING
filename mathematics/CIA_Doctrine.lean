@@ -3,9 +3,10 @@ import AvailabilityResilience
 import ForwardProof
 
 /-!
-# CIA doctrine — C = ITS, I = ITS, A = ITS forward-proof (v8)
+# CIA doctrine — C = ITS, I = ITS, A = ITS forward-proof (v8/v9)
 
 A = public log forward proof + SSS bound — not operational-only delivery trust.
+v9 whitelist/consensus/receive-gate bundle: `networkEcosystemCertificateV9`.
 -/
 
 namespace ITS
@@ -23,7 +24,7 @@ def integrityITS : Prop :=
 
 theorem integrity_its : integrityITS := Transport.forge_prob_bounded
 
-/-- Availability (v8): forward proof + SSS reconstruct bound. -/
+/-- Availability (v8 core): forward proof + SSS reconstruct bound. -/
 def availabilityITSClaim : Prop :=
   availabilityITSForward
 
