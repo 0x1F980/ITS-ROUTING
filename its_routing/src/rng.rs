@@ -1,5 +1,6 @@
 //! Platform RNG for routing — hardware TRNG when enabled, else /dev/urandom.
 
+#[cfg(not(feature = "hardware"))]
 use std::io::Read;
 use its_transport::SecureRandom;
 
