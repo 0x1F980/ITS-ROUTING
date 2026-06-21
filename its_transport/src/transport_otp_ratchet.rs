@@ -73,6 +73,39 @@ impl TransportOtpRatchet {
 mod tests {
     use super::*;
 
+    /// Lean mirror: `epochStepForward st entropy = current + anchor + counter + entropy`.
+    fn lean_epoch_step_forward(
+        current: FieldElement,
+        anchor: FieldElement,
+        counter: u32,
+        entropy: FieldElement,
+    ) -> FieldElement {
+        current + anchor + FieldElement::new(counter) + entropy
+    }
+
+    #[test]
+    fn rust_ratchet_algebra_matches_lean() {
+        let current = FieldElement::new(1_000_003);
+        let anchor = FieldElement::new(2_000_011);
+        let counter = 7u32;
+        let entropy = FieldElement::new(42_000_042);
+
+        let via_rust = epoch_step_forward(current, anchor, counter, entropy);
+        let via_lean = lean_epoch_step_forward(current, anchor, counter, entropy);
+        assert_eq!(via_rust.value(), via_lean.value());
+
+        let seed = [0x77u8; 32];
+        let mut ratchet = TransportOtpRatchet::new(seed);
+        ratchet.counter = counter as u64;
+        ratchet.current = current;
+        ratchet.anchor = anchor;
+
+        let entropy_fe = ratchet.step_entropy();
+        let expected = lean_epoch_step_forward(current, anchor, counter, entropy_fe);
+        let (k_pool, _, _) = ratchet.step().unwrap();
+        assert_eq!(k_pool.value(), expected.value());
+    }
+
     #[test]
     fn otp_ratchet_stepping() {
         let seed = [0x42u8; 32];

@@ -65,7 +65,7 @@ cd its_routing && cargo test
 | `its-routing` path | Upstream kernel | Refinement status |
 |----------------|-----------------|-------------------|
 | Transport OTP ratchet | `transport_otp_ratchet` + SSS epoch | **Proved (Lean)** — `Transport/RatchetDerivation.lean` |
-| UES epoch cell / pool | `epoch_cell.rs` | **Refinement** — `Refinement/EpochCellCorrectness.lean` (ideal = rust by rfl today) |
+| UES epoch cell / pool | `epoch_cell.rs` | **Proved (counter + support)** — `Refinement/EpochCellCorrectness.lean`; see [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) |
 | Mode P ⊗ AEH composition | pool + AEH client paths | **E2E pipes** + Lean `Transport/Composition.lean` |
 | Size-independent (N=1) | FewUser + Participation | **Proved (Lean)** |
 | ITS chaff indistinguishability | `create_chaff_onion_packet` | **Proved (Lean)** — dev-onion-mix |

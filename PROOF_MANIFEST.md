@@ -3,7 +3,8 @@
 **Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — axioms, formula manifest, Lean module map, v5 gaps
 
 **Math gate:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke `UnattackableCertificate.lean`  
-**Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes, Rust refinement
+**Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes, Rust refinement  
+**Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17 / X4 status (Sprint 4)
 
 **MathSupremacy:** Eve owns 99.999%+ nodes; all pool/relay HW/SW is backdoored transcript. Security = Lean lemmas only.
 
@@ -87,9 +88,12 @@
 
 ## Refinement manifest (phase 2 — software/hardware)
 
+Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
+
 | Concern | Implementation | Refinement status |
 |---------|----------------|-------------------|
-| UES epoch cell / `step` | `its_transport::epoch_cell` | `Refinement/EpochCellCorrectness.lean` (ideal = rust by rfl today) |
+| OTP ratchet forward | `its_transport::transport_otp_ratchet` | **Proved** — `Transport/RatchetDerivation.lean` + `rust_ratchet_algebra_matches_lean` |
+| UES epoch cell / `step` | `its_transport::epoch_cell` | **Proved (counter + support)** — `Refinement/EpochCellCorrectness.lean`; `rust_epoch_cell_refines_ideal` |
 | End-to-end binary | `client.rs` pool/AEH paths | E2E pipes |
 | OTM verify | `aeh.rs`, `epoch_cell.rs` | `ITS-OTM` (external) |
 | AEH φ embed | `aeh_carrier.rs` | Stego pipe |

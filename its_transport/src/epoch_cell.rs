@@ -337,15 +337,30 @@ mod tests {
 
     #[test]
     fn rust_epoch_cell_refines_ideal() {
-        // CertifiedBuild gate: ratchet counter advances monotonically (matches Lean ratchet_counter_advances).
+        // M17 / X4: counter aligns with Lean idealStep.1 (= e + 1); fixed cell size L.
+        const L: usize = 256;
         let seed = [0x55u8; 32];
-        let mut a = EpochCellState::new(seed, 256, 2, 3).unwrap();
-        let mut b = EpochCellState::new(seed, 256, 2, 3).unwrap();
+        let mut state = EpochCellState::new(seed, L, 2, 3).unwrap();
         let mut rng = MockRng { state: 0x1234 };
-        let (_, c1) = a.step(&mut rng).unwrap();
-        let (_, c2) = b.step(&mut rng).unwrap();
-        assert_eq!(c1.len(), c2.len());
-        assert_eq!(a.epoch(), b.epoch());
-        assert_eq!(a.epoch(), 1);
+
+        assert_eq!(state.epoch(), 0, "initial epoch index");
+
+        for e in 0u64..8 {
+            assert_eq!(state.epoch(), e, "epoch index before step");
+            let (_, cell) = state.step(&mut rng).unwrap();
+            assert_eq!(cell.len(), L, "fixed cell size L");
+            assert_eq!(state.epoch(), e + 1, "idealStep counter component (e + 1)");
+        }
+
+        // Deterministic replay: fresh state + same RNG seed ⇒ identical ratchet keys and cells.
+        let mut replay = EpochCellState::new(seed, L, 2, 3).unwrap();
+        let mut rng_replay = MockRng { state: 0x1234 };
+        let (k_orig, c_orig) = EpochCellState::new(seed, L, 2, 3)
+            .unwrap()
+            .step(&mut MockRng { state: 0x1234 })
+            .unwrap();
+        let (k_rep, c_rep) = replay.step(&mut rng_replay).unwrap();
+        assert_eq!(k_orig.value(), k_rep.value(), "deterministic ratchet replay");
+        assert_eq!(c_orig, c_rep, "deterministic cell draw under same RNG");
     }
 }
