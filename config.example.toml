@@ -46,8 +46,17 @@ entropy_sources = [
     "https://torrent-tracker.onion/scrape"  # Torrent tracker metadata
 ]
 
-# The candidate telemetry offset bob scans for shannon statistical clues
-clue_offset = 12
+[pool]
+# UES Monocell Pool (default transport mode v1.5)
+transport_mode = "pool"
+pool_file = ".its-pool"
+# pool_url = "http://127.0.0.1:8787"
+cell_size_L = 4096
+epoch_interval_ms = 100
+sss_k = 2
+sss_n = 3
+fountain_enabled = false
+# multi_pool_urls = ["http://mirror1:8787", "http://mirror2:8787"]
 
 [fingerprint_erasure]
 # Required when --fingerprint-erasure without --fe-pad (v0.8 strict stack)

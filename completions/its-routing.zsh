@@ -16,36 +16,42 @@ _its_net() {
                 'start-node[Start a bare-metal active VPS routing node]' \
                 'client-send[Send an Onion-encrypted, fragmented packet]' \
                 'client-receive[Receive, reconstruct and verify packets]' \
-                'status-audit[Run local telemetry and check for timing anomalies]' \
-                'verify-path[Interpolate and verify the homomorphic routing path]' \
-                'list-peers[Show current peers in the local finite field routing table]' \
                 'time-lock[Generate a hybrid deniable time-lock puzzle over a file]' \
                 'time-unlock[Sequentially solve and decrypt a .its puzzle]' \
-                'time-deny[Build an alternative decoy puzzle for deniability]'
+                'time-deny[Build an alternative decoy puzzle for deniability]' \
+                'fingerprint-erasure[Standalone offline provenance erasure]' \
+                'client-export-share[Export Shamir shares as physical strings]' \
+                'client-import-share[Import Shamir shares from physical strings]'
             ;;
         args)
             case $line[1] in
                 start-node)
                     _arguments \
-                        '--chaff-rate[Tick rate in ms for constant-rate chaff]:ms:' \
+                        '-p[Listening UDP port]:port:' \
                         '--port[Listening UDP port]:port:' \
-                        '--daemonize[Run routing node as a background daemon]'
+                        '-r[Tick rate in ms for constant-rate chaff]:ms:' \
+                        '--chaff-rate[Tick rate in ms for constant-rate chaff]:ms:'
                     ;;
                 client-send)
                     _arguments \
+                        '-m[The secret payload string to transmit]:message:' \
                         '--msg[The secret payload string to transmit]:message:' \
+                        '-f[File payload to send]:file:_files' \
+                        '--file[File payload to send]:file:_files' \
+                        '-d[The destination Node ID in Z_{2^31-1}]:node_id:' \
                         '--dest[The destination Node ID in Z_{2^31-1}]:node_id:' \
-                        '--aeh[Inject packet into external public entropy stream]'
+                        '--aeh[Inject packet into external public entropy stream]' \
+                        '--continuous[Enable continuous background decoy chaffing]' \
+                        '--ratchet-seed-file[32-byte OTP seed from ITS-KeyManagement]:file:_files'
                     ;;
                 client-receive)
                     _arguments \
-                        '--source[Source Node ID to filter]:node_id:' \
                         '--aeh[Extract message using Ambient Entropy Harvesting]' \
-                        '--unwrap[Force decryption using local SSS trapdoor]'
-                    ;;
-                verify-path)
-                    _arguments \
-                        '--probes[JSON/CSV file containing received probe shares]:file:_files'
+                        '--continuous[Enable continuous background winnowing]' \
+                        '--ratchet-seed-file[32-byte OTP seed from ITS-KeyManagement]:file:_files' \
+                        '-o[Output path for received payload]:file:_files' \
+                        '--out[Output path for received payload]:file:_files' \
+                        '--timeout-secs[Receive timeout in seconds]:seconds:'
                     ;;
                 time-lock)
                     _arguments \

@@ -1,6 +1,6 @@
 use its_transport::field_arith::FieldElement;
 use its_transport::trapdoor::Trapdoor;
-use its_transport::routing::{create_onion_packet, MorphicMixingNode};
+use its_transport::onion::{create_onion_packet, MorphicMixingNode};
 use its_transport::morphic_proof::{MorphicProbe, verify_morphic_path};
 
 struct XorShiftRng {

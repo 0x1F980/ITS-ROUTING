@@ -73,7 +73,6 @@ lorenz_jitter_enabled = true         # Enable chaotic interval randomization
 [aeh]
 # Ambient Entropy Harvesting sources
 entropy_sources = ["http://api.blockcypher.com/v1/btc/main"]
-clue_offset = 12
 ```
 
 ---

@@ -1,0 +1,32 @@
+[node]
+id = 1
+port = 18401
+bind_address = "127.0.0.1"
+
+[crypto]
+threshold_k = 2
+total_shares_n = 3
+trapdoor_x = 2
+trapdoor_y = 11
+stealth_anchor = 13
+stealth_whitening_factor = 7
+
+[traffic]
+constant_rate_chaff_enabled = true
+tick_rate_ms = 50
+payload_size_elements = 16
+
+[routing_table]
+1 = "127.0.0.1:18401"
+2 = "127.0.0.1:18402"
+3 = "127.0.0.1:18403"
+4 = "127.0.0.1:18404"
+
+[aeh]
+entropy_sources = []
+
+[fingerprint_erasure]
+default_pad = ""
+require_otp = false
+require_chaff = false
+require_on_file_send = false

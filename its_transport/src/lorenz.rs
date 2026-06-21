@@ -1,3 +1,4 @@
+//! DEPRECATE (dev-onion-mix only): Lorenz jitter scheduling — forbidden in UES prod path.
 // GNU General Public License v3.0 Only
 // Copyright (C) 2026 0x1F464
 //

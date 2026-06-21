@@ -1,7 +1,7 @@
 use its_transport::field_arith::FieldElement;
 use its_transport::stealth_identity::StealthIdentity;
-use its_transport::hydra_sss::{fragment_data, reconstruct_data, SssPackedShare};
-use its_transport::ratchet::StateRatchet;
+use its_transport::sss_fragment::{fragment_data, reconstruct_data, SssPackedShare};
+use its_transport::TransportOtpRatchet;
 use its_transport::SecureRandom;
 
 struct SimpleRng {
@@ -63,7 +63,7 @@ fn test_passive_entropy_parasitism_complete_simulation() {
     let mut seed = [0u8; 32];
     seed[0..4].copy_from_slice(&13u32.to_be_bytes()); // Anchor
     seed[4..8].copy_from_slice(&7u32.to_be_bytes());  // Whitening seed
-    let ratchet = StateRatchet::new(seed);
+    let ratchet = TransportOtpRatchet::new(seed);
 
     // =========================================================================
     // 4. ALICE: IMPOSE, INJECT & ATTEST
@@ -100,7 +100,7 @@ fn test_passive_entropy_parasitism_complete_simulation() {
             data_tags.push(tag);
         }
 
-        parasitised_shares.push(its_transport::hydra_sss::SssPackedShare {
+        parasitised_shares.push(its_transport::sss_fragment::SssPackedShare {
             id: share.id,
             data_points: mutated_data_points,
         });

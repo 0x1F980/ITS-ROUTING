@@ -1,0 +1,12 @@
+{"version": "1.1.0",
+ "packagesDir": ".lake/packages",
+ "packages":
+ [{"type": "path",
+   "scope": "",
+   "name": "«asymmetric-math»",
+   "manifestFile": "lake-manifest.json",
+   "inherited": false,
+   "dir": "./../../ITS-asymmetric/mathematics",
+   "configFile": "lakefile.lean"}],
+ "name": "«routing-math»",
+ "lakeDir": ".lake"}

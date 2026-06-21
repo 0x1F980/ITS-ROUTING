@@ -69,22 +69,6 @@ impl StealthIdentity {
         whitened_shard - self.whitening_factor
     }
 
-    /// Modulates statistical variance in an external entropy pool `pool` at a specific `offset`
-    /// using the anchor to create a "statistical echo" that the receiver can discover without headers.
-    ///
-    /// Formula: `pool[offset] = pool[offset] + anchor`
-    pub fn mimic_shannon_clue(
-        &self,
-        pool: &mut [FieldElement],
-        offset: usize,
-    ) -> Result<(), ()> {
-        if offset >= pool.len() {
-            return Err(());
-        }
-        pool[offset] = pool[offset] + self.anchor;
-        Ok(())
-    }
-
     /// Bob scans a candidate entropy pool element to see if the statistical clue is present.
     ///
     /// Returns a `subtle::Choice` representing whether the clue is valid (1) or invalid (0).
@@ -157,29 +141,5 @@ mod tests {
         // 5. Unwhitening
         let recovered_shard = stealth.shard_unwhiten(recovered_whitened);
         assert_eq!(recovered_shard.value(), 15);
-    }
-
-    #[test]
-    fn test_mimic_shannon_clue_discovery() {
-        let anchor = FieldElement::new(8);
-        let stealth = StealthIdentity::new(anchor, FieldElement::zero());
-
-        let mut public_entropy_pool = [
-            FieldElement::new(4),
-            FieldElement::new(14),
-            FieldElement::new(9),
-        ];
-
-        // Alice modulates the pool at offset 1 to create her statistical echo
-        stealth.mimic_shannon_clue(&mut public_entropy_pool, 1).unwrap();
-        assert_eq!(public_entropy_pool[1].value(), 22); // 14 + 8 = 22 mod 2147483647
-
-        // Bob checks the candidate offset using the original expected telemetry (14)
-        let is_clue_found = stealth.discover_clue(public_entropy_pool[1], FieldElement::new(14));
-        assert!(bool::from(is_clue_found));
-
-        // Bob checks an unmodified offset: discovery must fail
-        let is_clue_at_wrong_offset = stealth.discover_clue(public_entropy_pool[2], FieldElement::new(9));
-        assert!(!bool::from(is_clue_at_wrong_offset));
     }
 }

@@ -10,26 +10,19 @@ This document provides formal mathematical and information-theoretic proofs for 
 
 ---
 
-## 1. Mathematical Proof of Defense Against Timing-Correlation Attacks
+## 1. Traffic shaping vs Shannon ITS (C3)
 
-Under standard onion routing, an active or passive global adversary (Eve) can perform timing correlation by matching packet arrival times at different nodes. If the packet rate is $R(t)$, Eve can compute the cross-correlation function $R_{xy}(\tau)$ between the incoming traffic $X(t)$ at the entry node and the outgoing traffic $Y(t)$ at the exit node:
-$$R_{xy}(\tau) = \lim_{T \to \infty} \frac{1}{T} \int_0^T X(t) Y(t + \tau) \, dt$$
-If $R_{xy}(\tau)$ exhibits a non-zero peak at some delay $\tau$, Eve can correlate the sender and receiver with high statistical confidence.
+**Read first:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) · [ITS_INFRASTRUCTURE_REPLACEMENT.md](ITS_INFRASTRUCTURE_REPLACEMENT.md)
 
-To completely prevent this, Morphic Routing Network (ITS/SCPST) combines **Constant-Rate Chaffing** with **Lorenz Chaotic Timing Jitter**:
+| Mechanism | Security type | Claim |
+|-----------|---------------|-------|
+| **ITS chaff** (dummy ≡ real onion distribution) | **Shannon ITS** (C3) | $I(\text{real};\text{observed\_packet}) = 0$ — Lean: `ROUTING/mathematics/Transport/ChaffIndistinguishability.lean` |
+| **Constant-rate scheduling** | Operational | Flat $R(t)$ hides idle/active; not alone Shannon ITS |
+| **Lorenz timing jitter** | Operational | Non-periodic send intervals; implementation aid, not wire-ITS proof |
 
-1. **Constant-Rate Chaffing:** By maintaining a continuous stream of dummy packets (chaff) when no real payload is being transmitted, the overall packet rate $R(t) = R_{\text{const}}$ is kept as a flat, constant vector.
-2. **Lorenz Chaotic Timing Jitter:** To prevent Eve from filtering out dummy packets based on periodic timing analysis (de-jittering), the packet transmission intervals are randomized using a Lorenz chaotic system. The Lorenz system is defined by three non-linear differential equations:
-$$\frac{dx}{dt} = \sigma(y - x), \quad \frac{dy}{dt} = x(\rho - z) - y, \quad \frac{dz}{dt} = xy - \beta z$$
-The chaotic trajectory is extremely sensitive to initial conditions (the butterfly effect). Any two trajectories starting with an infinitesimally small difference $\delta$ diverge exponentially over time:
-$$| \Delta(t) | \approx e^{\lambda t} | \delta |$$
-where $\lambda > 0$ is the positive Lyapunov exponent.
+Under standard onion routing Eve can correlate entry/exit timing. Morphic Routing combines **constant-rate chaff** with **Lorenz jitter** for scheduling. The **Shannon ITS** claim on traffic analysis applies to **packet indistinguishability** (real vs dummy share the same `create_onion_packet` distribution with uniform OTP masks), not to Lorenz intervals alone.
 
-Because the chaotic intervals are non-periodic and deterministic but statistically indistinguishable from white noise without knowing the exact initial parameters (which are derived from the private key/ratchet), the output stream appears to Eve as a completely flat, invariant white noise vector:
-$$S(f) = \text{constant}$$
-This mathematically guarantees that the cross-correlation $R_{xy}(\tau)$ between any two nodes is zero for all non-trivial delays $\tau$:
-$$R_{xy}(\tau) = 0 \quad \forall \tau$$
-Thus, Eve is mathematically incapable of performing statistical timing correlation or de-jittering, rendering her global surveillance completely blind.
+**Do not overclaim:** Lorenz jitter and flat rate are operational aids. Deanonymization resistance under the ITS model is proven for chaff indistinguishability and morphic mixing (§2), not for timing side-channels without the chaff Lean proof.
 
 ---
 

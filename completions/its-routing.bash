@@ -1,11 +1,11 @@
 # Bash completion for its-routing CLI
 
-_its_net_completions() {
+_its_routing_completions() {
     local cur prev opts
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --version --config -c start-node client-send client-receive status-audit verify-path list-peers time-lock time-unlock time-deny client-export-share client-import-share"
+    opts="--help --version --config -c start-node client-send client-receive time-lock time-unlock time-deny fingerprint-erasure client-export-share client-import-share"
 
     case "$prev" in
         --config|-c)
@@ -13,19 +13,15 @@ _its_net_completions() {
             return 0
             ;;
         start-node)
-            COMPREPLY=( $(compgen -W "--chaff-rate --port --daemonize" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-p --port -r --chaff-rate" -- "$cur") )
             return 0
             ;;
         client-send)
-            COMPREPLY=( $(compgen -W "--msg --dest --aeh" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-m --msg -f --file -d --dest --aeh --continuous --ratchet-seed-file" -- "$cur") )
             return 0
             ;;
         client-receive)
-            COMPREPLY=( $(compgen -W "--source --aeh --unwrap" -- "$cur") )
-            return 0
-            ;;
-        verify-path)
-            COMPREPLY=( $(compgen -f -- "$cur") )
+            COMPREPLY=( $(compgen -W "--aeh --continuous --ratchet-seed-file -o --out --timeout-secs" -- "$cur") )
             return 0
             ;;
         time-lock)
@@ -48,4 +44,4 @@ _its_net_completions() {
     return 0
 }
 
-complete -F _its_net_completions its-routing
+complete -F _its_routing_completions its-routing

@@ -6,7 +6,7 @@ members = [
 ]
 
 [workspace.dependencies]
-its_transport = { path = "its_transport", version = "0.1.0" }
+its_transport = { path = "its_transport", version = "1.1.0" }
 its_hardware = { git = "ssh://git@github.com/0x1F980/ITS-hardware.git", branch = "master" }
 its_ledger = { git = "ssh://git@github.com/0x1F980/ITS-ledger.git", branch = "master" }
 its_self_enclosed_timelock = { git = "ssh://git@github.com/0x1F980/ITS-self_enclosed_timelock.git", branch = "master" }

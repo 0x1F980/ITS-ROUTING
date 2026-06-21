@@ -1,0 +1,20 @@
+[pool]
+transport_mode = "pool"
+epoch_interval_ms = 100
+cell_size_L = 4096
+sss_k = 2
+sss_n = 3
+fountain_enabled = true
+pool_file = ".its-pool"
+# Production: set pool_url or multi_pool_urls to public mirrors (see deploy/pool-mirror/)
+pool_url = ""
+multi_pool_urls = []
+
+[aeh]
+entropy_sources = [
+  "http://api.blockcypher.com/v1/btc/main"
+]
+
+[crypto]
+threshold_k = 2
+total_shares_n = 3

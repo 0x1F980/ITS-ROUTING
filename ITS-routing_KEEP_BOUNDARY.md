@@ -41,4 +41,14 @@ its-km export-ratchet-seed --out /tmp/seed.bin --password '...' [--duress]
 its-routing client-send -c config.toml -f payload.bin -d 2 --aeh --ratchet-seed-file /tmp/seed.bin
 ```
 
+### `demo_aeh_seed` (lab-only implementation detail)
+
+When no `--ratchet-seed-file` is supplied (or the file is unreadable / wrong length), `its_routing/src/ratchet.rs` falls back to `demo_aeh_seed`:
+
+- Derives a 32-byte seed from `crypto.stealth_anchor` and `crypto.stealth_whitening_factor` (first 8 bytes of config).
+- **Not** Shannon ITS — predictable from `config.toml`; suitable only for local demos and CI.
+- **Forbidden in production claims** — same rule as missing `--ratchet-seed-file`.
+
+Operators must export a real OTP seed via ITS-KeyManagement before any production AEH send/receive.
+
 See [ITS-KeyManagement_PIPE.md](https://github.com/0x1F980/ITS-KeyManagement/blob/main/ITS-KeyManagement_PIPE.md).

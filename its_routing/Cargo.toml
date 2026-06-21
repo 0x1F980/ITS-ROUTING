@@ -1,6 +1,6 @@
 [package]
 name = "its_routing"
-version = "0.1.0"
+version = "1.1.0"
 edition = "2021"
 description = "ITS-ROUTING — transport daemon and CLI"
 license = "GPL-3.0-only"
@@ -9,23 +9,37 @@ license = "GPL-3.0-only"
 name = "its-routing"
 path = "src/main.rs"
 
+[lib]
+name = "its_routing"
+path = "src/routing_lib.rs"
+
 [dependencies]
 its_transport = { workspace = true }
-its_hardware = { workspace = true }
-its_ledger = { workspace = true }
-its_self_enclosed_timelock = { workspace = true }
-its_otm_public_attestation = { workspace = true }
-its_fingerprint_erasure = { workspace = true }
+its_hardware = { workspace = true, optional = true }
+its_ledger = { workspace = true, optional = true }
+its_self_enclosed_timelock = { workspace = true, optional = true }
+its_otm_public_attestation = { workspace = true, optional = true }
+its_fingerprint_erasure = { workspace = true, optional = true }
 subtle = { version = "2.5.0", default-features = false }
 zeroize = { version = "1.7.0", features = ["derive", "alloc"] }
 
 [features]
-default = []
-dev-permissive = ["its_fingerprint_erasure/dev-permissive"]
-m61 = ["its_transport/m61", "its_hardware/m61", "its_ledger/m61", "its_self_enclosed_timelock/m61", "its_otm_public_attestation/m61"]
+default = ["pool", "aeh", "otm"]
+pool = []
+aeh = ["pool", "otm"]
+dev-direct-udp = []
+dev-onion-mix = ["dev-direct-udp"]
+full = ["aeh", "fingerprint-erasure", "hardware", "ledger", "timelock"]
+hardware = ["dep:its_hardware"]
+ledger = ["dep:its_ledger"]
+timelock = ["dep:its_self_enclosed_timelock"]
+otm = ["dep:its_otm_public_attestation"]
+fingerprint-erasure = ["dep:its_fingerprint_erasure"]
+dev-permissive = ["its_fingerprint_erasure?/dev-permissive"]
+m61 = ["its_transport/m61", "its_hardware?/m61", "its_ledger?/m61", "its_self_enclosed_timelock?/m61", "its_otm_public_attestation?/m61"]
 
-[lib]
-path = "src/routing_lib.rs"
+[dev-dependencies]
+tempfile = "3"
 
 [[test]]
 name = "tunnel_simulation"
@@ -38,3 +52,7 @@ path = "tests/transport/stealth_identity_simulation.rs"
 [[test]]
 name = "morphic_proof_simulation"
 path = "tests/transport/morphic_proof_simulation.rs"
+
+[[test]]
+name = "routing_wire_onion_e2e"
+path = "tests/routing_wire_onion_e2e.rs"

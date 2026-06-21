@@ -38,7 +38,7 @@ When operators use the full offline send path without disabling layers:
 
 1. **Γ** — fingerprint erasure (discrete ITS subset + axiomatic continuous rules)
 2. **OTP** — $C=M+K$ over $\mathbb{F}_p$ (ITS given uniform keys)
-3. **Chaff** — traffic shaping (operational; not a substitute for OTP ITS)
+3. **Chaff** — ITS-indistinguishable dummy packets (`create_chaff_onion_packet` ≡ real distribution; Lean `ChaffIndistinguishability`)
 
 Each layer must be evaluated separately. See ecosystem master FAQ.
 
@@ -61,6 +61,19 @@ Each layer must be evaluated separately. See ecosystem master FAQ.
 2. **"time-lock is fully ITS"** — RSW **squaring** is computational delay; the puzzle is **ITS** because RSW output $Y$ is **chained** into SSS ($s_{2,0} = (Y+m) \bmod p$). See timelock SECURITY_LAYERS.
 
 3. **Rejecting ITS-routing for glue code** — Wrong unit of analysis; follow the table in §2.
+
+---
+
+## 7. Huller-lukning (UES v1.5)
+
+| Hole | Closure | Doc / gate |
+|------|---------|------------|
+| **A — censur/sletning** | SSS over epochs, multi-courier, sneakernet | `AvailabilityResilience.lean`, `pipe_its_sneakernet_e2e.sh` |
+| **O⁺ — metadata** | L3' constant harvest, fixed cell size | `MetadataSymmetry.lean`, no selective `--timeout-secs` in prod |
+| **EP — endpoint** | Axiom + blast-radius | [ITS-routing_SecureEndpointDoctrine.md](ITS-routing_SecureEndpointDoctrine.md) |
+| **Forkert implementation** | CertifiedBuild | `verify_ecosystem.sh` v1.5 gates, `rust_epoch_cell_refines_ideal` |
+
+Master theorem: [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) — \(I(S;O_{\text{Eve}})=0\).
 
 ---
 

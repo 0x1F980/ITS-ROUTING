@@ -23,7 +23,7 @@ We operate under the ultimate trilateral threat scenario, where the adversary, *
 
 1. **Global Passive Surveillance (Traffic Volume Analysis):** Eve passive-records all IP packet transits on the planet. She attempts to perform timing and packet-count correlation to match Alice's outbound flows to Bob's incoming coordinates.
 2. **Silicon & Firmware Exploitation:** Eve has backdoored the physical motherboards, central processing units, and network interface cards (NICs) inside Bob's terminal, actively attempting to inject microsecond timing finger-prints into outgoing streams to identify routing participants across physical checkpoints.
-3. **Physical Seizure & Torture:** Eve can physically detain Alice and Bob and subject them to physical coercion to extract vault passwords and private keys.
+3. **Physical Seizure & Torture:** Eve can physically detain Alice and Bob and subject them to physical coercion to extract vault `secret.key` files and private keys.
 
 ---
 
@@ -47,7 +47,7 @@ Under extreme requirements, Bob must completely decouple his terminal from any p
 To guarantee absolute, untampered runtime execution in offline zones, the system provides precompiled, cryptographically hashed, static prebuilt binaries. Generated through our hermetic Nix and Docker reproducible build pipelines, these binaries can be audited and signed on verified master devices, distributed via write-once physical media (e.g., optical CD-Rs), and executed on offline nodes without requiring external compilers, internet links, or dynamically linked package caches. This eliminates any possibility of compiler-inserted backdoors or dynamic-link interception.
 
 ### 6. Duress ratchets (ITS-KeyManagement):
-Operator vault passwords and the **Dual-Seed Duress Ratchet** live in **[ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement)**, not in ITS-routing. If Bob is coerced, a decoy password derives a decoy ratchet seed for transport while the vault exposes a decoy contact view. Export seeds with `its-km export-ratchet-seed --duress` before `its-routing client-send --ratchet-seed-file`.
+Operator vault **secret.key** files and duress contact views live in **[ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement)**, not in ITS-routing. If Bob is coerced, he unlocks with the duress `secret.key` (decoy vault view) and may `send --duress` with decoy encrypt profiles. Transport AEH uses a fresh OTP ratchet seed: `its-km export-ratchet-seed --out seed.bin` then `its-routing client-send --ratchet-seed-file seed.bin` (no password KDF).
 
 ### 6. Heartbeat Self-Wipe:
 The physical terminal requires a continuous, scheduled heartbeat signal from the operator. If the operator is seized, the absence of the heartbeat immediately triggers an automated memory sanitization routine, writing zeros to all sensitive registers using volatile writes and sequentially consistent compiler fences (`SeqCst`).

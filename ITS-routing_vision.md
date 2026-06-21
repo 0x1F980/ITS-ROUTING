@@ -8,7 +8,7 @@
 
 This document details the network-level threat landscape and operational transitions managed by `ITS-routing`.
 
----
+> **Production default (v2.0):** UES Monocell Pool + CoverTransport — see [QUICKSTART.md](QUICKSTART.md). Option A onion routing below is **dev-only** (`dev-onion-mix` feature).
 
 ## 1. The Network Threat Model
 
@@ -37,11 +37,13 @@ To prevent Eve from filtering dummy packets based on periodic timing analysis, t
 
 ---
 
-## 3. The Active vs. Passive Operational Transition
+## 3. Operational modes
 
-`ITS-routing` offers a tactical choice between two operational modes, depending on the required level of anonymity:
+**Production default (v2.0): UES Monocell Pool** — global fixed-size cells, CoverTransport harvest, optional `its-pool-proxy`. See [QUICKSTART.md](QUICKSTART.md). No active onion daemon required.
 
-### Option A: Active Onion Routing (Concentrated Culpability)
+Legacy dev paths (require `dev-onion-mix` or `transport_mode = "dev"`):
+
+### Option A: Active Onion Routing (dev-only — Concentrated Culpability)
 *   **Tactical Profile:** Perfect cryptographic deniability. The user runs an active node, participating in the multi-hop onion routing mesh. Under physical coercion, **[ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement)** dual-password duress exports a decoy ratchet seed for `its-routing client-send --ratchet-seed-file` while showing a benign contact view.
 *   **Operational Risk:** High behavioral visibility. Eve can easily detect that you are running an active routing daemon. While she cannot read the data, the mere act of participating is visible on your network profile.
 

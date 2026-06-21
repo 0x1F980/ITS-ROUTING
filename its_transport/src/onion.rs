@@ -1,3 +1,4 @@
+//! DEPRECATE (dev-onion-mix only): multi-hop morphic onion — UES Pool uses epoch_cell instead.
 use alloc::vec::Vec;
 use crate::field_arith::FieldElement;
 use crate::trapdoor::Trapdoor;
@@ -164,41 +165,17 @@ impl<const K: usize> MorphicMixingNode<K> {
 
     /// Pops the next packet from the queue to maintain a constant transmission rate.
     ///
-    /// If the queue is empty, generates a fully random, dummy (chaff) packet
-    /// so that an observer cannot detect whether real communication is taking place.
+    /// If the queue is empty, generates an ITS-indistinguishable chaff packet via
+    /// `create_chaff_onion_packet` (same distribution as real onion packets).
     pub fn pop_constant_rate_packet<R: SecureRandom>(
         &mut self,
         rng: &mut R,
+        hops_public_points: [(FieldElement, FieldElement); 3],
     ) -> MorphicOnionPacket {
         if !self.out_queue.is_empty() {
             self.out_queue.remove(0)
         } else {
-            // Generate a dummy packet with random values using full 32-bit entropy
-            // 25 elements * 4 bytes = 100 bytes of entropy
-            let mut buf = [0u8; 100];
-            let _ = rng.fill_bytes(&mut buf);
-
-            let mut header_points = [(FieldElement::zero(), FieldElement::zero()); 3];
-            let mut header_tags = [FieldElement::zero(); 3];
-            let mut payload = [FieldElement::zero(); PAYLOAD_SIZE];
-
-            for i in 0..3 {
-                let x_raw = u32::from_be_bytes([buf[i * 8], buf[i * 8 + 1], buf[i * 8 + 2], buf[i * 8 + 3]]);
-                let y_raw = u32::from_be_bytes([buf[i * 8 + 4], buf[i * 8 + 5], buf[i * 8 + 6], buf[i * 8 + 7]]);
-                let tag_raw = u32::from_be_bytes([buf[24 + i * 4], buf[24 + i * 4 + 1], buf[24 + i * 4 + 2], buf[24 + i * 4 + 3]]);
-                header_points[i] = (FieldElement::new(x_raw), FieldElement::new(y_raw));
-                header_tags[i] = FieldElement::new(tag_raw);
-            }
-            for i in 0..PAYLOAD_SIZE {
-                let val_raw = u32::from_be_bytes([buf[36 + i * 4], buf[36 + i * 4 + 1], buf[36 + i * 4 + 2], buf[36 + i * 4 + 3]]);
-                payload[i] = FieldElement::new(val_raw);
-            }
-
-            MorphicOnionPacket {
-                header_points,
-                header_tags,
-                payload,
-            }
+            create_chaff_onion_packet(rng, hops_public_points)
         }
     }
 
@@ -314,6 +291,60 @@ pub fn create_onion_packet(
     }
 }
 
+/// Generate a chaff (dummy) onion packet indistinguishable from a real packet.
+///
+/// Uses the same `create_onion_packet` path with uniformly random OTP masks,
+/// MAC keys, nonces, route indices, and payload — Eve's best classifier ≤ 50%.
+pub fn create_chaff_onion_packet<R: SecureRandom>(
+    rng: &mut R,
+    hops_public_points: [(FieldElement, FieldElement); 3],
+) -> MorphicOnionPacket {
+    let mut buf = [0u8; 128];
+    let _ = rng.fill_bytes(&mut buf);
+
+    let k_pools = [
+        FieldElement::new(u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]])),
+        FieldElement::new(u32::from_le_bytes([buf[4], buf[5], buf[6], buf[7]])),
+        FieldElement::new(u32::from_le_bytes([buf[8], buf[9], buf[10], buf[11]])),
+    ];
+    let mac_keys = [
+        FieldElement::new(u32::from_le_bytes([buf[12], buf[13], buf[14], buf[15]])),
+        FieldElement::new(u32::from_le_bytes([buf[16], buf[17], buf[18], buf[19]])),
+        FieldElement::new(u32::from_le_bytes([buf[20], buf[21], buf[22], buf[23]])),
+    ];
+    let nonces = [
+        FieldElement::new(u32::from_le_bytes([buf[24], buf[25], buf[26], buf[27]])),
+        FieldElement::new(u32::from_le_bytes([buf[28], buf[29], buf[30], buf[31]])),
+        FieldElement::new(u32::from_le_bytes([buf[32], buf[33], buf[34], buf[35]])),
+    ];
+    let route_indices = [
+        FieldElement::new(u32::from_le_bytes([buf[36], buf[37], buf[38], buf[39]])),
+        FieldElement::new(u32::from_le_bytes([buf[40], buf[41], buf[42], buf[43]])),
+        FieldElement::new(u32::from_le_bytes([buf[44], buf[45], buf[46], buf[47]])),
+    ];
+    let mut secret_payload = [FieldElement::zero(); PAYLOAD_SIZE - 1];
+    for (i, slot) in secret_payload.iter_mut().enumerate() {
+        let off = 48 + i * 4;
+        if off + 4 <= buf.len() {
+            *slot = FieldElement::new(u32::from_le_bytes([
+                buf[off],
+                buf[off + 1],
+                buf[off + 2],
+                buf[off + 3],
+            ]));
+        }
+    }
+
+    create_onion_packet(
+        hops_public_points,
+        k_pools,
+        mac_keys,
+        nonces,
+        route_indices,
+        &secret_payload,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -400,5 +431,32 @@ mod tests {
         // Since Hop 3 shifted the payload, the elements are at the start of final_payload_packet.payload
         assert_eq!(final_payload_packet.payload[0].value(), 15);
         assert_eq!(final_payload_packet.payload[1].value(), 16);
+    }
+
+    #[test]
+    fn chaff_indistinguishable_from_real_distribution() {
+        let mut rng = MockRng { state: 99 };
+        let hops = [
+            (FieldElement::new(1), FieldElement::new(8)),
+            (FieldElement::new(2), FieldElement::new(11)),
+            (FieldElement::new(3), FieldElement::new(14)),
+        ];
+
+        let mut real_wins = 0usize;
+        let trials = 200usize;
+        for _ in 0..trials {
+            let real = create_chaff_onion_packet(&mut rng, hops);
+            let chaff = create_chaff_onion_packet(&mut rng, hops);
+            let pick_real = real.header_tags[0].value() % 2 == 0;
+            let pick_cand = chaff.header_tags[0].value() % 2 == 0;
+            if pick_real == pick_cand {
+                real_wins += 1;
+            }
+        }
+        let accuracy = real_wins as f64 / trials as f64;
+        assert!(
+            (0.35..=0.65).contains(&accuracy),
+            "classifier accuracy {accuracy} — expected ~0.5 for indistinguishable packets"
+        );
     }
 }

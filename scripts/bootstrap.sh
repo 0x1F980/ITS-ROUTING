@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# Clone ITS ecosystem repos at v1.0.0 tags into ./its-ecosystem/
+# Clone ITS ecosystem repos at tagged releases into ./its-ecosystem/
+#
+# ECOSYSTEM_TAG defaults to v2.0.0 for UES v2.0 ship gate.
+# Pre-UES baseline was v1.1.0; frozen snapshots: ECOSYSTEM_TAG=v1.0.0 ./scripts/bootstrap.sh
 set -euo pipefail
 
 ROOT="${1:-./its-ecosystem}"
-TAG="${ECOSYSTEM_TAG:-v1.0.0}"
+TAG="${ECOSYSTEM_TAG:-v2.0.0}"
 ORG="git@github.com:0x1F980"
 
 mkdir -p "$ROOT"
@@ -34,4 +37,6 @@ clone_repo "ITS-FINGERPRINT_ERASURE"
 clone_repo "ITS-KeyManagement" main
 
 echo "Bootstrap complete under $ROOT (tag=$TAG)"
-echo "Run: $ROOT/../ROUTING/scripts/verify_ecosystem.sh $ROOT"
+echo "Run: ROUTING/scripts/verify_ecosystem.sh $ROOT"
+echo "Run: ROUTING/scripts/pipe_its_routing_e2e.sh"
+echo "Run: ROUTING/scripts/pipe_its_proxy_e2e.sh  # its-wire/1 ALPN"

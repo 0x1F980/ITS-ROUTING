@@ -193,7 +193,6 @@ entropy_sources = [
     "https://api.nasa.gov/planetary/apod",
     "https://blockchain.info/q/latesthash"
 ]
-clue_offset = 12
 ```
 
 ---

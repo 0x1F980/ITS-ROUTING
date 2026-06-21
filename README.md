@@ -5,6 +5,8 @@ Copyright (C) 2026 0x1F980. All rights reserved.
 
 ITS-routing is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
+**ITS = Information-Theoretic Secrecy** — see [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md#its--information-theoretic-secrecy). Repo names (`ITS-*`) label components; they do not redefine the acronym.
+
 **Operator identity:** [ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement) — contacts, vault, duress, orchestration. **Transport boundary:** [ITS-routing_KEEP_BOUNDARY.md](ITS-routing_KEEP_BOUNDARY.md).
 
 ---
@@ -13,7 +15,9 @@ ITS-routing is free software: you can redistribute it and/or modify it under the
 
 **Read first:** **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md)** — maps subcommands to upstream ITS scope docs. Ecosystem master: [ITS_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ROUTING/blob/master/ITS_ECOSYSTEM.md).
 
-`ITS-routing` (binary `its-routing`, crate `its_routing`) is the **transport engine** of the Morphic Routing Network (ITS/SCPST). It moves bytes on the wire — onion, UDP, SSS, chaff. It does **not** manage human contacts or vault passwords (see ITS-KeyManagement).
+`ITS-routing` (binary `its-routing`, crate `its_routing`) is the **transport engine** of the Morphic Routing Network (ITS/SCPST). **Production path:** UES Monocell Pool + CoverTransport + optional `its-pool-proxy`. It does **not** manage human contacts or vault passwords (see ITS-KeyManagement).
+
+> **Dev-only:** onion/UDP/mix paths require `transport_mode = "dev"` or the `dev-onion-mix` feature — not the default prod narrative.
 
 ### Ecosystem placement:
 ```
@@ -55,7 +59,7 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 0c. **[ITS-routing_PIPE.md](ITS-routing_PIPE.md) (stdin/stdout piping)**
     *   `-` paths for `time-lock`, `time-unlock`, `fingerprint-erasure`; demo `scripts/pipe_timelock.sh`.
 1.  **[ITS-routing_vision.md](ITS-routing_vision.md) (Network-Level Threat Model & Transition Strategy)**
-    *   Defines the network threat landscape: global traffic analysis, passive router correlation, active packet injection, and the tactical choice between active onion routing (Option A) and passive entropy harvesting (Option B).
+    *   Threat landscape under active Eve; **prod default = UES Pool (Option B)**. Option A onion routing is **dev-only** (`dev-onion-mix`).
 2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Formally Proven Network & Traffic Obfuscation Proofs)**
     *   Rigorous mathematical proofs for:
         *   **Constant-Rate Chaffing + Lorenz Chaotic Jitter:** Proving that the cross-correlation function $R_{xy}(\tau)$ between any two nodes is zero for all non-trivial delays, rendering global timing analysis entirely blind.
@@ -63,7 +67,7 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 3.  **[ITS-routing_manual.md](ITS-routing_manual.md) (Command-Line Reference, Configurations & Operations Guide)**
     *   Complete CLI guide for `its-routing` daemon operations, time-lock puzzles, steganographic sending, and configuration file syntax.
 4.  **[ITS-routing_troubleshooting.md](ITS-routing_troubleshooting.md) (Transport Recovery & Operational Procedures)**
-    *   UDP packet loss via SSS redundancy, configuration drift, time-lock CLI recovery, and ratchet resync with ITS-KeyManagement.
+    *   Pool mirror failover, fountain recovery, time-lock CLI recovery, and ratchet resync with ITS-KeyManagement. (UDP/onion: dev-only.)
 5.  **[ITS-routing_usecase.md](ITS-routing_usecase.md) (Transport Use-Cases & Integration Guide)**
     *   Tactical deployment scenarios including air-gapped time-lock custody via `ITS-self_enclosed_timelock`.
 6.  **[ITS-routing_HEADS_UP.md](ITS-routing_HEADS_UP.md) (Tactical Threat Profile & Worst-Case Survival Guide)**
@@ -74,6 +78,15 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 ---
 
 ## 3. Build & Verification Guide
+
+**Primary transport (v2.0):** UES Monocell Pool — see [QUICKSTART.md](QUICKSTART.md) and [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md).
+
+```bash
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key send --contact bob --file doc.pdf
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key receive --contact alice --out received.pdf
+```
+
+UDP/onion paths remain for **dev** (`transport_mode = "dev"` in config). Production: copy `config.prod.toml` → `~/.its/routing.toml`.
 
 ### Compilation:
 This crate compiles natively under Rust 2021 Edition.
@@ -86,3 +99,22 @@ cargo build --release
 cd its_routing && cargo test
 ```
 Tests cover analog SSS export/import roundtrip and stdin/stdout path detection. Integration tests for timelock, OTM verify, and fingerprint-erasure live in upstream crates (see [ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md)).
+
+### Shell completions
+
+| Shell | Install |
+|-------|---------|
+| Bash | `source completions/its-routing.bash` |
+| Zsh | `source completions/its-routing.zsh` |
+| Fish | `cp completions/its-routing.fish ~/.config/fish/completions/` |
+| PowerShell | `. ./completions/its-routing.ps1` |
+
+### Build profiles
+
+```bash
+cargo build -p its_routing                              # transport only (default)
+cargo build -p its_routing --features full              # all operational ridges
+cargo build -p its_routing --features timelock,ledger    # custom subset
+```
+
+See [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md) for composable infrastructure philosophy and feature matrix.
