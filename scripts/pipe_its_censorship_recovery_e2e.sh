@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Censorship recovery: mirror1 blocked → mirror2 + file pool still works.
+# Censorship recovery: mirror1 blocked + mirror3 evil omit → mirror2 + M_valid harvest.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=scripts/lib/pipe_pool_common.sh
@@ -11,8 +11,18 @@ python3 "$ROOT/deploy/pool-mirror/pool_mirror_server.py" --port 9201 --store-dir
 M1=$!
 python3 "$ROOT/deploy/pool-mirror/pool_mirror_server.py" --port 9202 --store-dir "$TMP/mirror2" &
 M2=$!
+python3 "$ROOT/deploy/pool-mirror/pool_mirror_server.py" --port 9203 --store-dir "$TMP/mirror3" --evil-omit &
+M3=$!
 sleep 1.5
-trap 'kill ${M1:-} ${M2:-} 2>/dev/null; rm -rf "$TMP"' EXIT
+for port in 9201 9202 9203; do
+  for _ in $(seq 1 30); do
+    if curl -sf "http://127.0.0.1:${port}/pool/cells?from=0" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 0.2
+  done
+done
+trap 'kill ${M1:-} ${M2:-} ${M3:-} 2>/dev/null; rm -rf "$TMP"' EXIT
 
 pipe_pool_keygen "$TMP/bob"
 MSG="censorship-recovery e2e"
@@ -24,7 +34,8 @@ cat > "$TMP/pool.toml" <<EOF
 transport_mode = "pool"
 pool_file = "$POOL"
 pool_url = "http://127.0.0.1:9201"
-multi_pool_urls = ["http://127.0.0.1:9202"]
+multi_pool_urls = ["http://127.0.0.1:9202", "http://127.0.0.1:9203"]
+valid_fwd_window = 64
 cell_size_L = 4096
 epoch_interval_ms = 50
 sss_k = 2
@@ -35,13 +46,21 @@ EOF
 "$ROUTING" -c "$TMP/pool.toml" client-send --pool --file "$TMP/msg.wire" \
   --ratchet-seed-file "$TMP/ratchet.seed"
 
-# Block mirror1
+# Block mirror1 (primary)
 kill $M1 2>/dev/null || true
 wait $M1 2>/dev/null || true
 
+RECV_LOG="$TMP/recv.log"
 "$ROUTING" -c "$TMP/pool.toml" client-receive --pool --continuous \
-  --ratchet-seed-file "$TMP/ratchet.seed" --out "$TMP/recv.wire" --timeout-secs 25
+  --ratchet-seed-file "$TMP/ratchet.seed" --out "$TMP/recv.wire" --timeout-secs 25 \
+  2>"$RECV_LOG" | tee "$TMP/recv.stdout"
+
+grep -q "de-whitelisted" "$RECV_LOG" || {
+  echo "pipe_its_censorship_recovery_e2e: expected ValidFwd de-whitelist log line" >&2
+  cat "$RECV_LOG" >&2
+  exit 1
+}
 
 pipe_pool_decrypt "$TMP/bob" "$TMP/recv.wire" "$TMP/out.txt"
 [[ "$(cat "$TMP/out.txt")" == "$MSG" ]]
-echo "pipe_its_censorship_recovery_e2e.sh: OK"
+echo "pipe_its_censorship_recovery_e2e.sh: OK (mirror1 blocked, evil mirror3 de-whitelisted, mirror2 alternate path)"

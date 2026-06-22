@@ -60,6 +60,9 @@ pub struct PoolConfig {
     pub pool_url: String,
     pub pool_file: String,
     pub multi_pool_urls: Vec<String>,
+    pub witness_pool_urls: Vec<String>,
+    pub consensus_k: usize,
+    pub valid_fwd_window: u64,
     pub sss_k: usize,
     pub sss_n: usize,
     pub fountain_enabled: bool,
@@ -74,6 +77,9 @@ impl Default for PoolConfig {
             pool_url: String::new(),
             pool_file: ".its-pool".to_string(),
             multi_pool_urls: Vec::new(),
+            witness_pool_urls: Vec::new(),
+            consensus_k: 1,
+            valid_fwd_window: 64,
             sss_k: 2,
             sss_n: 3,
             fountain_enabled: false,
@@ -126,6 +132,9 @@ pub fn parse_config(content: &str) -> Result<Config, &'static str> {
     let mut pool_url = String::new();
     let mut pool_file = ".its-pool".to_string();
     let mut multi_pool_urls = Vec::new();
+    let mut witness_pool_urls = Vec::new();
+    let mut pool_consensus_k = 1usize;
+    let mut pool_valid_fwd_window = 64u64;
     let mut pool_sss_k = 2usize;
     let mut pool_sss_n = 3usize;
     let mut pool_fountain_enabled = false;
@@ -167,6 +176,8 @@ pub fn parse_config(content: &str) -> Result<Config, &'static str> {
                         entropy_sources.push(last_part.to_string());
                     } else if key == "multi_pool_urls" {
                         multi_pool_urls.push(last_part.to_string());
+                    } else if key == "witness_pool_urls" {
+                        witness_pool_urls.push(last_part.to_string());
                     }
                 }
                 collecting_array_key = None;
@@ -177,6 +188,8 @@ pub fn parse_config(content: &str) -> Result<Config, &'static str> {
                         entropy_sources.push(cleaned.to_string());
                     } else if key == "multi_pool_urls" {
                         multi_pool_urls.push(cleaned.to_string());
+                    } else if key == "witness_pool_urls" {
+                        witness_pool_urls.push(cleaned.to_string());
                     }
                 }
             }
@@ -275,14 +288,19 @@ pub fn parse_config(content: &str) -> Result<Config, &'static str> {
                 pool_sss_n = val_raw.parse::<usize>().map_err(|_| "Failed to parse sss_n")?;
             } else if key == "fountain_enabled" {
                 pool_fountain_enabled = val_raw.parse::<bool>().map_err(|_| "Failed to parse fountain_enabled")?;
-            } else if key == "multi_pool_urls" {
+            } else if key == "multi_pool_urls" || key == "witness_pool_urls" {
+                let target = if key == "multi_pool_urls" {
+                    &mut multi_pool_urls
+                } else {
+                    &mut witness_pool_urls
+                };
                 if val_raw.starts_with('[') && val_raw.ends_with(']') {
                     let trimmed = val_raw.trim_start_matches('[').trim_end_matches(']');
                     if !trimmed.is_empty() {
                         for part in trimmed.split(',') {
                             let cleaned = part.trim().trim_matches('"').trim_matches('\'');
                             if !cleaned.is_empty() {
-                                multi_pool_urls.push(cleaned.to_string());
+                                target.push(cleaned.to_string());
                             }
                         }
                     }
@@ -290,9 +308,13 @@ pub fn parse_config(content: &str) -> Result<Config, &'static str> {
                     collecting_array_key = Some(key.to_string());
                     let rest = val_raw.trim_start_matches('[').trim().trim_matches(',').trim().trim_matches('"').trim_matches('\'');
                     if !rest.is_empty() {
-                        multi_pool_urls.push(rest.to_string());
+                        target.push(rest.to_string());
                     }
                 }
+            } else if key == "consensus_k" {
+                pool_consensus_k = val_raw.parse::<usize>().map_err(|_| "Failed to parse consensus_k")?;
+            } else if key == "valid_fwd_window" {
+                pool_valid_fwd_window = val_raw.parse::<u64>().map_err(|_| "Failed to parse valid_fwd_window")?;
             }
         }
     }
@@ -329,6 +351,9 @@ pub fn parse_config(content: &str) -> Result<Config, &'static str> {
             pool_url,
             pool_file,
             multi_pool_urls,
+            witness_pool_urls,
+            consensus_k: pool_consensus_k,
+            valid_fwd_window: pool_valid_fwd_window,
             sss_k: pool_sss_k,
             sss_n: pool_sss_n,
             fountain_enabled: pool_fountain_enabled,

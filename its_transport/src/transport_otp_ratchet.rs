@@ -1,7 +1,8 @@
 use crate::field_arith::FieldElement;
+use sss_chain::{FieldElement as ChainFe, sss_chain_epoch_step_forward};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-/// SSS epoch forward step (same algebra as `sss_chain_epoch_step_forward`).
+/// Forward epoch transition via SSS_CHAIN (single chaining source).
 #[inline]
 fn epoch_step_forward(
     current: FieldElement,
@@ -9,9 +10,13 @@ fn epoch_step_forward(
     link_index: u32,
     entropy: FieldElement,
 ) -> FieldElement {
-    let idx = FieldElement::new(link_index);
-    let transition = current + current + anchor + idx + entropy;
-    transition - current
+    let next = sss_chain_epoch_step_forward(
+        ChainFe::new(current.value() as u32),
+        ChainFe::new(anchor.value() as u32),
+        link_index,
+        ChainFe::new(entropy.value() as u32),
+    );
+    FieldElement::new(next.value() as u32)
 }
 
 /// Transport forward-secrecy ratchet — SSS OTP epoch steps (no HKDF/PBKDF).
@@ -73,16 +78,6 @@ impl TransportOtpRatchet {
 mod tests {
     use super::*;
 
-    /// Lean mirror: `epochStepForward st entropy = current + anchor + counter + entropy`.
-    fn lean_epoch_step_forward(
-        current: FieldElement,
-        anchor: FieldElement,
-        counter: u32,
-        entropy: FieldElement,
-    ) -> FieldElement {
-        current + anchor + FieldElement::new(counter) + entropy
-    }
-
     #[test]
     fn rust_ratchet_algebra_matches_lean() {
         let current = FieldElement::new(1_000_003);
@@ -90,9 +85,9 @@ mod tests {
         let counter = 7u32;
         let entropy = FieldElement::new(42_000_042);
 
-        let via_rust = epoch_step_forward(current, anchor, counter, entropy);
-        let via_lean = lean_epoch_step_forward(current, anchor, counter, entropy);
-        assert_eq!(via_rust.value(), via_lean.value());
+        let via_sss_chain = epoch_step_forward(current, anchor, counter, entropy);
+        let via_oracle = current + anchor + FieldElement::new(counter) + entropy;
+        assert_eq!(via_sss_chain.value(), via_oracle.value());
 
         let seed = [0x77u8; 32];
         let mut ratchet = TransportOtpRatchet::new(seed);
@@ -101,7 +96,7 @@ mod tests {
         ratchet.anchor = anchor;
 
         let entropy_fe = ratchet.step_entropy();
-        let expected = lean_epoch_step_forward(current, anchor, counter, entropy_fe);
+        let expected = epoch_step_forward(current, anchor, counter, entropy_fe);
         let (k_pool, _, _) = ratchet.step().unwrap();
         assert_eq!(k_pool.value(), expected.value());
     }

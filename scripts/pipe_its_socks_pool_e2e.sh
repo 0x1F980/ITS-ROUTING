@@ -27,7 +27,12 @@ timeout 30 python3 "$ROOT/tools/its_pool_proxy.py" \
   --routing "$ROUTING" \
   --asymmetric "$ITS" &
 PROXY_PID=$!
-sleep 1
+for _ in $(seq 1 60); do
+  if python3 -c "import socket; s=socket.socket(); s.settimeout(0.2); s.connect(('127.0.0.1', 19880)); s.close()" 2>/dev/null; then
+    break
+  fi
+  sleep 0.25
+done
 
 python3 - <<'PY' || { kill $PROXY_PID 2>/dev/null; exit 1; }
 import socket

@@ -57,6 +57,9 @@ sss_k = 2
 sss_n = 3
 fountain_enabled = false
 # multi_pool_urls = ["http://mirror1:8787", "http://mirror2:8787"]
+# witness_pool_urls = []   # A2′ Charlie mirrors for k-of-n consensus
+# consensus_k = 1
+# valid_fwd_window = 64
 
 [fingerprint_erasure]
 # Required when --fingerprint-erasure without --fe-pad (v0.8 strict stack)

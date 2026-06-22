@@ -24,6 +24,8 @@ pub mod availability_ledger;
 pub mod ridges;
 pub mod config;
 pub mod courier;
+pub mod valid_forward_party;
+pub mod witness_consensus;
 #[cfg(feature = "dev-onion-mix")]
 pub mod packet;
 pub mod aeh_channel;

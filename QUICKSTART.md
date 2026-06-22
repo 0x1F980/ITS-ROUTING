@@ -22,6 +22,14 @@ cp ROUTING/config.prod.toml ~/.its/routing.toml
 
 Edit `~/.its/routing.toml` — set `pool_url` or `multi_pool_urls` to your public mirror (see `ROUTING/deploy/pool-mirror/`).
 
+Optional ITS-A witness pool (A2′ Charlie mirrors):
+
+```toml
+witness_pool_urls = ["http://witness1:8787"]
+consensus_k = 2          # k-of-n threshold
+valid_fwd_window = 64    # ValidFwd history window W
+```
+
 ## 3. Vault + contacts (both peers)
 
 ```bash

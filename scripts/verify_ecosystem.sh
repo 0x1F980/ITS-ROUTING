@@ -88,6 +88,13 @@ if [[ -d "$ROUTING" ]]; then
   (cd "$ROUTING" && cargo test -p its_transport -p its_routing --features full --quiet) && green "tests: ROUTING workspace" || red "tests: ROUTING workspace"
 fi
 
+echo "=== ITS-A: ValidFwd + witness consensus unit tests ==="
+if [[ -d "$ROUTING" ]]; then
+  (cd "$ROUTING" && cargo test -p its_routing --lib valid_forward --quiet \
+    && cargo test -p its_routing --lib consensus --quiet) \
+    && green "ITS-A: valid_forward + witness_consensus" || red "ITS-A: valid_forward tests failed"
+fi
+
 echo "=== tests: math repos and glue ==="
 for pkg in SSS_CHAIN ITS-OTM_public_attestation ITS-self_enclosed_timelock ITS-hardware ITS-ledger ITS-KeyManagement; do
   if [[ -f "$ECO_ROOT/$pkg/Cargo.toml" ]]; then
@@ -453,6 +460,7 @@ fi
 
 echo "=== M20: timelock pipe (P8.5) ==="
 if [[ -x "$ROUTING/scripts/pipe_timelock.sh" ]]; then
+  (cd "$ROUTING" && cargo build -p its_routing --release --features timelock --quiet 2>/dev/null) || true
   "$ROUTING/scripts/pipe_timelock.sh" >/dev/null 2>&1 && green "M20: pipe_timelock.sh" || red "M20: pipe_timelock.sh failed"
 else
   red "M20: pipe_timelock.sh missing"

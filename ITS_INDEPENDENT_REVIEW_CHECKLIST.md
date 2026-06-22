@@ -55,18 +55,52 @@ Reproducible verification badge for adopters.
 
 ---
 
-## Sprint 6 — `ecosystem-v1.0.0-complete` gate (prep)
+## Sprint 6 — `ecosystem-v1.0.0-complete` gate (M1–M20)
 
-**Execute before meta-tag (operator action — not automated in this sprint):**
+**Math gate** — `./scripts/verify_math.sh` (local run 2026-06-22: **green**):
 
-- [ ] `./scripts/verify_math.sh` green on tagged checkout (M9–M16)
-- [ ] `./scripts/verify_ecosystem.sh` green (M17–M22, P8.*)
-- [ ] All sibling repos at matching tags — see [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
-- [ ] Product docs present: SOCKS egress (D30), deploy math gates (D9), standard replacement, overlay extinction, migration guides
-- [ ] Public pool reference deploy tested: `pipe_its_http_pool_e2e.sh`
-- [ ] Timelock pipe: `pipe_timelock.sh`
-- [ ] Independent reviewer sign-off on [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v5 + [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
-- [ ] Push all repos; apply meta-tag `ecosystem-v1.0.0-complete` (requires user confirmation)
+- [x] **M1** — `lake build routing-math-cert` (0 `sorry` in cert closure)
+- [x] **M2** — C1 wire Shannon via `Transport/WireComposition.lean` (no `mutualInfo := 0` stub)
+- [x] **M3** — I(author; O) = 0 package (`AuthorAttributionZero.lean` in cert)
+- [x] **M4** — O⁺ under P1–P3 + observation alphabet (`OplusClosure.lean`)
+- [x] **M5** — EP split encryptor vs verify (`EndpointSplit.lean`)
+- [x] **M6** — Offline / sneakernet channel (`OfflineChannel.lean`)
+- [x] **M7** — Master unattackable certificate (`UnattackableCertificate.lean` smoke)
+- [x] **M8** — Math-only verify script (`./scripts/verify_math.sh`)
+- [x] **M9** — Finite MI (`Transport/FiniteMutualInfo.lean` smoke; no stub)
+- [x] **M10** — `networkEcosystemCertificateV5` (`MasterTheorem.lean` smoke)
+- [x] **M11** — 0 `sorry` in ROUTING + ITS-asymmetric mathematics
+- [x] **M12** — OTM C2 integrity import (`Otm/OtmIntegrity.lean` smoke)
+- [x] **M13** — `PROOF_MANIFEST.md` v9 CORE one-liner + finite-MI column
+- [x] **M14** — C4 timelock deniability (`Stl/Security/Deniability.lean` smoke)
+- [x] **M15** — Coercion model (`CoercionModel.lean` smoke)
+- [x] **M16** — Cert path isolation (no dev-onion in `routing-math-cert`)
+- [x] **M17** — `networkEcosystemCertificateV6–v9` (`MasterTheoremV6.lean` smoke) + `lake build routing-math-refinement` + Rust `rust_epoch_cell_refines_ideal`
+- [x] **M18** — 0 `Prop := True` stubs + public mirror deploy (`pipe_its_http_pool_e2e.sh`, D9)
+- [x] **M19** — ITS-A forward proof (`ForwardProof.lean` smoke) + KM pool + SOCKS egress (`pipe_its_km_pool_e2e.sh`, `pipe_its_socks_pool_e2e.sh`)
+- [x] **M20** — ValidFwd / witness / receive gate (`ValidForwardParty.lean` smoke) + `cargo test -p its_routing valid_forward witness_consensus` + timelock pipe (`pipe_timelock.sh`) + censorship recovery (`pipe_its_censorship_recovery_e2e.sh`)
+
+**Ecosystem gate** — `./scripts/verify_ecosystem.sh /home/user` (local run 2026-06-22 @ ROUTING `de1a7c5`: **ALL CHECKS PASSED**):
+
+- [x] Dependency pins: 0x1F980 git tags only (no `path = "../"`)
+- [x] ROUTING workspace + ITS-A unit tests green
+- [x] M21 censorship / sneakernet / AEH pipes
+- [x] M22 manifest alignment (`PROOF_MANIFEST.md` + `REFINEMENT_MANIFEST.md`)
+- [x] Full `verify_ecosystem.sh` green on local monorepo (`/home/user`, ~17 min)
+- [ ] Full `verify_ecosystem.sh` green on **tagged checkout** via Z10 fresh clone (see below)
+
+**Z10 fresh-clone status** (2026-06-22):
+
+- `./scripts/bootstrap.sh /tmp/its-ecosystem-z10-test` — initial attempt failed: remote `SSS_CHAIN` has no `master` branch; `bootstrap.sh` updated with `main` fallback.
+- Re-run after merge: `ECOSYSTEM_TAG=v2.0.0 ./scripts/bootstrap.sh ./its-ecosystem && ./its-ecosystem/ITS-ROUTING/scripts/verify_math.sh && ./its-ecosystem/ITS-ROUTING/scripts/verify_ecosystem.sh ./its-ecosystem`
+- Local monorepo gate is green; Z10 remains **operator action** until bootstrap + verify on isolated tree succeeds.
+
+**Operator-only** (requires user confirmation — not automated):
+
+- [ ] Clone all sibling repos at matching release tags — see [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
+- [ ] `./scripts/bootstrap.sh` → `verify_math.sh` + `verify_ecosystem.sh` on fresh clone (Z10)
+- [ ] Independent reviewer sign-off on [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v9 + [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
+- [ ] Push all repos; apply `v1.0.0` per repo + meta-tag `ecosystem-v1.0.0-complete`
 
 ---
 

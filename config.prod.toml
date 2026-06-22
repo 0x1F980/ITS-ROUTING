@@ -9,6 +9,9 @@ pool_file = ".its-pool"
 # Production: set pool_url or multi_pool_urls to public mirrors (see deploy/pool-mirror/)
 pool_url = ""
 multi_pool_urls = []
+witness_pool_urls = []
+consensus_k = 1
+valid_fwd_window = 64
 
 [aeh]
 entropy_sources = [

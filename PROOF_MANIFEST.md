@@ -120,8 +120,14 @@ Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
 | KM send/receive | operator glue | `pipe_its_km_pool_e2e.sh` |
 | Timelock | C4 ridge | `pipe_timelock.sh` |
 | Public mirror | reference deploy | `pipe_its_http_pool_e2e.sh` |
+| ValidFwd / M_valid | `ValidForwardParty.lean` | `valid_forward_party.rs` + `WhitelistMultiCourier` | **Unit + E2E** — omit ⇒ de-whitelist |
+| Witness consensus | `WitnessConsensus.lean` | `witness_consensus.rs` | **Unit** — k-of-n `consensus_at_epoch` |
+| Forward receive gate | `ForwardReceiveGate.lean` | `receive_gate` + M_valid harvest filter | **E2E** — censorship pipe evil mirror |
+| ValidFwd / M_valid | `ValidForwardParty.lean` | `its_routing::valid_forward_party` | **Unit tests** — `cargo test -p its_routing valid_forward` |
+| Witness consensus | `WitnessConsensus.lean` | `its_routing::witness_consensus` | **Unit tests** — `cargo test -p its_routing witness_consensus` |
+| Receive gate / M_valid harvest | `ForwardReceiveGate.lean` | `WhitelistMultiCourier` | **E2E** — `pipe_its_censorship_recovery_e2e.sh` |
 
-**Refinement gate:** `cargo test -p its_transport -p its_routing` + `./scripts/verify_ecosystem.sh` (M17–M22)
+**Refinement gate:** `cargo test -p its_transport -p its_routing` + `cargo test -p its_routing valid_forward` + `./scripts/verify_ecosystem.sh` (M17–M22)
 
 ---
 

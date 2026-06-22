@@ -51,7 +51,10 @@
 | SOCKS egress | L3 + BIS | `tools/its_pool_proxy.py` | **E2E** — `pipe_its_socks_pool_e2e.sh` |
 | KM one-command send | subprocess glue | `its-km` | **E2E** — `pipe_its_km_pool_e2e.sh` |
 | Timelock ridge | `Transport/TimelockComposition.lean` | `ridges/timelock.rs` | **E2E** — `pipe_timelock.sh` |
-| Censorship recovery | `AvailabilityResilience.lean` | fountain + multi-mirror | **E2E** — `pipe_its_censorship_recovery_e2e.sh` |
+| Censorship recovery | `AvailabilityResilience.lean` | fountain + multi-mirror + ValidFwd | **E2E** — `pipe_its_censorship_recovery_e2e.sh` |
+| ValidFwd / M_valid whitelist | `ValidForwardParty.lean` | `its_routing::valid_forward_party` | **Unit tests** — `valid_forward_*` |
+| Witness k-of-n consensus | `WitnessConsensus.lean` | `its_routing::witness_consensus` | **Unit tests** — `witness_consensus_*` |
+| Forward receive gate | `ForwardReceiveGate.lean` | `WhitelistMultiCourier` in `courier.rs` | **Unit + E2E** — M_valid harvest filter |
 | End-to-end binary | composition lemmas | `client.rs` pool/AEH | E2E pipes in `verify_ecosystem.sh` |
 
 ---
@@ -97,6 +100,7 @@ cd ROUTING/mathematics && lake build routing-math-refinement
 
 # Rust refinement tests
 cd ROUTING && cargo test -p its_transport rust_epoch_cell_refines_ideal rust_ratchet_algebra_matches_lean --quiet
+cd ROUTING && cargo test -p its_routing --lib valid_forward consensus --quiet
 
 # Full phase-2 gate
 cd ROUTING && ./scripts/verify_ecosystem.sh /home/user

@@ -1,5 +1,6 @@
 use std::net::{SocketAddr, UdpSocket};
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
@@ -11,8 +12,9 @@ use its_transport::TransportOtpRatchet;
 use its_transport::SecureRandom;
 
 use crate::config::Config;
-use crate::courier::{build_epoch_courier, ZeroizedBuffer};
+use crate::courier::{build_epoch_courier_from, EpochCourierBuild, ZeroizedBuffer};
 use crate::availability_ledger;
+use crate::valid_forward_party::{establish_canonical, record_mirror_mismatch, ValidForwardState};
 use crate::pool_mailbox::PoolMailbox;
 #[cfg(feature = "pool")]
 use crate::cover_transport::{EpochLoop, PoolPlusCoverHarvest};
@@ -99,11 +101,16 @@ fn run_pool_send(
         );
         return;
     }
-    let courier = build_epoch_courier(
-        &config.pool.pool_file,
-        &config.pool.pool_url,
-        &config.pool.multi_pool_urls,
-    );
+    let valid_fwd = Arc::new(Mutex::new(ValidForwardState::new()));
+    let courier = build_epoch_courier_from(EpochCourierBuild {
+        pool_file: &config.pool.pool_file,
+        pool_url: &config.pool.pool_url,
+        multi_pool_urls: &config.pool.multi_pool_urls,
+        witness_pool_urls: &config.pool.witness_pool_urls,
+        consensus_k: config.pool.consensus_k,
+        valid_fwd_window: config.pool.valid_fwd_window,
+        valid_fwd_state: Arc::clone(&valid_fwd),
+    });
     println!(
         "UES Pool send (L3): {} payload epochs + {chaff_epochs} chaff, cell_size_L={}, pool={}",
         payload_epochs,
@@ -162,11 +169,16 @@ fn run_pool_receive(
             return;
         }
     };
+    let valid_fwd = Arc::new(Mutex::new(ValidForwardState::new()));
     let cover = PoolPlusCoverHarvest::new(
         &config.pool.pool_file,
         &config.pool.pool_url,
         &config.pool.multi_pool_urls,
+        &config.pool.witness_pool_urls,
+        config.pool.consensus_k,
+        config.pool.valid_fwd_window,
         &config.aeh.entropy_sources,
+        Arc::clone(&valid_fwd),
     );
     println!(
         "UES Pool receive (L3'): cover+pool harvest every {}ms, threshold k={}, cover_sources={}",
@@ -201,6 +213,9 @@ fn run_pool_receive(
         for (epoch, cell) in bundle.pool_cells {
             match cell_state.verify_cell(epoch, &cell) {
                 Ok(Some(share)) => {
+                    if let Ok(mut st) = valid_fwd.lock() {
+                        establish_canonical(&mut st, epoch, &cell);
+                    }
                     let sid = share.id.value();
                     if mb.accept_verified_share(sid) && !shares.iter().any(|s| s.id == share.id) {
                         shares.push(share);
@@ -209,6 +224,11 @@ fn run_pool_receive(
                 }
                 Ok(None) => {}
                 Err(()) => {
+                    if let Ok(mut st) = valid_fwd.lock() {
+                        if st.canonical.get(epoch).is_some() {
+                            record_mirror_mismatch(&mut st, "pool-harvest", epoch);
+                        }
+                    }
                     println!("Warning: cell verify failed at epoch {epoch}.");
                 }
             }

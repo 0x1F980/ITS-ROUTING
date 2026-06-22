@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
-"""Minimal UES pool HTTP mirror for E2E and deploy reference."""
+"""Evil pool mirror — accepts POST but omits cells on GET (selective omit E2E)."""
 from __future__ import annotations
 
 import argparse
-import os
-import struct
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 
-class PoolMirrorHandler(BaseHTTPRequestHandler):
+class EvilPoolMirrorHandler(BaseHTTPRequestHandler):
     store_dir: Path
-    evil_omit: bool = False
+    omit_harvest: bool = True
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/pool/cells":
-            if self.evil_omit:
+            if self.omit_harvest:
                 self._ok(b"", "application/octet-stream")
                 return
             qs = parse_qs(parsed.query)
@@ -42,6 +40,8 @@ class PoolMirrorHandler(BaseHTTPRequestHandler):
         self.send_error(404)
 
     def _harvest_body(self, from_epoch: int) -> bytes:
+        import struct
+
         cells: list[tuple[int, bytes]] = []
         if not self.store_dir.is_dir():
             return b""
@@ -67,26 +67,20 @@ class PoolMirrorHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, fmt: str, *args) -> None:
-        print(f"[pool-mirror] {self.address_string()} - {fmt % args}")
+        print(f"[pool-mirror-evil] {self.address_string()} - {fmt % args}")
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="UES pool HTTP mirror")
+    p = argparse.ArgumentParser(description="Evil UES pool mirror (selective omit on harvest)")
     p.add_argument("--host", default="127.0.0.1")
-    p.add_argument("--port", type=int, default=9191)
-    p.add_argument("--store-dir", default="./.pool-mirror-store")
-    p.add_argument(
-        "--evil-omit",
-        action="store_true",
-        help="accept POST but return empty harvest (selective omit for ValidFwd E2E)",
-    )
+    p.add_argument("--port", type=int, default=9203)
+    p.add_argument("--store-dir", default="./.pool-mirror-evil")
     args = p.parse_args()
     store = Path(args.store_dir)
     store.mkdir(parents=True, exist_ok=True)
-    PoolMirrorHandler.store_dir = store
-    PoolMirrorHandler.evil_omit = args.evil_omit
-    srv = HTTPServer((args.host, args.port), PoolMirrorHandler)
-    print(f"pool mirror http://{args.host}:{args.port} store={store}")
+    EvilPoolMirrorHandler.store_dir = store
+    srv = HTTPServer((args.host, args.port), EvilPoolMirrorHandler)
+    print(f"evil pool mirror http://{args.host}:{args.port} store={store}")
     srv.serve_forever()
 
 
