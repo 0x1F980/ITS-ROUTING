@@ -1,4 +1,6 @@
 //! Valid forward party — mirror whitelist M_valid (Lean: `ValidForwardParty.lean`, `ForwardReceiveGate.lean`).
+//! Refinement theorems: `Refinement.ValidForwardRefinement` — `rust_omit_de_whitelists`,
+//! `rust_valid_forward_party_sound`, `rust_valid_mirror_set_subset`, `validForwardRefinementClosed`.
 
 use std::collections::{HashMap, HashSet};
 

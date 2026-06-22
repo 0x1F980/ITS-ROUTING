@@ -79,4 +79,10 @@ theorem epoch_cell_correctness : epochCellCorrectness :=
    fun st entropy => rust_ratchet_refines_ideal st entropy,
    cell_indistinguishability⟩
 
+/-- Named closed bundle for v10 implementation certificate. -/
+def epochCellRefinementClosed : Prop := epochCellCorrectness
+
+theorem epoch_cell_refinement_closed : epochCellRefinementClosed :=
+  epoch_cell_correctness
+
 end Refinement

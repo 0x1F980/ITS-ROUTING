@@ -227,6 +227,8 @@ impl EpochCourier for MultiCourier {
 }
 
 /// Multi-mirror courier with ValidFwd tracking, M_valid filter, and optional witness consensus.
+/// Lean refinement: `Refinement.ForwardReceiveGateRefinement` (`rustReceiveGate`, `rustAlternateFromValidMirrors`),
+/// `Refinement.ClientPoolRefinement` (`rustPoolHarvestPermitted`, `forwardReceiveGateRefinementClosed`).
 pub struct WhitelistMultiCourier {
     mirror_urls: Vec<String>,
     couriers: Vec<Box<dyn EpochCourier + Send + Sync>>,

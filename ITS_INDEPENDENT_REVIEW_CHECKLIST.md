@@ -109,3 +109,29 @@ Badge: **ITS v0.10 verify_fast + Lean green — reproducible build**
 Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (multi-hour on standard profile).
 
 **Target badge (Sprint 6):** `ecosystem-v1.0.0-complete` — verify_math + verify_ecosystem + P8.* + tagged sibling repos.
+
+---
+
+## Sprint 7 — v10 implementation certificate (M23–M26)
+
+**Math gate** — `./scripts/verify_math.sh` M23–M26:
+
+- [ ] **M23** — `lake build routing-math-refinement` (all v10 roots: ValidFwd, witness, receive gate, client pool, SSS stub)
+- [ ] **M24** — smoke `Refinement/ValidForwardRefinement.lean`
+- [ ] **M25** — smoke `Refinement/WitnessConsensusRefinement.lean` + `Refinement/ForwardReceiveGateRefinement.lean`
+- [ ] **M26** — smoke `networkImplementationCertificateV10` in `MasterTheoremV6.lean`; PROOF_MANIFEST v10 grep
+
+**Refinement review:**
+
+- [ ] 0 `sorry` in `mathematics/Refinement/*.lean`
+- [ ] 0 `Prop := True` stubs in refinement modules
+- [ ] `validForwardRefinementClosed`, `witnessConsensusRefinementClosed`, `forwardReceiveGateRefinementClosed`, `clientPoolRefinementClosed` proved
+- [ ] `cargo test -p its_routing --lib valid_forward consensus` green
+- [ ] REFINEMENT_MANIFEST.md truth table: Proved / smoke / Outside — no grey zone
+- [ ] M21–M22 E2E pipes labeled smoke only in manifests
+
+**v10 sign-off:**
+
+- [ ] Independent reviewer confirms `networkImplementationCertificateV10` bundle
+- [ ] RNG byte draw documented as Outside (option B) in REFINEMENT_MANIFEST
+- [ ] v10.1 sibling tracks (asymmetric, OTM, timelock, SSS) tracked as planned

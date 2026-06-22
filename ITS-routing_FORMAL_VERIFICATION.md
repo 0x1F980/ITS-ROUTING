@@ -4,30 +4,34 @@
 
 ---
 
-## Gate matrix (cert / dev / ecosystem)
+## Gate matrix (cert / refinement / smoke)
 
 | Target | Script / command | Lean lib / Rust features | Scope |
 |--------|------------------|--------------------------|-------|
-| **Math certificate** | `./scripts/verify_math.sh` | `routing-math-cert` (transitive from `UnattackableCertificate`) | M1–M8; 0 `sorry`; no dev-onion in cert closure |
+| **Math certificate** | `./scripts/verify_math.sh` | `routing-math-cert` | M1–M20: v9 ideal, 0 `sorry`, no dev-onion in cert closure |
+| **Implementation refinement (theorem)** | `./scripts/verify_math.sh` | `routing-math-refinement` | M23–M26: v10 cert, ITS-A refinement modules |
 | **Dev-onion regression** | `./scripts/verify_ecosystem.sh` (dev jobs) | `routing-math-dev`; `cargo build -p its_routing --features dev-onion-mix` | MixAnonymity, ChaffIndistinguishability; onion mesh pipes |
-| **Refinement / ecosystem** | `./scripts/verify_ecosystem.sh` | `routing-math-refinement`; default `pool` Rust | cargo tests, pool E2E pipes, `EpochCellCorrectness` |
+| **Ecosystem smoke** | `./scripts/verify_ecosystem.sh` | M17 build + M21–M22 pipes | cargo tests, E2E regression — **not primary proof after v10** |
 | **Prod binary (pool only)** | `cargo build -p its_routing --no-default-features --features pool` | No `onion`/`daemon`/`packet` symbols | UES Monocell Pool operator path |
 
 **Rules:**
-- Master unattackability = Lean cert path first; Rust is refinement (phase 2).
+- Master unattackability = Lean cert path first (M1–M20 ideal + M23–M26 refinement).
+- E2E pipes (M18–M22) are smoke/regression only after v10.
 - Dev-onion scripts and tests require explicit `--features dev-onion-mix`.
 - Pool pipes share boilerplate via `scripts/lib/pipe_pool_common.sh`.
+- Optional strict mode: `VERIFY_MATH_V10=1 ./scripts/verify_ecosystem.sh` runs full M1–M26.
 
 ---
 
-## Two gates (math vs refinement)
+## Three gates (math / refinement / smoke)
 
 | Gate | Script | Scope |
 |------|--------|-------|
-| **Math certificate** | `./scripts/verify_math.sh` | Lean only — `lake build`, 0 `sorry`, `UnattackableCertificate.lean` |
-| **Refinement / ecosystem** | `./scripts/verify_ecosystem.sh` | cargo, E2E pipes, Rust ↔ ideal (phase 2) |
+| **Math certificate (ideal v9)** | `./scripts/verify_math.sh` M1–M20 | Lean only — `lake build routing-math-cert`, 0 `sorry` |
+| **Implementation refinement (v10)** | `./scripts/verify_math.sh` M23–M26 | `routing-math-refinement`, `networkImplementationCertificateV10` |
+| **Ecosystem smoke** | `./scripts/verify_ecosystem.sh` | cargo, M17 build, M21–M22 pipes (regression) |
 
-**Rule:** Master unattackability is sealed in Lean first. No Rust change required for math gate green.
+**Rule:** Master unattackability is sealed in Lean first. Rust must refine ideal — drift fails M23–M26.
 
 ---
 
@@ -53,11 +57,13 @@ Full lemma map: [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v4 (v4 MI status column) 
 
 ---
 
-## Refinement gates (phase 2 — software/hardware)
+## Refinement gates (phase 3 — v10 theorem + phase 2 smoke)
 
 ```bash
-cd its_routing && cargo test
-./scripts/verify_ecosystem.sh /home/user
+cd ROUTING && ./scripts/verify_math.sh          # M1–M26 (ideal + refinement)
+cd ROUTING/mathematics && lake build routing-math-refinement
+cd ROUTING && cargo test -p its_routing --lib valid_forward consensus --quiet
+./scripts/verify_ecosystem.sh /home/user        # M17 + M21–M22 smoke
 ```
 
 ### Subcommand → proof map (implementation)
@@ -65,7 +71,12 @@ cd its_routing && cargo test
 | `its-routing` path | Upstream kernel | Refinement status |
 |----------------|-----------------|-------------------|
 | Transport OTP ratchet | `transport_otp_ratchet` + SSS epoch | **Proved (Lean)** — `Transport/RatchetDerivation.lean` |
-| UES epoch cell / pool | `epoch_cell.rs` | **Proved (counter + support)** — `Refinement/EpochCellCorrectness.lean`; see [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) |
+| UES epoch cell / pool | `epoch_cell.rs` | **Proved (counter + support)** — `Refinement/EpochCellCorrectness.lean` |
+| ValidFwd / M_valid | `valid_forward_party.rs` | **Proved** — `Refinement/ValidForwardRefinement.lean` |
+| Witness k-of-n | `witness_consensus.rs` | **Proved** — `Refinement/WitnessConsensusRefinement.lean` |
+| Receive gate / courier | `courier.rs` | **Proved** — `Refinement/ForwardReceiveGateRefinement.lean` |
+| Pool client harvest | `courier.rs` receive | **Proved** — `Refinement/ClientPoolRefinement.lean` |
+| End-to-end pool path | `client.rs` | **E2E smoke** — M21–M22 pipes |
 | Mode P ⊗ AEH composition | pool + AEH client paths | **E2E pipes** + Lean `Transport/Composition.lean` |
 | Size-independent (N=1) | FewUser + Participation | **Proved (Lean)** |
 | ITS chaff indistinguishability | `create_chaff_onion_packet` | **Proved (Lean)** — dev-onion-mix |

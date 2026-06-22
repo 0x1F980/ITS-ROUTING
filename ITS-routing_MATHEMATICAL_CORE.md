@@ -4,9 +4,9 @@
 
 ## Target: Mathematicians, cryptographers, traffic-analysis auditors
 
-**Status:** v9 ecosystem certificate **proved** — 100% ITS C · I · A (`networkEcosystemCertificateV9`)  
-**Formal certificate:** [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) — `networkEcosystemCertificateV9` (M1–M20)  
-**Verify:** `./scripts/verify_math.sh` — M1–M20, `lake build`, 0 `sorry`, smoke certificates  
+**Status:** v10 implementation certificate **proved** — v9 ideal + refinement bundle (`networkImplementationCertificateV10`)  
+**Formal certificate:** [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) — `networkEcosystemCertificateV9` (M1–M20) · `networkImplementationCertificateV10` (M23–M26)  
+**Verify:** `./scripts/verify_math.sh` — M1–M26, `lake build`, 0 `sorry`, smoke certificates + refinement
 **Lean roots:** [`mathematics/lakefile.lean`](mathematics/lakefile.lean) — `routing-math-cert` · `routing-math-dev` · `routing-math-refinement`
 
 **Related:** [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) · [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
@@ -53,6 +53,22 @@ For each message pair \((s, r)\):
 **Example:** Alice hosts content; Bob₁…Bobₙ and Charlie (witness) harvest via public pool — A2′ applies per pair (Alice–Bobᵢ, Alice–Charlie). Compromise of **both** endpoints in a pair is **Outside** channel C/I.
 
 **Lean:** `EndpointEitherOr.lean`, `EndpointSplit.secureEndpointAxiom` (Outside boundary)
+
+---
+
+## §0c — MathSupremacy (evil SW/HW can / cannot)
+
+Under A0, Eve owns pool relay ISP SW/HW — all are **transcript** (delivery only).
+
+| Evil SW/HW **can** (A only) | Evil SW/HW **cannot** (C/I in O) |
+|-----------------------------|----------------------------------|
+| Selective omit / jam a mirror harvest | Derive message bits from \(O\) |
+| De-whitelist mirror on omit (`omit_de_whitelists_mirror`) | Forge OTM tag (\(P \leq 1/p\)) |
+| Rate-limit / censor pool publish | Break Shannon wire \(I(M;O)=0\) |
+| Sybil flood \(O\) | Increase finite-MI on message |
+
+**Lean:** `MathSupremacyDoctrine.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`  
+**Refinement (v10):** Rust ITS-A must refine ideal — `networkImplementationCertificateV10` in `MasterTheoremV6.lean`
 
 ---
 
@@ -631,6 +647,48 @@ def networkEcosystemCertificateV6 : Prop :=
 ```
 
 **Smoke:** `lake env lean MasterTheoremV6.lean` · verify gate **M17**
+
+### v9 — ITS-A ideal certificate (**proved**)
+
+```lean
+def networkEcosystemCertificateV9 : Prop :=
+  networkEcosystemCertificateV8 ∧
+    validForwardPartyClosed ∧
+    witnessConsensusClosed ∧
+    forwardReceiveGateClosed
+```
+
+### v10 — implementation certificate (**proved**)
+
+```lean
+def networkImplementationCertificateV10 : Prop :=
+  networkEcosystemCertificateV9 ∧
+    epochCellRefinementClosed ∧
+    validForwardRefinementClosed ∧
+    witnessConsensusRefinementClosed ∧
+    forwardReceiveGateRefinementClosed ∧
+    clientPoolRefinementClosed
+```
+
+**Gates:** M23 `lake build routing-math-refinement` · M24–M25 refinement smoke · M26 v10 cert smoke  
+**Manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
+
+---
+
+## §Refinement — ideal → Rust abstract model (phase 3)
+
+| Ideal module | Refinement module | Rust impl | Status |
+|--------------|-------------------|-----------|--------|
+| `Transport/Epoch` + `Cell` | `Refinement/EpochCellCorrectness.lean` | `epoch_cell.rs` | **Proved** (counter + support) |
+| `ValidForwardParty.lean` | `Refinement/ValidForwardRefinement.lean` | `valid_forward_party.rs` | **Proved** |
+| `WitnessConsensus.lean` | `Refinement/WitnessConsensusRefinement.lean` | `witness_consensus.rs` | **Proved** |
+| `ForwardReceiveGate.lean` | `Refinement/ForwardReceiveGateRefinement.lean` | `courier.rs` M_valid filter | **Proved** |
+| `ForwardReceiveGate.harvestPermitted` | `Refinement/ClientPoolRefinement.lean` | pool receive path | **Proved** |
+| SSS wire interleave | `Refinement/SssWireRefinement.lean` | fragment roundtrip test | **Planned (v10.1)** |
+
+**Outside (explicit):** OS `/dev/urandom` uniform bytes — counter + tag support proved; byte draw not re-proved in Lean.
+
+**E2E pipes (M18–M22):** regression smoke only — not primary proof after v10.
 
 ---
 

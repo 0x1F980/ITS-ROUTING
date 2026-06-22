@@ -8,7 +8,7 @@ TL_ROOT="$(cd "$ROOT/../ITS-self_enclosed_timelock/mathematics/stl" 2>/dev/null 
 OTM_ROOT="$(cd "$ROOT/../ITS-OTM_public_attestation" 2>/dev/null && pwd || true)"
 MATH="$ROOT/mathematics"
 
-echo "=== verify_math.sh — Lean certificate (M1–M20) ==="
+echo "=== verify_math.sh — Lean certificate (M1–M26) ==="
 
 echo "[1/12] M1–M8: lake build routing-math-cert"
 cd "$MATH"
@@ -126,11 +126,28 @@ if grep -E 'MixAnonymity|ChaffIndistinguishability' "$MATH/lakefile.lean" \
   exit 1
 fi
 
-echo "[16/16] M18: no Prop := True stub in ROUTING mathematics"
+echo "[16/20] M18: no Prop := True stub in ROUTING mathematics"
 if grep -r --include='*.lean' 'Prop := True' "$MATH" 2>/dev/null | grep -v '.lake'; then
   echo "FAIL: Prop := True stub found (prove or document Outside)"
   exit 1
 fi
 
+echo "[17/20] M23: lake build routing-math-refinement (v10 modules)"
+lake build routing-math-refinement
+
+echo "[18/20] M24: smoke Refinement/ValidForwardRefinement.lean"
+lake env lean Refinement/ValidForwardRefinement.lean
+
+echo "[19/20] M25: smoke WitnessConsensus + ForwardReceiveGate refinement"
+lake env lean Refinement/WitnessConsensusRefinement.lean
+lake env lean Refinement/ForwardReceiveGateRefinement.lean
+
+echo "[20/20] M26: smoke v10 cert + PROOF_MANIFEST v10 grep"
+lake env lean MasterTheoremV6.lean
+if ! grep -q 'networkImplementationCertificateV10' "$ROOT/PROOF_MANIFEST.md"; then
+  echo "FAIL: PROOF_MANIFEST.md must document networkImplementationCertificateV10 (M26)"
+  exit 1
+fi
+
 echo ""
-echo "ALL MATH CHECKS PASSED (M1–M20)"
+echo "ALL MATH CHECKS PASSED (M1–M26)"

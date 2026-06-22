@@ -1,4 +1,6 @@
 //! Witness consensus — k-of-n A2′ harvest agreement (Lean: `WitnessConsensus.lean`).
+//! Refinement theorems: `Refinement.WitnessConsensusRefinement` — `rust_consensus_at_epoch_iff`,
+//! `rust_count_ge_gives_consensus`, `rust_consensus_gives_forward_proof`, `witnessConsensusRefinementClosed`.
 
 /// Count witnesses in `members` that harvest `expected` at `epoch`.
 pub fn witness_harvest_count(

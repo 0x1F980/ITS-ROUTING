@@ -1,12 +1,15 @@
-# ROUTING — Proof manifest (v9 — ITS-A whitelist + witness consensus + receive gate)
+# ROUTING — Proof manifest (v10 — implementation refinement + v9 ideal)
 
-**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v9: axioms, §Expectations, ValidFwd whitelist, witness consensus, receive gate
+**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — authoritative CORE v10: axioms, §Expectations, ValidFwd whitelist, witness consensus, receive gate, refinement
 
-**Master cert:** `networkEcosystemCertificateV9` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₈ ∧ `validForwardPartyClosed` ∧ `witnessConsensusClosed` ∧ `forwardReceiveGateClosed`)
+**Master cert (ideal):** `networkEcosystemCertificateV9` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= U₈ ∧ ITS-A bundle)
 
-**Math gate:** `./scripts/verify_math.sh` — M1–M20, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke `ForwardProof.lean` + `ValidForwardParty.lean` + `MasterTheoremV6.lean`  
-**Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22, Rust refinement  
-**Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M17–M22 / X4 / P8.* status
+**Master cert (implementation):** `networkImplementationCertificateV10` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (= v9 ∧ refinement closed bundles — epoch cell, ValidFwd, witness, receive gate, client pool)
+
+**Math gate:** `./scripts/verify_math.sh` — M1–M26, `lake build`, 0 `sorry`, 0 `Prop := True` in `mathematics/`, smoke refinement + v10 cert  
+**Refinement gate (theorem):** M23–M26 in `verify_math.sh`  
+**Ecosystem gate (smoke):** `./scripts/verify_ecosystem.sh` — cargo, pipes M17–M22 (M21–M22 smoke only after v10)  
+**Refinement manifest:** [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — Lean ↔ Rust map, M23–M26 / v10.1 sibling tracks
 
 **MathSupremacy:** Eve owns 99.999%+ nodes; all pool/relay HW/SW is backdoored transcript. Security = Lean lemmas only.
 
@@ -49,6 +52,12 @@ Each pillar is **proved** under A0–A2′. Concrete numeric walkthroughs live i
 | **M20 — witness k-of-n consensus** | `WitnessConsensus.lean` | **Proved** (consensus ⇒ ProofFwd) | N/A |
 | **M20 — forward-receive gate** | `ForwardReceiveGate.lean` | **Proved** (M_valid alternate path) | N/A |
 | **M20+ — networkEcosystemCertificateV9** | `MasterTheoremV6.lean` | **Proved** (U₈ ∧ v9 ITS-A bundle) | N/A |
+| **Phase 3 — networkImplementationCertificateV10** | `MasterTheoremV6.lean` + `Refinement/*.lean` | **Proved** (v9 ∧ refinement bundles) | N/A |
+| ValidFwd refinement | `Refinement/ValidForwardRefinement.lean` | **Proved** | N/A |
+| Witness consensus refinement | `Refinement/WitnessConsensusRefinement.lean` | **Proved** | N/A |
+| Forward receive gate refinement | `Refinement/ForwardReceiveGateRefinement.lean` | **Proved** | N/A |
+| Client pool refinement | `Refinement/ClientPoolRefinement.lean` | **Proved** | N/A |
+| Epoch cell refinement closed | `Refinement/EpochCellCorrectness.lean` | **Proved** (counter + support) | N/A |
 | P1–P3 participation postulates | `OplusClosure.participationPostulatesDerived` | **Proved** (L3 + pool + L3') | **Proved** |
 | B1+B3 from L3+pool+P1–P3 | `BroadcastIPDerivation.bisFullyDerived` | **Proved** | **Proved** |
 | Absolut A + forward proof | `CensorshipDisclosure.lean`, `ForwardProof.lean` | **Proved** (v8) | N/A |
@@ -132,14 +141,13 @@ Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
 | KM send/receive | operator glue | `pipe_its_km_pool_e2e.sh` |
 | Timelock | C4 ridge | `pipe_timelock.sh` |
 | Public mirror | reference deploy | `pipe_its_http_pool_e2e.sh` |
-| ValidFwd / M_valid | `ValidForwardParty.lean` | `valid_forward_party.rs` + `WhitelistMultiCourier` | **Unit + E2E** — omit ⇒ de-whitelist |
-| Witness consensus | `WitnessConsensus.lean` | `witness_consensus.rs` | **Unit** — k-of-n `consensus_at_epoch` |
-| Forward receive gate | `ForwardReceiveGate.lean` | `receive_gate` + M_valid harvest filter | **E2E** — censorship pipe evil mirror |
-| ValidFwd / M_valid | `ValidForwardParty.lean` | `its_routing::valid_forward_party` | **Unit tests** — `cargo test -p its_routing valid_forward` |
-| Witness consensus | `WitnessConsensus.lean` | `its_routing::witness_consensus` | **Unit tests** — `cargo test -p its_routing witness_consensus` |
-| Receive gate / M_valid harvest | `ForwardReceiveGate.lean` | `WhitelistMultiCourier` | **E2E** — `pipe_its_censorship_recovery_e2e.sh` |
+| ValidFwd / M_valid | `ValidForwardParty.lean` | `its_routing::valid_forward_party` | **Proved** — `Refinement/ValidForwardRefinement.lean` |
+| Witness consensus | `WitnessConsensus.lean` | `its_routing::witness_consensus` | **Proved** — `Refinement/WitnessConsensusRefinement.lean` |
+| Forward receive gate | `ForwardReceiveGate.lean` | `receive_gate`, `WhitelistMultiCourier` | **Proved** — `Refinement/ForwardReceiveGateRefinement.lean` |
+| Pool client path | `ForwardReceiveGate.harvestPermitted` | `courier.rs` | **Proved** — `Refinement/ClientPoolRefinement.lean` |
 
-**Refinement gate:** `cargo test -p its_transport -p its_routing` + `cargo test -p its_routing valid_forward` + `./scripts/verify_ecosystem.sh` (M17–M22)
+**Refinement gate (theorem):** `./scripts/verify_math.sh` M23–M26 + `cargo test -p its_routing valid_forward consensus`  
+**E2E smoke:** `./scripts/verify_ecosystem.sh` M21–M22 (not primary proof after v10)
 
 ---
 
@@ -163,8 +171,8 @@ Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
 
 | # | Criterion | Gate |
 |---|-----------|------|
-| 1 | Math certificate v9 | `./scripts/verify_math.sh` (M1–M20) |
-| 2 | Refinement + product pipes | `./scripts/verify_ecosystem.sh` (M17–M22) |
+| 1 | Math certificate v10 | `./scripts/verify_math.sh` (M1–M26) |
+| 2 | Ecosystem smoke (pipes) | `./scripts/verify_ecosystem.sh` (M17, M21–M22 smoke) |
 | 3 | P8.* product DoD | table above |
 | 4 | Sibling repos committed at matching tags | `bootstrap.sh` + per-repo `v1.0.0` |
 | 5 | Independent review checklist executed | `ITS_INDEPENDENT_REVIEW_CHECKLIST.md` |

@@ -80,5 +80,10 @@ lean_lib «routing-math-dev» where
 lean_lib «routing-math-refinement» where
   roots := #[
     `Refinement,
-    `Refinement.EpochCellCorrectness
+    `Refinement.EpochCellCorrectness,
+    `Refinement.ValidForwardRefinement,
+    `Refinement.WitnessConsensusRefinement,
+    `Refinement.ForwardReceiveGateRefinement,
+    `Refinement.ClientPoolRefinement,
+    `Refinement.SssWireRefinement
   ]

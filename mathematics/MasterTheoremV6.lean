@@ -10,6 +10,11 @@ import AvailabilityLedger
 import ValidForwardParty
 import WitnessConsensus
 import ForwardReceiveGate
+import Refinement.EpochCellCorrectness
+import Refinement.ValidForwardRefinement
+import Refinement.WitnessConsensusRefinement
+import Refinement.ForwardReceiveGateRefinement
+import Refinement.ClientPoolRefinement
 
 /-!
 # Master theorem v6/v9 — network ecosystem certificate (v7 absolutisme + v8/v9 ITS-A)
@@ -93,5 +98,24 @@ theorem valid_mirror_of_ledger
     (hvm : validMirror V L (sendRightsViewOf led) m W) :
     validForwardParty V L m W ∧ ¬ sendRightsRevoked led m :=
   ⟨hvm.1, hvm.2⟩
+
+open Refinement
+
+/-- v10 — v9 ideal certificate + implementation refinement bundle (ITS-A + transport). -/
+def networkImplementationCertificateV10 : Prop :=
+  networkEcosystemCertificateV9 ∧
+    epochCellRefinementClosed ∧
+    validForwardRefinementClosed ∧
+    witnessConsensusRefinementClosed ∧
+    forwardReceiveGateRefinementClosed ∧
+    clientPoolRefinementClosed
+
+theorem network_implementation_certificate_v10 : networkImplementationCertificateV10 :=
+  ⟨network_ecosystem_certificate_v9,
+   epoch_cell_refinement_closed,
+   valid_forward_refinement_closed,
+   witness_consensus_refinement_closed,
+   forward_receive_gate_refinement_closed,
+   client_pool_refinement_closed⟩
 
 end ITS

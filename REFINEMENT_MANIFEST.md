@@ -1,118 +1,113 @@
-# ROUTING — Refinement manifest (phase 2 — software ↔ Lean ideal)
+# ROUTING — Refinement manifest (phase 3 — v10 implementation certificate)
 
-**Math certificate (phase 1):** [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · `./scripts/verify_math.sh`  
-**CIA worked examples (Eve 99.999%+):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va — C/I/A numeric tables align with Lean v9 (`ValidForwardParty`, `WitnessConsensus`, `SybilDoctrine`).  
-**Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — M17 + Rust tests  
-**Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) · [ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md)
+**Math certificate (phase 1):** [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · `./scripts/verify_math.sh` M1–M26  
+**Implementation certificate (phase 3):** `networkImplementationCertificateV10` in [`MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean)  
+**Refinement gate (theorem):** M23–M26 in `./scripts/verify_math.sh`  
+**Ecosystem gate (smoke):** `./scripts/verify_ecosystem.sh` — M17 + M21–M22 pipes (not primary proof)
 
-**Ship blocker X4:** Rust must not silently diverge from Lean ideal without a green refinement gate (M17).
+**Ship blocker X4:** Rust must not silently diverge from Lean ideal — drift is a **math failure** (M23–M26).
 
 ---
 
-## Status (Sprint 5 — ca308ef5)
+## Status (v10 — Sprint R1–R5)
 
 | Gate | Command | Status |
 |------|---------|--------|
-| **M17** Lean refinement lib | `lake build routing-math-refinement` | **Green** |
-| **M18** Public mirror deploy | `pipe_its_http_pool_e2e.sh` + `ITS-routing_DEPLOY_MATH_GATES.md` | **Green** |
-| **M19** KM + SOCKS egress | `pipe_its_km_pool_e2e.sh`, `pipe_its_socks_pool_e2e.sh` | **Green** |
-| **M20** Timelock pipe | `pipe_timelock.sh` | **Green** |
-| **M21** Censorship recovery | `pipe_its_censorship_recovery_e2e.sh`, `pipe_its_sneakernet_e2e.sh`, `pipe_its_aeh_censorship_e2e.sh` | **Green** |
-| **M22** Manifest alignment | PROOF_MANIFEST + REFINEMENT_MANIFEST ↔ Lean/Rust | **Green** |
-| **M7** epoch cell Rust test | `cargo test -p its_transport rust_epoch_cell_refines_ideal` | **Green** |
-| Ratchet algebra test | `cargo test -p its_transport rust_ratchet_algebra_matches_lean` | **Green** |
-| Ecosystem | `./scripts/verify_ecosystem.sh` | **Green** |
-
-**Closes:** X4 (Sprint 4), P8.* product DoD (Sprint 5).
+| **M23** Lean refinement lib (all v10 roots) | `lake build routing-math-refinement` | **Green** |
+| **M24** ValidFwd refinement smoke | `Refinement/ValidForwardRefinement.lean` | **Green** |
+| **M25** Witness + receive gate refinement smoke | `WitnessConsensusRefinement` + `ForwardReceiveGateRefinement` | **Green** |
+| **M26** v10 cert + PROOF_MANIFEST grep | `MasterTheoremV6.lean` + manifest | **Green** |
+| **M17** Ecosystem refinement build | `verify_ecosystem.sh` | **Green** |
+| **M21–M22** E2E pipes + manifest | smoke only (not primary proof) | **Green** |
+| ITS-A Rust unit tests | `cargo test -p its_routing --lib valid_forward consensus` | **Green** |
 
 ---
 
-## Status (Sprint 4 — ca308ef5)
+## Lean ↔ Rust map (v10)
 
-| Gate | Command | Status |
-|------|---------|--------|
-| **M17** Lean refinement lib | `lake build routing-math-refinement` | **Green** |
-| **M7** epoch cell Rust test | `cargo test -p its_transport rust_epoch_cell_refines_ideal` | **Green** |
-| Ratchet algebra test | `cargo test -p its_transport rust_ratchet_algebra_matches_lean` | **Green** |
-| Ecosystem | `./scripts/verify_ecosystem.sh` | **Green** |
-
-**Closes:** X4 (implementation drift ship blocker), M17 (refinement build gate).
-
----
-
-## Lean ↔ Rust map
-
-| Concern | Lean (ideal) | Rust (implementation) | Refinement status |
-|---------|--------------|-------------------------|-------------------|
-| OTP ratchet step | `Transport/RatchetDerivation.lean` — `ratchetStep`, `epochStepForward` | `its_transport::transport_otp_ratchet` | **Proved** — counter + k_pool by rfl; Rust test mirrors forward algebra |
-| UES epoch cell | `Refinement/EpochCellCorrectness.lean` | `its_transport::epoch_cell` | **Proved (counter + support)** — epoch index = `idealStep.1`; cell tag ∈ F_p; fixed size L in Rust test |
-| L1 cell indistinguishability | `Transport/Cell.lean` — `cellIndistinguishability` | uniform RNG fill in `step()` | **Proved (Lean)** — uniform draw over F_p; payload/chaff header not in O model |
-| OTM tag verify | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | `epoch_cell::verify_cell`, `aeh.rs` | **Cross-repo** (ITS-OTM) |
-| Pool client path | `UnifiedEpochStream.lean`, `MasterTheorem.lean` | `its_routing::client` pool receive | **E2E pipes** — `pipe_its_pool_e2e.sh` |
-| SOCKS egress | L3 + BIS | `tools/its_pool_proxy.py` | **E2E** — `pipe_its_socks_pool_e2e.sh` |
-| KM one-command send | subprocess glue | `its-km` | **E2E** — `pipe_its_km_pool_e2e.sh` |
-| Timelock ridge | `Transport/TimelockComposition.lean` | `ridges/timelock.rs` | **E2E** — `pipe_timelock.sh` |
-| Censorship recovery | `AvailabilityResilience.lean` | fountain + multi-mirror + ValidFwd | **E2E** — `pipe_its_censorship_recovery_e2e.sh` |
-| ValidFwd / M_valid whitelist | `ValidForwardParty.lean` | `its_routing::valid_forward_party` | **Unit tests** — `valid_forward_*` |
-| Witness k-of-n consensus | `WitnessConsensus.lean` | `its_routing::witness_consensus` | **Unit tests** — `witness_consensus_*` |
-| Forward receive gate | `ForwardReceiveGate.lean` | `WhitelistMultiCourier` in `courier.rs` | **Unit + E2E** — M_valid harvest filter |
-| End-to-end binary | composition lemmas | `client.rs` pool/AEH | E2E pipes in `verify_ecosystem.sh` |
+| Concern | Lean ideal | Lean refinement | Rust implementation | Status |
+|---------|------------|-----------------|----------------------|--------|
+| OTP ratchet step | `Transport/RatchetDerivation.lean` | `EpochCellCorrectness.lean` | `transport_otp_ratchet` | **Proved** |
+| UES epoch cell | `Transport/Epoch.lean`, `Cell.lean` | `EpochCellCorrectness.lean` | `epoch_cell.rs` | **Proved (counter + support)** |
+| L1 cell bytes | `cellIndistinguishability` | support membership only | uniform RNG in `step()` | **Outside RNG** |
+| ValidFwd / M_valid | `ValidForwardParty.lean` | `ValidForwardRefinement.lean` | `valid_forward_party.rs` | **Proved** |
+| Witness k-of-n | `WitnessConsensus.lean` | `WitnessConsensusRefinement.lean` | `witness_consensus.rs` | **Proved** |
+| Forward receive gate | `ForwardReceiveGate.lean` | `ForwardReceiveGateRefinement.lean` | `receive_gate`, `WhitelistMultiCourier` | **Proved** |
+| Pool client harvest | `harvestPermitted` | `ClientPoolRefinement.lean` | `courier.rs` receive path | **Proved** |
+| Omit → ledger strike | `AvailabilityLedger.lean` | `ClientPoolRefinement.lean` | `omit_de_whitelists_mirror` | **Proved (selectiveOmit disclosure)** |
+| SSS fragment wire | `SSSMultiIPCourier.lean` | `SssWireRefinement.lean` (stub) | interleave roundtrip test | **Planned v10.1** |
+| End-to-end binary | composition lemmas | — | `client.rs` pool/AEH | **E2E smoke (M18–M22)** |
+| OTM tag verify | `IntegrityAxiom.lean` | — | `epoch_cell`, `aeh.rs` | **Cross-repo (ITS-OTM)** |
+| SOCKS / KM glue | L3 + BIS | — | proxy, `its-km` | **E2E smoke** |
 
 ---
 
-## What is proved vs tested
+## v10.1 sibling refinement tracks (planned)
 
-### Proved in Lean (`Refinement/EpochCellCorrectness.lean`)
+| Repo | Target | Lean location | Status |
+|------|--------|---------------|--------|
+| **ITS-asymmetric** | `fullWireEncShannonIts` execution | `mathematics/refinement/` (planned) | **Planned** |
+| **ITS-OTM** | `verify_cell` ↔ OTM tag | extend OTM mathematics | **Planned** |
+| **ITS-timelock** | ridge `timelock.rs` ↔ `TimelockComposition` | `stl/refinement/` (planned) | **Planned** |
+| **SSS_CHAIN** | fragment interleave roundtrip | `Refinement/SssWireRefinement.lean` | **Stub / planned** |
 
-- `rust_epoch_counter_refines_ideal` — after step at epoch `e`, counter is `e + 1` (= `idealStep 0 e`).1).
-- `rust_k_pool_matches_forward` — pool key equals `epochStepForward` algebra.
-- `rust_ratchet_refines_ideal` — counter strictly increases each step.
-- `rust_cell_tag_in_support` — draw mod `fieldPrime` lies in ideal distribution support.
-- `epoch_cell_correctness` — bundles counter refinement + L1 `cellIndistinguishability`.
-
-**Not proved by rfl alias:** `rustStep` is **not** defined as `idealStep`. Ideal L3 uses abstract `(e+1, e % p)`; Rust uses ratchet-derived keys plus uniform byte draw — refinement is counter alignment + support membership, not byte-for-byte equality.
-
-### Proved in Rust tests
-
-| Test | File | Claim |
-|------|------|-------|
-| `rust_ratchet_algebra_matches_lean` | `transport_otp_ratchet.rs` | `epoch_step_forward` = `current + anchor + counter + entropy` (M31 field) |
-| `rust_epoch_cell_refines_ideal` | `epoch_cell.rs` | fixed cell size L; counter advances 0→1; deterministic replay across replicas |
-| `otp_ratchet_stepping` | `transport_otp_ratchet.rs` | Alice/Bob ratchet sync |
+`verify_ecosystem.sh` runs `lake build *-refinement` when sibling lakefile defines a `*-refinement` lib.
 
 ---
 
-## Axiom boundary (honest)
+## What is proved vs smoke vs Outside
 
-| Layer | Boundary | Notes |
-|-------|----------|-------|
-| M31 field ring | `ItsMath.Field.Basic` — `feAdd_assoc`, `feAdd_sub_cancel`, `feSub_add_cancel` | Axioms match Rust `field_arith` reduction; not re-proved in ROUTING refinement lib |
-| RNG / OS entropy | Outside Lean | Cell bytes drawn uniformly in Rust; Lean models support `fieldPrime` only |
-| SSS fragment wire | Operational | Roundtrip via `epoch_cell_sss_interleave_roundtrip` test |
-| Both EP compromised | `OutsideChannel` | Not a refinement failure — outside theorem scope |
+### Proved in Lean (`Refinement/` — 0 `sorry`, 0 `Prop := True`)
+
+- **Epoch cell:** `rust_epoch_counter_refines_ideal`, `epochCellRefinementClosed`
+- **ValidFwd:** `rust_omit_de_whitelists`, `rust_valid_forward_party_sound`, `validForwardRefinementClosed`
+- **Witness:** `rust_consensus_at_epoch_iff`, `rust_count_ge_gives_consensus`, `witnessConsensusRefinementClosed`
+- **Receive gate:** `rust_receive_gate_vacuous_at_zero`, `forwardReceiveGateRefinementClosed`
+- **Client pool:** `rust_pool_harvest_permitted_of_gate`, `clientPoolRefinementClosed`
+- **Master v10:** `network_implementation_certificate_v10`
+
+### E2E smoke (regression only)
+
+- M18–M22 pipes: pool, SOCKS, KM, timelock, censorship recovery
+- `cargo test` integration paths
+
+### Outside (explicit boundary)
+
+| Layer | Notes |
+|-------|-------|
+| **RNG / OS entropy** | Cell byte draw uniform in Rust; Lean proves tag ∈ F_p support only (option B) |
+| M31 field ring | Cross-repo axioms in `ItsMath.Field` |
+| Side-channels, both-EP compromised | Documented Outside |
+| SSS wire byte-for-byte | Operational roundtrip test until v10.1 |
+| dev-onion mix | Out of cert/refinement (M16) |
 
 ---
 
 ## Commands
 
 ```bash
-# Lean refinement lib (M17)
+# Phase 1 + 3 math gate (M1–M26)
+cd ROUTING && ./scripts/verify_math.sh
+
+# Refinement lib only (M23)
 cd ROUTING/mathematics && lake build routing-math-refinement
 
-# Rust refinement tests
-cd ROUTING && cargo test -p its_transport rust_epoch_cell_refines_ideal rust_ratchet_algebra_matches_lean --quiet
+# ITS-A Rust unit tests
 cd ROUTING && cargo test -p its_routing --lib valid_forward consensus --quiet
 
-# Full phase-2 gate
+# Ecosystem smoke (M17, M21–M22)
 cd ROUTING && ./scripts/verify_ecosystem.sh /home/user
+
+# Strict v10 math on ecosystem run
+VERIFY_MATH_V10=1 ./scripts/verify_ecosystem.sh /home/user
 ```
 
 ---
 
 ## Related docs
 
-- [PROOF_MANIFEST.md](PROOF_MANIFEST.md) — phase 2 table (refinement row)
-- [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) — H4 implementation drift
-- [ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md) — gate matrix
+- [PROOF_MANIFEST.md](PROOF_MANIFEST.md) — v10 one-liner + phase 3 row
+- [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) — §0c MathSupremacy, §Refinement
+- [ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md) — three-gate matrix
 
 **Constitution:** [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)

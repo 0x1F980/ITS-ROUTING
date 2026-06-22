@@ -204,10 +204,24 @@ if [[ -d "$ROUTING/mathematics" ]]; then
   (cd "$ROUTING/mathematics" && lake build routing-math-dev 2>/dev/null) && green "v5: routing-math-dev build" || red "v5: routing-math-dev build failed"
 fi
 
-echo "=== M17: routing-math-refinement ==="
+echo "=== M17: routing-math-refinement (v10 ITS-A + epoch cell) ==="
 if [[ -d "$ROUTING/mathematics" ]]; then
   (cd "$ROUTING/mathematics" && lake build routing-math-refinement 2>/dev/null) && green "M17: routing-math-refinement" || red "M17: routing-math-refinement failed"
 fi
+
+echo "=== v10.1: sibling *-refinement lake builds (when present) ==="
+for sib in ITS-asymmetric ITS-OTM_public_attestation ITS-self_enclosed_timelock SSS_CHAIN; do
+  sib_math="$ECO_ROOT/$sib/mathematics"
+  [[ "$sib" == "ITS-self_enclosed_timelock" ]] && sib_math="$ECO_ROOT/$sib/mathematics/stl"
+  if [[ -f "$sib_math/lakefile.lean" ]] && grep -q 'refinement' "$sib_math/lakefile.lean" 2>/dev/null; then
+    ref_lib=$(grep -oE 'lean_lib «[^»]*-refinement»' "$sib_math/lakefile.lean" 2>/dev/null | head -1 | sed 's/lean_lib «//;s/»//')
+    if [[ -n "$ref_lib" ]]; then
+      (cd "$sib_math" && lake build "$ref_lib" 2>/dev/null) && green "v10.1: $sib $ref_lib" || red "v10.1: $sib $ref_lib failed"
+    fi
+  else
+    green "v10.1: $sib refinement planned (no *-refinement lib yet)"
+  fi
+done
 
 echo "=== v5: pipe_its_routing_e2e.sh present ==="
 [[ -x "$ROUTING/scripts/pipe_its_routing_e2e.sh" ]] && green "v5: pipe_its_routing_e2e.sh" || red "v5: pipe_its_routing_e2e.sh missing or not executable"
@@ -473,7 +487,9 @@ else
   green "M20: pipe_its_validfwd_e2e.sh skipped (not present)"
 fi
 
-echo "=== M21: censorship recovery pipes (P8.3/B4) ==="
+echo "=== M21–M22 smoke (not primary proof — regression pipes + manifest) ==="
+
+echo "=== M21 smoke: censorship recovery pipes (P8.3/B4) ==="
 m21_ok=1
 for p in pipe_its_censorship_recovery_e2e.sh pipe_its_sneakernet_e2e.sh pipe_its_aeh_censorship_e2e.sh; do
   if [[ -x "$ROUTING/scripts/$p" ]]; then
@@ -483,11 +499,13 @@ for p in pipe_its_censorship_recovery_e2e.sh pipe_its_sneakernet_e2e.sh pipe_its
   fi
 done
 [[ -f "$ROUTING/ITS-routing_CENSORSHIP_RECOVERY.md" ]] || { red "M21: ITS-routing_CENSORSHIP_RECOVERY.md missing"; m21_ok=0; }
-[[ "$m21_ok" -eq 1 ]] && green "M21: censorship + sneakernet pipes"
+[[ "$m21_ok" -eq 1 ]] && green "M21 smoke: censorship + sneakernet pipes"
 
-echo "=== M22: manifest ↔ Lean/Rust alignment ==="
+echo "=== M22 smoke: manifest ↔ Lean/Rust alignment ==="
 m22_ok=1
-for f in MasterTheorem.lean BroadcastIPDerivation.lean Refinement/EpochCellCorrectness.lean; do
+for f in MasterTheorem.lean BroadcastIPDerivation.lean Refinement/EpochCellCorrectness.lean \
+  Refinement/ValidForwardRefinement.lean Refinement/WitnessConsensusRefinement.lean \
+  Refinement/ForwardReceiveGateRefinement.lean Refinement/ClientPoolRefinement.lean; do
   mod="${f%.lean}"
   mod="${mod//\//.}"
   grep -q "$mod" "$ROUTING/PROOF_MANIFEST.md" 2>/dev/null || { red "M22: PROOF_MANIFEST missing $mod"; m22_ok=0; }
@@ -498,7 +516,20 @@ done
 [[ -f "$ROUTING/ITS-routing_STANDARD_REPLACEMENT.md" ]] || { red "M22: ITS-routing_STANDARD_REPLACEMENT.md missing"; m22_ok=0; }
 [[ -f "$ROUTING/ITS-routing_OVERLAY_EXTINCTION.md" ]] || { red "M22: ITS-routing_OVERLAY_EXTINCTION.md missing"; m22_ok=0; }
 [[ -f "$ROUTING/ITS_MIGRATION_GUIDES.md" ]] && grep -q 'Tor SOCKS' "$ROUTING/ITS_MIGRATION_GUIDES.md" || { red "M22: ITS_MIGRATION_GUIDES Tor/I2P migration missing"; m22_ok=0; }
-[[ "$m22_ok" -eq 1 ]] && green "M22: PROOF + REFINEMENT manifests aligned"
+[[ "$m22_ok" -eq 1 ]] && green "M22 smoke: PROOF + REFINEMENT manifests aligned"
+
+if [[ "${VERIFY_MATH_V10:-0}" == "1" ]]; then
+  echo "=== VERIFY_MATH_V10=1: strict M23–M26 (verify_math.sh) ==="
+  if [[ -x "$ROUTING/scripts/verify_math.sh" ]]; then
+    if ! "$ROUTING/scripts/verify_math.sh" 2>&1 | grep -q 'ALL MATH CHECKS PASSED (M1–M26)'; then
+      red "VERIFY_MATH_V10: verify_math.sh M23–M26 failed"
+    else
+      green "VERIFY_MATH_V10: M1–M26 green"
+    fi
+  else
+    red "VERIFY_MATH_V10: verify_math.sh missing"
+  fi
+fi
 
 echo "=== Sprint 5: product docs D1-D30 registry ==="
 d_ok=1
