@@ -41,6 +41,8 @@ its-pool-proxy \
 
 Binary paths default to `its-routing` and `its_asymmetric` on `PATH`, or override via `ITS_ROUTING_BIN` / `ITS_ASYMMETRIC_BIN` (or `--routing` / `--asymmetric`).
 
+Optional sync env (E2E / ingress bridge): `ITS_PROXY_SENT_MARKER` (written after publish), `ITS_PROXY_REPLY_MARKER` (wait before harvest reply).
+
 Point any SOCKS5-capable app at `127.0.0.1:1080`. Traffic is encrypted with ITS-asymmetric wire, published to the pool, and decrypted only on Bob's math-trusted endpoint. Responses stream back **without payload truncation** (full duplex over pool cells).
 
 > **Deprecated:** `tools/its_pool_proxy.py` — demo only; use **`its-pool-proxy`**.
