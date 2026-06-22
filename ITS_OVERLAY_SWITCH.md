@@ -16,9 +16,9 @@ You are **not** joining a mixnet. You run the constitution CLI (`its-km send/rec
 | **Network exists** | Public `multi_pool_urls` + `witness_pool_urls` in `config.prod.toml` | `pipe_its_http_pool_e2e.sh` (M18) |
 | **Messaging to a contact** | `its-km send --contact ALIAS --file PATH` | `pipe_its_pool_e2e.sh` |
 | **Receive loop** | `its-km receive --contact ALIAS --continuous` | `pipe_its_km_pool_e2e.sh` |
-| **SOCKS app egress** | `python3 tools/its_pool_proxy.py --listen 127.0.0.1:1080` + Bob `--continuous` | `pipe_its_socks_pool_e2e.sh` (M19) |
+| **SOCKS app egress** | `its-pool-proxy --listen 127.0.0.1:1080` + Bob `--continuous` / ingress bridge | `pipe_its_socks_pool_e2e.sh` (M19 v2) |
 | **Hidden service / site** | Bob: `receive --continuous` → local nginx; Alice: SOCKS or `send --file` | [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · M19 |
-| **Contact address** | Vault alias + OOB ratchet sync (`export-qr` / `import-qr`); PoolMailbox fingerprint in ciphertext | `--mailbox-fingerprint` · W11 |
+| **Contact address** | Vault alias + OOB ratchet sync (`export-qr` / `import-qr`); **PoolMailbox** `--mailbox-fingerprint` on receive | `--mailbox-fingerprint` · W11 |
 | **Offline / air-gap** | `config.offline.toml` or `--pool-dir /media/usb/its-pool` | `pipe_its_km_sneakernet_e2e.sh` (M28) |
 | **Censorship / bridges** | Fountain + mirror failover → AEH → sneakernet | `pipe_its_censorship_recovery_e2e.sh` (M21) |
 | **Sybil-majority threat** | C/I unchanged at 0 bits; ValidFwd de-whitelists omitters | `verify_math.sh` · CORE §Va |

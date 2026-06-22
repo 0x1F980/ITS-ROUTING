@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "its_transport",
     "its_routing",
+    "its_pool_proxy",
 ]
 
 [workspace.dependencies]

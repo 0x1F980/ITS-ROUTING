@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ITS Operator Bundle — one-shot bootstrap + release build + PATH setup.
 #
-# Installs constitution trio on PATH: its-km, its-routing, its_asymmetric
+# Installs constitution trio + its-pool-proxy on PATH: its-km, its-routing, its_asymmetric, its-pool-proxy
 # Optional: shell completions via install_completions.sh
 #
 # Usage:
@@ -29,7 +29,7 @@ usage() {
   cat <<EOF
 Usage: $0 [ECOSYSTEM_ROOT]
 
-Build release binaries for the constitution trio and install under ~/.its/bin.
+Build release binaries for the constitution trio + its-pool-proxy and install under ~/.its/bin.
 
 Environment:
   ECOSYSTEM_TAG=v2.0.0     Tag for bootstrap.sh (when repos missing)
@@ -100,6 +100,10 @@ echo "=== Building its_asymmetric ==="
 (cd "$ASY" && cargo build --release --bin its_asymmetric \
   --features "bundle,parallel,std,compact-wire")
 
+echo "=== Building its-pool-proxy (SOCKS egress) ==="
+(cd "$ROUTING" && cargo build --release -p its_pool_proxy)
+install -m 755 "$ROUTING/target/release/its-pool-proxy" "$ITS_BIN/its-pool-proxy"
+
 install -m 755 "$ROUTING/target/release/its-routing" "$ITS_BIN/its-routing"
 install -m 755 "$KM/target/release/its-km" "$ITS_BIN/its-km"
 install -m 755 "$ASY/target/release/its_asymmetric" "$ITS_BIN/its_asymmetric"
@@ -128,9 +132,11 @@ echo "=== ITS Operator Bundle installed ==="
 echo "  Binaries: $ITS_BIN"
 echo "  Activate:  source $ITS_ENV"
 echo ""
+echo "  its-pool-proxy:  $("$ITS_BIN/its-pool-proxy" --help 2>&1 | head -1 || echo ok)"
 echo "  its-routing:     $("$ITS_BIN/its-routing" --help 2>&1 | head -1 || echo ok)"
 echo "  its-km:          $("$ITS_BIN/its-km" --help 2>&1 | head -1 || echo ok)"
 echo "  its_asymmetric:  $("$ITS_BIN/its_asymmetric" --help 2>&1 | head -1 || echo ok)"
+echo "  its-pool-proxy:  $("$ITS_BIN/its-pool-proxy" --help 2>&1 | head -1 || echo ok)"
 echo ""
 echo "Next:"
 echo "  source $ITS_ENV"

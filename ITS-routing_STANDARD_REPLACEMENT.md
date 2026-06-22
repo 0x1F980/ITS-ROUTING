@@ -40,7 +40,7 @@ Full lemma map: [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTI
 1. Bootstrap ecosystem: `./scripts/bootstrap.sh`
 2. Configure pool: `config.prod.toml` → `~/.its/routing.toml`
 3. Start receiver: `its-km receive --continuous`
-4. Start proxy: `python3 tools/its_pool_proxy.py --listen 127.0.0.1:1080`
+4. Start proxy: `its-pool-proxy --listen 127.0.0.1:1080` (see [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md))
 5. Point SOCKS5 apps at `127.0.0.1:1080`
 
 ### From I2P hidden service

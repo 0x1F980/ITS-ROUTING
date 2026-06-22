@@ -22,7 +22,7 @@ Feature → gate one-pager: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md)
 |-----------------|----------------|
 | Router / wallet running | `its-km`, `its-routing`, `its_asymmetric` on PATH |
 | Destination / Nym ID | Contact alias + OOB transport ratchet sync |
-| SOCKS proxy | `its_pool_proxy.py` on `:1080` (Bob must `--continuous` receive) |
+| SOCKS proxy | `its-pool-proxy` on `:1080` (Bob must `--continuous` receive or ingress bridge) |
 | `.i2p` hidden site | Pairwise — [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) |
 | Network / floodfill | `multi_pool_urls` + `witness_pool_urls` in `config.prod.toml` |
 
@@ -86,7 +86,14 @@ its-km receive --contact alice --continuous
 **Alice** (proxy):
 
 ```bash
-python3 ROUTING/tools/its_pool_proxy.py --listen 127.0.0.1:1080 --config ~/.its/routing.toml
+cargo build --release -p its_pool_proxy --manifest-path ROUTING/Cargo.toml
+its-pool-proxy \
+  --listen 127.0.0.1:1080 \
+  --config ~/.its/routing.toml \
+  --ratchet-seed-file ~/.its/shared-ratchet.seed \
+  --pk ~/.its/contacts/bob/public.key \
+  --sk ~/.its/keys/alice/secret.key \
+  --own-pk ~/.its/keys/alice/public.key
 ```
 
 Point app at `SOCKS5 127.0.0.1:1080`. Gate: `pipe_its_socks_pool_e2e.sh` (M19).  
@@ -148,7 +155,7 @@ Pitch for colleagues: [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md)
 ## Use case: Tor SOCKS app egress
 
 **Replace:** Tor Browser SOCKS `127.0.0.1:9050`  
-**With:** `python3 tools/its_pool_proxy.py --listen 127.0.0.1:1080`  
+**With:** `its-pool-proxy --listen 127.0.0.1:1080` (see [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md))  
 **Why:** Same app integration; Shannon wire + pool instead of onion hops  
 **Doc:** [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) (D30)  
 **Gate:** `pipe_its_socks_pool_e2e.sh`

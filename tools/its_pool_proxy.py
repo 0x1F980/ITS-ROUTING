@@ -1,6 +1,20 @@
 #!/usr/bin/env python3
-"""Minimal SOCKS5/HTTP bridge → ITS wire → UES pool (v1.8)."""
+"""DEPRECATED — use Rust `its-pool-proxy` (build: cargo build -p its_pool_proxy --release).
+
+Minimal SOCKS5/HTTP bridge → ITS wire → UES pool (v1.8 demo only).
+Production: ROUTING/its_pool_proxy/ → binary `its-pool-proxy`.
+See ITS-routing_SOCKS_EGRESS.md.
+"""
 from __future__ import annotations
+
+import sys
+import warnings
+
+warnings.warn(
+    "its_pool_proxy.py is deprecated; use `its-pool-proxy` from ROUTING/its_pool_proxy",
+    DeprecationWarning,
+    stacklevel=1,
+)
 
 import argparse
 import socket
@@ -95,7 +109,11 @@ def handle_client(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="ITS pool SOCKS5 proxy")
+    print(
+        "WARNING: deprecated demo script; use `its-pool-proxy` — see ITS-routing_SOCKS_EGRESS.md",
+        file=sys.stderr,
+    )
+    p = argparse.ArgumentParser(description="ITS pool SOCKS5 proxy (DEPRECATED)")
     p.add_argument("--listen", default="127.0.0.1:1080")
     p.add_argument("--config", required=True)
     p.add_argument("--ratchet-seed-file", required=True)
@@ -114,7 +132,7 @@ def main() -> None:
     srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     srv.bind((host, port))
     srv.listen(8)
-    print(f"its-pool-proxy SOCKS5 {host}:{port}")
+    print(f"its-pool-proxy SOCKS5 {host}:{port} (deprecated python demo)")
     while True:
         conn, _ = srv.accept()
         try:

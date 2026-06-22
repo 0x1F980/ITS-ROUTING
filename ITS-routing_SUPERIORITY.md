@@ -22,7 +22,7 @@ Eve owns \(10^9\) nodes; Alice sends a 256-bit file. Channel observation \(O\) r
 Three mirrors, epochs 0–5. Eve-A selectively omits epoch 3 → `omit_de_whitelists_mirror` removes Eve-A from \(\mathcal{M}_{\text{valid}}\). Bob harvests \(c_3\) from Eve-B or Charlie; with `witness_pool_urls` and \(k=2, n=3\), two witnesses agreeing on \(c_3\) ⇒ `ProofFwd(3,c_3)`. Against \(10^9\) Eve nodes, **one** valid forwarder in \(\mathcal{M}_{\text{valid}}\) is enough. Outside: \(\mathcal{M}_{\text{valid}}=\emptyset\). Walkthrough: [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) § Eve scenario · §Va in CORE.
 
 | W9 | One-command send | VPN / router start | **`its-km send`** | `scripts/pipe_its_km_pool_e2e.sh`; [QUICKSTART.md](QUICKSTART.md) |
-| W10 | App egress | SOCKS 4444 | **`its-pool-proxy :1080`** | `tools/its_pool_proxy.py`; `scripts/pipe_its_socks_pool_e2e.sh` |
+| W10 | App egress | SOCKS 4444 | **`its-pool-proxy :1080`** | `its_pool_proxy/` crate; `scripts/pipe_its_socks_pool_e2e.sh` |
 | W11 | Hidden addressing | `.i2p` | **PoolMailbox** (OTM in ciphertext) | `--mailbox-fingerprint`; Lean `ParticipationTheorem.lean` |
 | W12 | Public infrastructure | Volunteer relays | **`deploy/pool-mirror/`** | `scripts/pipe_its_http_pool_e2e.sh`; `multi_pool_urls` |
 | W13 | Reproducible ship | Releases | **9 E2E pipes + verify_ecosystem** | `scripts/verify_ecosystem.sh`; tag `v2.0.0` |
