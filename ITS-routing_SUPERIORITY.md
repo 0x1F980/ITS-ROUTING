@@ -12,6 +12,15 @@
 | W6 | Idle leak | Possible | **L3 constant emit** | Epoch-loop in `client.rs`; cover pipe |
 | W7 | O⁺ participation | Hops hide pattern | **CoverTransport** | `scripts/pipe_its_cover_harvest_e2e.sh`; L11–L12 Lean |
 | W8 | Censorship | Bridges / many nodes | **ITS-A (v9): ProofFwd + \(\mathcal{M}_{\text{valid}}\) + witness k-of-n + SSS** | Lean `ForwardProof.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`, `ForwardReceiveGate.lean`; `scripts/pipe_its_censorship_recovery_e2e.sh`; `scripts/pipe_its_aeh_censorship_e2e.sh` |
+
+### W1 — numeric example (C + I under Eve 99.999%+)
+
+Eve owns \(10^9\) nodes; Alice sends a 256-bit file. Channel observation \(O\) reveals **0 bits** about \(M\): \(I(M;O)=0\) (`SybilDoctrine` — adding \(10^9\) Sybil posters changes nothing). Integrity: each forged cell accepted with probability \(\leq 1/p\), \(p=2147483647\). A \(10^6\)-cell transfer expects \(\leq 10^6/p \approx 0.0005\) false accepts — OTM verify on Bob's A2′ endpoint only. Full tables: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
+
+### W8 — numeric example (ITS-A vs censorship)
+
+Three mirrors, epochs 0–5. Eve-A selectively omits epoch 3 → `omit_de_whitelists_mirror` removes Eve-A from \(\mathcal{M}_{\text{valid}}\). Bob harvests \(c_3\) from Eve-B or Charlie; with `witness_pool_urls` and \(k=2, n=3\), two witnesses agreeing on \(c_3\) ⇒ `ProofFwd(3,c_3)`. Against \(10^9\) Eve nodes, **one** valid forwarder in \(\mathcal{M}_{\text{valid}}\) is enough. Outside: \(\mathcal{M}_{\text{valid}}=\emptyset\). Walkthrough: [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) § Eve scenario · §Va in CORE.
+
 | W9 | One-command send | VPN / router start | **`its-km send`** | `scripts/pipe_its_km_pool_e2e.sh`; [QUICKSTART.md](QUICKSTART.md) |
 | W10 | App egress | SOCKS 4444 | **`its-pool-proxy :1080`** | `tools/its_pool_proxy.py`; `scripts/pipe_its_socks_pool_e2e.sh` |
 | W11 | Hidden addressing | `.i2p` | **PoolMailbox** (OTM in ciphertext) | `--mailbox-fingerprint`; Lean `ParticipationTheorem.lean` |

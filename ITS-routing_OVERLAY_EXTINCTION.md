@@ -32,6 +32,7 @@ This document maps each overlay claim to ITS lemma-ID and product gate (W1–W13
 | Coercion deniability | Timelock SSS L2 | `Stl.Security.Deniability` · C4 · M20 |
 | SOCKS egress | `its-pool-proxy` | D30 · M19 |
 | Censorship survival | Fountain + mirrors + AEH + sneakernet | B4 · M21 |
+| **ITS-A vs overlay bridges** | ValidFwd whitelist + witness k-of-n — **not** volunteer relay trust | `ValidForwardParty`, `WitnessConsensus` · W8 · *e.g.* Eve-A omit @epoch 3 ⇒ de-whitelist; \(k{=}2\) of 3 witnesses ⇒ `ProofFwd` — see [CORE §Va](ITS-routing_MATHEMATICAL_CORE.md) |
 | Public infrastructure | `deploy/pool-mirror/` | M18 · W12 |
 
 ---

@@ -375,6 +375,142 @@ Recovery without breaking C/I: fountain + multi-mirror + AEH + sneakernet — **
 
 ---
 
+## §Va — CIA mitigations with worked examples (Eve 99.999%+)
+
+Under axioms **A0–A2′**, Eve may own ≥ 99.999% of all nodes. The three pillars below are **proved in Lean** — not operational heuristics. Each subsection gives the logical claim, then a **concrete numeric walkthrough** aligned with `fieldPrime p = 2^{31}-1 = 2147483647`.
+
+### C — Confidentiality: zero bits in \(O\)
+
+**Logic.** Channel observation \(O\) contains epoch cells \(C_e \sim \mathcal{D}\) with \(|\mathcal{D}| = p\). Without the wire secret, Eve's posterior over plaintext \(M\) is **uniform** — Shannon ITS on the wire (`Asymmetric.fullWireEncShannonIts`) composed with L3 constant emit (`UnifiedEpochStream`). Sybil injections add chaff or OTM-fail garbage; finite-MI derives \(I(M; O_{\mathcal{E} \cup \text{Sybil}}) = 0\) (`SybilDoctrine.lean`, `FiniteMutualInfo.lean`).
+
+\[
+\boxed{I(M;\, O) = 0 \text{ bits}}
+\]
+
+**Worked example — 256-bit message.**
+
+| Quantity | Value |
+|----------|-------|
+| Message entropy bound | \(H(M) \leq 256\) bits (arbitrary 32-byte payload) |
+| Eve sees | `public.key` + all wire bytes + all pool cells in \(O\) |
+| Posterior \(P(M \mid O)\) | Uniform over consistent plaintexts |
+| Bits gained | \(I(M;O) = H(M) - H(M \mid O) = 256 - 256 = \mathbf{0}\) |
+
+**Sybil scale.** Eve spins up \(10^9\) fake pool nodes. Each fake either fails OTM (rejected by Bob's verify-oracle) or emits \(C \sim \mathcal{D}\). Adding \(10^9\) Sybil cells changes **nothing**:
+
+\[
+I(M;\, O_{\mathcal{E} \cup 10^9\,\text{Sybil}}) = I(M;\, O_{\mathcal{E}}) = 0 \text{ bits}
+\]
+
+**Wire field.** All tags and cell draws live in \(\mathbb{F}_p\) with \(p = 2147483647\). The wire Shannon bound is independent of Eve's node count — only of whether she holds `secret.key` (she does not, under A2 encryptor).
+
+| Lean | Claim |
+|------|-------|
+| `SybilDoctrine.sybil_irrelevant_for_c` | Sybil ⇒ 0 extra C bits |
+| `UnifiedEpochStream` + `FiniteMutualInfo` | \(I(S;O)=0\) from uniform posterior |
+| `WireComposition` → `Asymmetric.fullWireEncShannonIts` | \(I(M;C_{\text{wire}})=0\) |
+
+---
+
+### I — Integrity: forgery floor \(1/p\)
+
+**Logic.** Wegman-Carter OTM over \(\mathbb{F}_p\) gives an information-theoretic forgery bound. Verification runs **only** on the math-trusted verify-oracle (A2′ receiver) — never on Eve's pool software (`IntegrityAxiom.lean` → `Otm.OtmIntegrity`).
+
+\[
+\boxed{P(\text{forge accepted}) \leq \frac{1}{p} = \frac{1}{2\,147\,483\,647} \approx 4.657 \times 10^{-10}}
+\]
+
+**Worked example — Eve's brute-force campaign.**
+
+| Quantity | Calculation |
+|----------|-------------|
+| Field prime | \(p = 2^{31} - 1 = 2\,147\,483\,647\) |
+| Per-attempt success cap | \(P_{\text{forge}} \leq 1/p \approx 4.657 \times 10^{-10}\) |
+| Eve tries | \(N = 10^{12}\) forged cells |
+| Expected acceptances | \(\mathbb{E}[\text{success}] \leq N/p = 10^{12} / 2.147 \times 10^9 \approx \mathbf{465}\) |
+| Bob's action | OTM verify on **A2′ EP only** — Eve's 99.999%+ nodes never verify |
+
+Even with unbounded compute (A1), Eve cannot drive \(P(\text{forge}) > 1/p\) per attempt. A file transfer with \(10^6\) cells expects \(\leq 10^6/p \approx 0.0005\) forgeries — below one expected false accept.
+
+| Lean | Claim |
+|------|-------|
+| `IntegrityAxiom` → `Otm.OtmIntegrity` | \(P(\text{forge}) \leq 1/p\) |
+| `EndpointSplit.wireIntegrity` | Verify-oracle ⇒ integrity bound |
+
+---
+
+### A — Availability: ValidFwd whitelist + witness k-of-n
+
+**Logic.** Availability is **not** Shannon delivery. ITS-A (v9) proves: selective omit is **detectable** (`omit_de_whitelists_mirror`), evil mirrors leave \(\mathcal{M}_{\text{valid}}\), and harvest reroutes to a mirror that forwards the canonical log — or to k-of-n witness consensus (A2′ Charlie). **Outside:** \(O_{\text{net}}=\emptyset\) or \(\mathcal{M}_{\text{valid}}=\emptyset\) with no independent witness.
+
+**Worked example — three mirrors, epochs 0–5.**
+
+Setup: canonical log publishes one cell per epoch \(e \in \{0,\ldots,5\}\). Three mirrors:
+
+| Mirror | Role | Harvest behaviour |
+|--------|------|-------------------|
+| **Eve-A** | Evil — selective omit | Correct at \(e \in \{0,1,2,4,5\}\); **drops** epoch 3 |
+| **Eve-B** | Evil but forwarding | Correct at all \(e \leq 5\) |
+| **Charlie** | A2′ witness | Correct at all \(e \leq 5\) |
+
+**Before omit (epoch 2):**
+
+\[
+\mathcal{M}_{\text{valid}} = \{\text{Eve-A},\, \text{Eve-B},\, \text{Charlie}\}
+\]
+
+All three satisfy \(\text{ValidFwd}(m, W=5)\).
+
+**After Eve-A omits epoch 3** (published \(c_3\), Eve-A returns \(\neq c_3\)):
+
+\[
+\text{omit\_de\_whitelists\_mirror} \Rightarrow \text{Eve-A} \notin \mathcal{M}_{\text{valid}}
+\]
+\[
+\mathcal{M}_{\text{valid}} = \{\text{Eve-B},\, \text{Charlie}\}
+\]
+
+Bob's `receiveGate` harvests from \(\mathcal{M}_{\text{valid}}\) only → gets \(c_3\) from Eve-B or Charlie. **Alternate route** without hop guilt (`ForwardReceiveGate.lean`).
+
+**Witness k-of-n** (config: \(k=2\), \(n=3\) witnesses in `witness_pool_urls`):
+
+| Witness | Harvest at \(e=3\) |
+|---------|-------------------|
+| W₁ (Eve) | wrong / missing |
+| W₂ (Charlie) | \(c_3\) ✓ |
+| W₃ (independent) | \(c_3\) ✓ |
+
+\[
+|\{w : \text{Harvest}(w,3)=c_3\}| = 2 \geq k \Rightarrow \text{consensusAtEpoch}(3, c_3, 2) \Rightarrow \text{ProofFwd}(3, c_3)
+\]
+
+**Eve 99.999999% nodes.** Let total nodes \(N = 10^9\), Eve fraction \(f = 0.99999999\). Eve controls \(\approx 10^9 - 1\) mirrors — but ITS-A needs **only one** \(m \in \mathcal{M}_{\text{valid}}\):
+
+\[
+|\mathcal{M}_{\text{valid}}| \geq 1 \Rightarrow \text{ProofFwd}(e,c) \text{ harvestable}
+\]
+
+Sybil nodes that **do** forward correctly may stay whitelisted — they still add **0 C/I bits** (`SybilDoctrine`, PA.6). Sybil nodes that omit are de-whitelisted and never routed.
+
+**Outside (explicit):**
+
+| Condition | Result |
+|-----------|--------|
+| \(\mathcal{M}_{\text{valid}} = \emptyset\) | No alternate mirror — **Outside** ITS-A |
+| \(O_{\text{net}} = \emptyset\) | Total blackout — sneakernet recovery (product) |
+| Both EP compromised | **Outside** channel C/I |
+
+| Lean | Claim |
+|------|-------|
+| `ValidForwardParty.omit_de_whitelists_mirror` | Omit ⇒ invalid forward party |
+| `WitnessConsensus.consensusAtEpoch` | \(k\)-of-\(n\) ⇒ `forwardProof` |
+| `ForwardReceiveGate.receiveGate` | Harvest only from \(\mathcal{M}_{\text{valid}}\) |
+| `CensorshipDisclosure.silentOmitImpossible` | Selective omit detectable |
+
+**Cross-ref:** full Eve walkthrough — [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) § CIA + scenario; operator config — [QUICKSTART.md](QUICKSTART.md).
+
+---
+
 ## §VI — AEH alternative (when pool protocol is banned)
 
 | Lemma | Formula | Lean |

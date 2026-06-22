@@ -12,6 +12,18 @@
 
 ---
 
+## CIA pillars — narrative + example refs (v9)
+
+Each pillar is **proved** under A0–A2′. Concrete numeric walkthroughs live in [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va and [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) (Eve scenario).
+
+**C — Confidentiality.** Eve sees all of \(O\) including \(10^9\) Sybil injections; finite-MI + Shannon wire give \(I(M;O)=0\) bits for a 256-bit message (uniform posterior). Sybil adds zero information (`SybilDoctrine.lean`, `FiniteMutualInfo.lean`). *Example:* §Va C-table — 256-bit \(H(M|O)=H(M)\).
+
+**I — Integrity.** OTM WC-MAC over \(\mathbb{F}_p\), \(p=2147483647\): \(P(\text{forge})\leq 1/p\). Eve's \(10^{12}\) forgery attempts yield \(\leq 465\) expected accepts; verify runs only on A2′ EP (`IntegrityAxiom.lean`). *Example:* §Va I-table — \(N/p\) bound.
+
+**A — Availability (ITS-A v9).** Not Shannon delivery — log-proof + \(\mathcal{M}_{\text{valid}}\) whitelist + de-whitelist on omit + witness k-of-n (\(k=2, n=3\)). One honest forwarder in \(\mathcal{M}_{\text{valid}}\) suffices against \(10^9\) Eve nodes. *Example:* §Va A-table — epochs 0–5, Eve-A omit @3, `omit_de_whitelists_mirror`, `ProofFwd` via Charlie. **Outside:** empty \(\mathcal{M}_{\text{valid}}\), no witness.
+
+---
+
 ## Master math certificate (v4)
 
 | Claim | Lean module | Math status | v4 MI status |

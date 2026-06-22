@@ -1,6 +1,7 @@
 # ROUTING — Refinement manifest (phase 2 — software ↔ Lean ideal)
 
 **Math certificate (phase 1):** [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · `./scripts/verify_math.sh`  
+**CIA worked examples (Eve 99.999%+):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va — C/I/A numeric tables align with Lean v9 (`ValidForwardParty`, `WitnessConsensus`, `SybilDoctrine`).  
 **Refinement gate (phase 2):** `./scripts/verify_ecosystem.sh` — M17 + Rust tests  
 **Formal spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) · [ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md)
 

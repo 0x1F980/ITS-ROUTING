@@ -133,6 +133,58 @@ Begge modes deler **samme** `step` + wire + OTM — kun courier/embed ændres.
 
 **Honest limit:** A ≠ Shannon “always delivers”; A = log-proof + whitelist + reroute when valid mirrors/witness exist.
 
+**Worked numeric examples (full derivations):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
+
+### C — logik + tal (Eve 99.999%+)
+
+Eve ejer pool, relays og \(10^9\) Sybil-noder. Hun ser hele \(O\) — men uden `secret.key` er posterior over \(M\) uniform:
+
+\[
+I(M;\, O) = 0 \text{ bits} \quad (\text{256-bit besked} \Rightarrow H(M\mid O) = H(M) = 256)
+\]
+
+Sybil-strategier ændrer intet: \(I(M;\, O_{\mathcal{E}\cup\text{Sybil}}) = 0\) (`SybilDoctrine.lean`, finite-MI). Wire: Shannon ITS-asymmetric over \(\mathbb{F}_p\), \(p = 2147483647\).
+
+### I — logik + tal
+
+\[
+P(\text{forge}) \leq \frac{1}{p} \approx 4.657 \times 10^{-10}
+\]
+
+Eve forsøger \(10^{12}\) forgeries → forventet accept \(\leq 10^{12}/p \approx 465\). OTM verify kører **kun** på A2′ verify-oracle (Bob/Charlie) — aldrig på Eves 99.999%+ noder.
+
+### A — logik + tal
+
+ITS-A: ValidFwd whitelist + `omit_de_whitelists_mirror` + witness k-of-n. Se scenario nedenfor.
+
+---
+
+## Eve 99.999%+ scenario walkthrough
+
+**Antagelse (A0):** \(N = 10^9\) noder; Eve kontrollerer \(10^9 - 1\). Én uafhængig mirror (Eve-B) eller A2′ witness (Charlie) forbliver ærlig forwarder.
+
+**Tidslinje — epochs 0–5, tre mirrors:**
+
+```
+Epoch:     0    1    2    3    4    5
+Publish:   c₀   c₁   c₂   c₃   c₄   c₅   (canonical log)
+Eve-A:     ✓    ✓    ✓    ✗    ✓    ✓    (selective omit @ e=3)
+Eve-B:     ✓    ✓    ✓    ✓    ✓    ✓
+Charlie:   ✓    ✓    ✓    ✓    ✓    ✓    (A2′ witness)
+```
+
+| Fase | \(\mathcal{M}_{\text{valid}}\) | Bob's handling |
+|------|-------------------------------|----------------|
+| Før omit | {Eve-A, Eve-B, Charlie} | `receiveGate` — any mirror OK |
+| Efter Eve-A dropper \(c_3\) | {Eve-B, Charlie} | Eve-A de-whitelisted; harvest \(c_3\) fra Eve-B eller Charlie |
+| Witness \(k{=}2, n{=}3\) | W₂+W₃ agree on \(c_3\) | `consensusAtEpoch` ⇒ `ProofFwd(3,c₃)` |
+
+**Hvorfor Eve ikke vinder på C/I:** under hele scenariet forbliver \(I(M;O)=0\) og \(P(\text{forge})\leq 1/p\) — omit påvirker kun **A**, og det mitigeres af whitelist + alternate route.
+
+**Outside:** hvis **alle** mirrors er Eve-only selective omitters og ingen A2′ witness → \(\mathcal{M}_{\text{valid}}=\emptyset\) — da er A **Outside** (sneakernet / offline recovery er produkt-gate, ikke kanal-theorem).
+
+**Lean-kæde:** `ValidForwardParty.omit_de_whitelists_mirror` · `WitnessConsensus.selective_omit_consensus_gives_alternate_route` · `ForwardReceiveGate` · `SybilDoctrine` (Sybil forwarders ⇒ 0 ekstra C/I bits).
+
 ---
 
 ## Sybil

@@ -45,6 +45,24 @@ Wire confidentiality, SSS backward ambiguity, WC-MAC attestation, and timelock d
 
 ---
 
+## CIA mitigations vs Eve 99.999%+ (routing summary)
+
+Under axiom A0, Eve owns ≥ 99.999% of nodes. ROUTING's v9 certificate (`networkEcosystemCertificateV9`) proves **100% ITS** on all three pillars when A2/A2′ holds. **Full worked examples with numbers:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
+
+| Pillar | Channel / mechanism | Numeric sketch | Lean |
+|--------|---------------------|----------------|------|
+| **C1 Payload** | Shannon wire + L3 pool | \(I(M;O)=0\) bits; \(10^9\) Sybil ⇒ +0 bits | `WireComposition`, `SybilDoctrine` |
+| **C2 Integritet** | WC-MAC OTM | \(P(\text{forge}) \leq 1/2.147\times10^9\); \(10^{12}\) tries ⇒ ≤465 expected | `IntegrityAxiom` → `Otm.OtmIntegrity` |
+| **C3 Anonymitet** | UES pool, 0 hops | Author/recipient/flow zero in \(O\), \(IP_{obs}\) | `UnifiedEpochStream`, `BroadcastIPSymmetry` |
+| **C4 Benægtelighed** | Timelock SSS L2 | Coercion underdetermination (no numeric floor) | `Stl.Security.Deniability` |
+| **ITS-A (A)** | ValidFwd + witness k-of-n | 1 mirror in \(\mathcal{M}_{\text{valid}}\) suffices vs \(10^9\) Eve nodes | `ValidForwardParty`, `WitnessConsensus`, `ForwardReceiveGate` |
+
+**Outside:** both endpoints compromised; \(\mathcal{M}_{\text{valid}}=\emptyset\) without witness; total blackout \(O_{\text{net}}=\emptyset\).
+
+**PA.6 Sybil-whitelist:** evil mirrors that omit leave \(\mathcal{M}_{\text{valid}}\); Sybil forwarders that sync correctly stay whitelisted but add **zero** C/I bits.
+
+---
+
 ## ITS-first charter
 
 1. **Wire confidentiality** = Shannon ITS — Lean in [ITS-asymmetric](../ITS-asymmetric/ITS-asymmetric_FORMAL_VERIFICATION.md).
