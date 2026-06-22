@@ -136,7 +136,7 @@ fi
 echo "=== M27: its-routing man subcommands ==="
 for sub in client-send client-receive start-node time-lock time-unlock time-deny fingerprint-erasure; do
   man_token="${sub//-/\\-}"
-  if grep -q "\\.${man_token}" "$ROOT/man/its-routing.1" 2>/dev/null; then
+  if grep -qF "$man_token" "$ROOT/man/its-routing.1" 2>/dev/null; then
     green "man documents $sub"
   else
     red "man missing subcommand $sub"
@@ -144,7 +144,7 @@ for sub in client-send client-receive start-node time-lock time-unlock time-deny
 done
 for sub in client-export-share client-import-share; do
   man_token="${sub//-/\\-}"
-  if grep -q "$man_token" "$ROOT/man/its-routing.1" 2>/dev/null \
+  if grep -qF "$man_token" "$ROOT/man/its-routing.1" 2>/dev/null \
     && grep -qi 'hardware' "$ROOT/man/its-routing.1"; then
     green "man documents hardware-gated $sub"
   else
