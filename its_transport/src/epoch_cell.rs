@@ -2,6 +2,7 @@
 //!
 //! Optional SSS `(k,n)` interleaving spreads share bytes across epochs for A-resilience.
 
+use alloc::collections::BTreeMap;
 use alloc::vec;
 use alloc::vec::Vec;
 
@@ -24,6 +25,9 @@ pub struct EpochCellState {
     sss_interleave: bool,
     pending: Vec<PendingCellPayload>,
     pending_idx: usize,
+    /// Reassemble SSS share wire chunks split across multiple epochs.
+    #[zeroize(skip)]
+    partial_share_wires: BTreeMap<u32, Vec<u8>>,
 }
 
 #[derive(Clone, Debug, Zeroize, ZeroizeOnDrop)]
@@ -47,6 +51,7 @@ impl EpochCellState {
             sss_interleave,
             pending: Vec::new(),
             pending_idx: 0,
+            partial_share_wires: BTreeMap::new(),
         })
     }
 
@@ -167,8 +172,18 @@ impl EpochCellState {
         if !bool::from(verify_tag(k_mac, y, nonce, tag)) {
             return Ok(None);
         }
-        let share = deserialize_share_wire(share_id, payload)?;
-        Ok(Some(share))
+        let buf = self
+            .partial_share_wires
+            .entry(share_id)
+            .or_insert_with(Vec::new);
+        buf.extend_from_slice(payload);
+        match deserialize_share_wire(share_id, buf) {
+            Ok(share) => {
+                self.partial_share_wires.remove(&share_id);
+                Ok(Some(share))
+            }
+            Err(()) => Ok(None),
+        }
     }
 
     fn max_payload_len(&self) -> usize {
@@ -315,6 +330,40 @@ mod tests {
         alice.queue_sss_payload(secret, &mut rng).unwrap();
         let epochs = alice.queued_epochs();
         assert!(epochs >= 3);
+
+        let mut cells = Vec::new();
+        for e in 0..epochs {
+            let (_, cell) = alice.step(&mut rng).unwrap();
+            cells.push((e as u64, cell));
+        }
+
+        let mut shares = Vec::new();
+        for (epoch, cell) in cells {
+            if let Some(share) = bob.verify_cell(epoch, &cell).unwrap() {
+                if !shares.iter().any(|s: &SssPackedShare| s.id == share.id) {
+                    shares.push(share);
+                }
+            }
+        }
+        assert!(shares.len() >= 2);
+        let recovered = reconstruct_data(&shares, 2).unwrap();
+        assert_eq!(recovered, secret);
+    }
+
+    #[test]
+    fn epoch_cell_sss_multi_chunk_roundtrip() {
+        let seed = [0x99u8; 32];
+        let mut alice = EpochCellState::new(seed, 512, 2, 3).unwrap();
+        let mut bob = EpochCellState::new(seed, 512, 2, 3).unwrap();
+        let mut rng = MockRng { state: 0xFEEDFACE };
+        // ~200 bytes forces multiple wire chunks per share (max_payload = 502).
+        let secret: Vec<u8> = (0..200).map(|i| (i as u8).wrapping_mul(7)).collect();
+        alice.queue_sss_payload(&secret, &mut rng).unwrap();
+        let epochs = alice.queued_epochs();
+        assert!(
+            epochs > 5,
+            "expected >5 payload epochs for multi-chunk shares, got {epochs}"
+        );
 
         let mut cells = Vec::new();
         for e in 0..epochs {

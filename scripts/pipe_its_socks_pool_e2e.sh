@@ -20,7 +20,7 @@ cat > "$TMP/pool.toml" <<EOF
 transport_mode = "pool"
 pool_file = "$POOL"
 cell_size_L = 4096
-epoch_interval_ms = 50
+epoch_interval_ms = 100
 sss_k = 2
 sss_n = 3
 EOF
@@ -55,12 +55,12 @@ bob_bridge_once() {
   local recv_wire="$TMP/bob_in.wire"
   rm -f "$recv_wire" "$REPLIED_MARKER"
   "$ROUTING" -c "$TMP/pool.toml" client-receive --pool --continuous \
-    --timeout-secs 45 --out "$recv_wire" --ratchet-seed-file "$TMP/ratchet.seed"
+    --timeout-secs 15 -o "$recv_wire" --ratchet-seed-file "$TMP/ratchet.seed"
 
   "$ITS" decrypt --sk "$TMP/bob/secret.key" --pk "$TMP/bob/public.key" \
     --in "$recv_wire" --out "$TMP/bob_plain.bin"
 
-  curl -sf --max-time 5 "http://127.0.0.1:${HTTP_PORT}/" > "$TMP/bob_resp.bin"
+  curl -sf --max-time 5 -D - "http://127.0.0.1:${HTTP_PORT}/" > "$TMP/bob_resp.bin"
 
   "$ITS" encrypt --pk "$TMP/alice/public.key" --in "$TMP/bob_resp.bin" --out "$TMP/bob_out.wire"
   "$ROUTING" -c "$TMP/pool.toml" client-send --pool -f "$TMP/bob_out.wire" \
@@ -83,24 +83,24 @@ export ITS_PROXY_REPLY_MARKER="$REPLIED_MARKER"
   --routing "$ROUTING" \
   --asymmetric "$ITS" \
   --receive-timeout-secs 90 \
-  --reply-grace-ms 60000 &
+  --reply-grace-ms 30000 &
 PROXY_PID=$!
 
 for _ in $(seq 1 60); do
-  if ss -ltn 2>/dev/null | grep -q ":${SOCKS_PORT} "; then
+  if python3 -c "import socket; s=socket.socket(); s.settimeout(0.2); s.connect(('127.0.0.1', ${SOCKS_PORT})); s.close()" 2>/dev/null; then
     break
   fi
   sleep 0.25
 done
 
-# Minimal HTTP GET keeps pool payload ≤5 epochs (curl default headers exceed SSS chunk gate today).
 BODY="$(python3 - <<PY
 import socket, struct
-s = socket.create_connection(("127.0.0.1", $SOCKS_PORT))
+s = socket.create_connection(("127.0.0.1", ${SOCKS_PORT}))
+s.settimeout(60)
 s.sendall(b"\\x05\\x01\\x00")
 s.recv(2)
 host = b"127.0.0.1"
-port = $HTTP_PORT
+port = ${HTTP_PORT}
 s.sendall(b"\\x05\\x01\\x00\\x03" + bytes([len(host)]) + host + struct.pack("!H", port))
 s.recv(10)
 s.sendall(b"GET / HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\n\\r\\n")
