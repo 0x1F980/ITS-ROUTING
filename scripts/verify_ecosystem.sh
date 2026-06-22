@@ -466,6 +466,13 @@ else
   red "M20: pipe_timelock.sh missing"
 fi
 
+echo "=== M20: ValidFwd witness pipe (optional) ==="
+if [[ -x "$ROUTING/scripts/pipe_its_validfwd_e2e.sh" ]]; then
+  "$ROUTING/scripts/pipe_its_validfwd_e2e.sh" >/dev/null 2>&1 && green "M20: pipe_its_validfwd_e2e.sh" || red "M20: pipe_its_validfwd_e2e.sh failed"
+else
+  green "M20: pipe_its_validfwd_e2e.sh skipped (not present)"
+fi
+
 echo "=== M21: censorship recovery pipes (P8.3/B4) ==="
 m21_ok=1
 for p in pipe_its_censorship_recovery_e2e.sh pipe_its_sneakernet_e2e.sh pipe_its_aeh_censorship_e2e.sh; do

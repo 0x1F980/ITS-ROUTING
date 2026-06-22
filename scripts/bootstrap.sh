@@ -43,6 +43,11 @@ clone_repo "ITS-ledger"
 clone_repo "ITS-FINGERPRINT_ERASURE"
 clone_repo "ITS-KeyManagement" main
 
+# verify_ecosystem.sh expects monorepo-style directory names.
+[[ -d ITS-ROUTING && ! -e ROUTING ]] && ln -sfn ITS-ROUTING ROUTING
+[[ -d ITS-FINGERPRINT_ERASURE && ! -e ITS-fingerprint_erasure ]] \
+  && ln -sfn ITS-FINGERPRINT_ERASURE ITS-fingerprint_erasure
+
 echo "Bootstrap complete under $ROOT (tag=$TAG)"
 echo "Run: ROUTING/scripts/verify_ecosystem.sh $ROOT"
 echo "Run: ROUTING/scripts/pipe_its_pool_e2e.sh"
