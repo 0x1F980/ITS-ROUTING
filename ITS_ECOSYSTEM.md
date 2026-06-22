@@ -2,7 +2,7 @@
 
 ## License: GNU GPLv3 Only
 
-**Read this document first.** UES v1.5 model: [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md). Execution plan: `.cursor/plans/its_klippe_v4_fundament.plan.md` (do not fork without updating gates).
+**Read this document first.** UES v1.5 model: [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md). **Master cert:** `networkEcosystemCertificateV9` in [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) — gate `./scripts/verify_math.sh` (M1–M20). DoD + build checklist: `.cursor/plans/its_dod_postulates_v7_ca308ef5.plan.md`. Execution plan: `.cursor/plans/its_ecosystem_masterplan_5f896348.plan.md`.
 
 ---
 
@@ -356,7 +356,7 @@ Ecosystem verify uses `--features full` when testing the complete routing binary
 
 | # | Requirement |
 |---|-------------|
-| 1 | `./scripts/verify_math.sh` green (M9–M16) |
+| 1 | `./scripts/verify_math.sh` green (M1–M20) |
 | 2 | `./scripts/verify_ecosystem.sh` green (M17–M22, P8.*) |
 | 3 | Sibling repos pushed at matching `v1.0.0` tags |
 | 4 | [ITS_INDEPENDENT_REVIEW_CHECKLIST.md](ITS_INDEPENDENT_REVIEW_CHECKLIST.md) executed on tagged release |
