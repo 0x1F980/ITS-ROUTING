@@ -76,7 +76,7 @@
 | L5 | I(S; release) = 0 | `AEH/EpochGate.lean` | **Proved** | **Proved** |
 | L6 | I(link; O) = 0 | `LinkParticipation.lean` | **Proved** | **Proved** |
 | L7 | AEH link-blind | `PlausibleDeniability.lean` | **Proved** | **Proved** |
-| L8 | SSS availability | `AvailabilityResilience.lean` | **Operational** | N/A |
+| L8 | SSS availability | `AvailabilityResilience.lean` | **Proved (SSS bound; subsumed in v9 ITS-A bundle)** | N/A |
 | L9 | Composition | `Transport/Composition.lean` | **Proved** | **Proved** |
 | L10 | I(link; O⁺_{rate,volume}) = 0 | `MetadataSymmetry.lean` | **Theorem** | **Proved** (finite-MI) |
 | L11 | CoverTransport constant O⁺ | `ParticipationSymmetry.lean` | **Proved** (L3 + L3') | **Proved** |
@@ -145,7 +145,7 @@ Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
 
 | # | Criterion | Gate |
 |---|-----------|------|
-| 1 | Math certificate v5 | `./scripts/verify_math.sh` (M9–M16) |
+| 1 | Math certificate v9 | `./scripts/verify_math.sh` (M1–M20) |
 | 2 | Refinement + product pipes | `./scripts/verify_ecosystem.sh` (M17–M22) |
 | 3 | P8.* product DoD | table above |
 | 4 | Sibling repos committed at matching tags | `bootstrap.sh` + per-repo `v1.0.0` |
@@ -154,4 +154,4 @@ Full map: [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md)
 
 **Remaining for full ship:** push all repos, tag, execute review checklist on tagged release, public mirror deployment (operational).
 
-**Constitution:** [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md) · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v4
+**Constitution:** [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md) · [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) v9

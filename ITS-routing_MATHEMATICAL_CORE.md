@@ -4,9 +4,9 @@
 
 ## Target: Mathematicians, cryptographers, traffic-analysis auditors
 
-**Status:** v5 ecosystem certificate **proved** · v6 absolutisme doc-sync · v7 Lean closure (B1/B3, Absolut A, roles)  
-**Formal certificate:** [`mathematics/MasterTheorem.lean`](mathematics/MasterTheorem.lean) (v5) · [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) (v6)  
-**Verify:** `./scripts/verify_math.sh` — M1–M17, `lake build`, 0 `sorry`, smoke certificates  
+**Status:** v9 ecosystem certificate **proved** — 100% ITS C · I · A (`networkEcosystemCertificateV9`)  
+**Formal certificate:** [`mathematics/MasterTheoremV6.lean`](mathematics/MasterTheoremV6.lean) — `networkEcosystemCertificateV9` (M1–M20)  
+**Verify:** `./scripts/verify_math.sh` — M1–M20, `lake build`, 0 `sorry`, smoke certificates  
 **Lean roots:** [`mathematics/lakefile.lean`](mathematics/lakefile.lean) — `routing-math-cert` · `routing-math-dev` · `routing-math-refinement`
 
 **Related:** [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) · [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
@@ -347,7 +347,10 @@ No personal ACK; alternate route = next mirror in \(\mathcal{M}_{\text{valid}}\)
 | SSS reconstruction bound | `AvailabilityResilience.lean` |
 | ITS-A in master cert v9 | `networkEcosystemCertificateV9` |
 
-**Unattackable scope:** selective omit to `s` + k-of-n witness consensus (A2′ Charlie) ⇒ `ProofFwd`; alternate path from \(\mathcal{M}_{\text{valid}}\) only — no hop guilt.  
+**Unattackable scope:** selective omit to `s` + k-of-n witness consensus (A2′ Charlie) ⇒ `ProofFwd`; alternate path from \(\mathcal{M}_{\text{valid}}\) only — no hop guilt.
+
+**Sybil-whitelist doctrine (PA.6):** Eve may own 99.999%+ nodes; she **cannot** remain on \(\mathcal{M}_{\text{valid}}\) unless she **actively forwards** the canonical log (`ValidFwd`). Selective omit/jam ⇒ `omit_de_whitelists_mirror` — **evil mirrors are not routed**. Sybil nodes that sync correctly are whitelisted but give **zero extra C/I bits** (`SybilDoctrine`). Harvest/publish uses \(\mathcal{M}_{\text{valid}}\) only (`alternateFromValidMirrors`).
+
 **Outside:** \(O_{\text{net}}=\emptyset\); all mirrors Eve-only with no independent witness; \(\mathcal{M}_{\text{valid}}=\emptyset\).
 
 ### SSS reconstruction bound
@@ -356,7 +359,7 @@ No personal ACK; alternate route = next mirror in \(\mathcal{M}_{\text{valid}}\)
 f + k \leq n \Rightarrow \text{reconstruct}(M)
 \]
 
-| Lean | `AvailabilityResilience.lean` — **Operational**, not ITS |
+| Lean | `AvailabilityResilience.lean` — **Proved (SSS reconstruction bound; component of v9 ITS-A)** |
 
 ### Offline / sneakernet
 
@@ -368,7 +371,7 @@ Security reduces to wire on medium + OTM on Bob.
 
 | Lean | `OfflineChannel.lean` |
 
-Recovery without breaking C/I: fountain + multi-mirror + AEH + sneakernet (operational gates in `verify_ecosystem.sh`).
+Recovery without breaking C/I: fountain + multi-mirror + AEH + sneakernet — **product refinement gates** in `verify_ecosystem.sh` (not a math caveat for A; v9 ITS-A is proved in Lean).
 
 ---
 
@@ -503,7 +506,7 @@ Under axioms A0–A1 and file/message to known contact:
 |--|---------|---------------------|
 | **C** | \(I(M;O)=0\) forever (ITS) | Computational → breaks under A1 |
 | **I** | \(P(forge)\leq 1/p\) (WC-MAC ITS) | Signatures/PQC — crypto-epoch |
-| **A** | SSS + sneakernet (operational) | Bridges/mirrors (operational) |
+| **A** | **v9 ITS-A** — ProofFwd + \(\mathcal{M}_{\text{valid}}\) whitelist + witness k-of-n + ReceiveGate + SSS | Bridges/mirrors (operational) |
 | **Sybil 99%+** | C/I **unchanged** | Deanonymization risk |
 | **N = 1 user** | **Sufficient** | Meaningless without mass |
 | **Hops** | **0** (ms latency) | 3–6+ (seconds) |
@@ -590,7 +593,7 @@ MASTER v6:       U_6 = U_5 ∧ A_abs ∧ BIS_derived ∧ roleAwareDeniability
 | Either EP | `EndpointEitherOr.lean` | **Proved** |
 | MathSupremacy | `MathSupremacyDoctrine.lean` | **Proved** |
 | C2 integrity | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (OTM import) |
-| A availability | `AvailabilityResilience.lean` | **Operational** |
+| A availability | `ForwardProof.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`, `ForwardReceiveGate.lean`, `AvailabilityResilience.lean` | **Proved (v9)** |
 | AEH L4/L5 | `AEH/StegoIndistinguishability.lean`, `AEH/EpochGate.lean` | **Proved** |
 | L9 composition | `Transport/Composition.lean` | **Proved** |
 | Offline | `OfflineChannel.lean` | **Proved** |
@@ -708,7 +711,7 @@ flowchart TB
 | L5 | I(S; release) = 0 | AEH | `AEH/EpochGate` | Proved |
 | L6 | I(link; O) = 0 | P | `LinkParticipation` | Proved |
 | L7 | AEH link-blind | AEH | `PlausibleDeniability` | Proved |
-| L8 | SSS reconstruction | A | `AvailabilityResilience` | Operational |
+| L8 | SSS reconstruction | A | `AvailabilityResilience` | **Proved (SSS; v9 ITS-A component)** |
 | L9 | Mode composition | both | `Transport/Composition` | Proved |
 | L10 | I(link; O⁺_{rv}) = 0 | both | `MetadataSymmetry` | **Proved** (finite-MI) |
 | L11 | CoverTransport O⁺ | P | `ParticipationSymmetry` | Postulate P1–P3 |

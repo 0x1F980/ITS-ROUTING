@@ -1,10 +1,14 @@
 import Transport.Basic
 
 /-!
-# Availability resilience — SSS deletion bound (operational A)
+# Availability resilience — SSS deletion bound (v9 ITS-A component)
 
-Shannon ITS does not prove perfect delivery; SSS (k, n) gives reconstruction
-under bounded Eve deletion. Not I = 0 — operational resilience only.
+Proved SSS (k, n) reconstruction under bounded Eve deletion.
+Subsumed in v9 ITS-A via `CIA_Doctrine.availabilityITSForward` / `ForwardProof` bundle
+(ProofFwd + ValidFwd whitelist + witness consensus + ReceiveGate + this SSS bound).
+
+Shannon ITS does not prove perfect delivery — honest A = log-proof + whitelist + reroute
+when valid mirrors/witness exist; Outside when no witness + empty M_valid.
 -/
 
 namespace ITS
@@ -35,7 +39,7 @@ theorem availability_resilience (f : Nat) (hf : f + thresholdK ≤ totalSharesN)
     canReconstruct f :=
   sss_reconstruction_bound f hf
 
-/-- Honest A-claim: operational, not information-theoretic. -/
+/-- Legacy SSS bound name (subset of `availabilityITSForward` in ForwardProof). -/
 def availabilityOperational : Prop :=
   ∀ f, f + thresholdK ≤ totalSharesN → canReconstruct f
 

@@ -42,7 +42,7 @@ This document maps each overlay claim to ITS lemma-ID and product gate (W1–W13
 |-------|--------|
 | Million-user network effects today | **Roadmap** — not math blocker |
 | Anonymous access to arbitrary clearnet without known contact | **Out of scope** — SOCKS proxies to Bob's receiver |
-| Perfect availability under total blackout | **A operational** — sneakernet recovery (B4) |
+| Perfect availability under total blackout | **Outside** when no A2′ witness + empty \(\mathcal{M}_{\text{valid}}\); otherwise **ITS-A (v9)** reroute via ProofFwd / ReceiveGate + SSS (B4 sneakernet is product refinement) |
 | Both endpoints compromised | **OutsideChannel** |
 
 ---

@@ -1,11 +1,11 @@
-# ITS-routing: Unattackable Model (v4 — absolute deniability)
+# ITS-routing: Unattackable Model (v9 — 100% ITS C · I · A)
 
 **Formal spec (formulas + Lean map):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md)
 
-**Status:** Formal math certificate — software refinement explicitly phase 2  
-**Master theorem:** `mathematics/MasterTheorem.lean` (v5) · v4: `UnattackableCertificate.lean`  
+**Status:** Formal math certificate v9 — software refinement explicitly phase 2  
+**Master theorem:** `mathematics/MasterTheoremV6.lean` — `networkEcosystemCertificateV9` (M1–M20)  
 **Absolute deniability:** `mathematics/PlausibleDeniabilityAbsolute.lean`  
-**Verify:** `./scripts/verify_math.sh` — `lake build`, 0 `sorry`, smoke certificate  
+**Verify:** `./scripts/verify_math.sh` — M1–M20, `lake build`, 0 `sorry`, smoke certificate  
 **Refinement (later):** `./scripts/verify_ecosystem.sh` — cargo + E2E pipes
 
 ---
@@ -84,7 +84,7 @@ SSS multi-IP courier, og BIS — **ikke** via at stole på Eve's nodes.
 | L5 | I(S; release) = 0 | begge | `AEH/EpochGate.lean` | **Proved** |
 | L6 | I(link; O) = 0 under L3+L3' | P | `LinkParticipation.lean` | **Proved** |
 | L7 | φ ~ 𝒟_benign ⇒ link-blind i AEH | AEH | `PlausibleDeniability.lean` | **Proved** |
-| L8 | SSS rekonstruktion under ≤ f deletion | A | `AvailabilityResilience.lean` | **Operational** |
+| L8 | SSS rekonstruktion under ≤ f deletion | A | `AvailabilityResilience.lean` | **Proved (v9 ITS-A component)** |
 | L9 | Composition end-to-end | begge | `Transport/Composition.lean` → `UnattackableCertificate.lean` | **Proved** |
 | L10 | I(link; O⁺_{rate,volume}) = 0 | begge | `MetadataSymmetry.lean` | **Proved (finite-MI)** |
 | L11 | CoverTransport ⇒ konstant O⁺ deltagelse | P | `ParticipationSymmetry.lean` | **Postulate-under-P1–P3** |
@@ -125,9 +125,13 @@ Begge modes deler **samme** `step` + wire + OTM — kun courier/embed ændres.
 
 | Pille | ITS-rang | Lean |
 |-------|----------|------|
-| **C — Confidentiality** | **Fuld** i O | `CIA_Doctrine.lean`, C1 via `WireComposition.lean` |
-| **I — Integrity** | **Fuld** (OTM axiom) | `IntegrityAxiom.lean` |
-| **A — Availability** | **Operational** — ikke ITS | `AvailabilityResilience.lean`, `OfflineChannel.lean` |
+| **C — Confidentiality** | **100% ITS** — \(I(S;O)=0\), Sybil irrelevant, wire Shannon | `CIA_Doctrine.lean`, C1 via `WireComposition.lean`, `SybilDoctrine.lean` |
+| **I — Integrity** | **100% ITS** — \(P(\text{forge})\le 1/p\); verify on A2′ EP | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` |
+| **A — Availability** | **100% ITS (v9)** — ProofFwd, \(\mathcal{M}_{\text{valid}}\), witness k-of-n, ReceiveGate, SSS | `CIA_Doctrine.availabilityITSForward`, `ForwardProof.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`, `ForwardReceiveGate.lean`, `AvailabilityResilience.lean` |
+
+**Outside (explicit):** both EP compromised; side-channels; \(O_{\text{net}}=\emptyset\); no A2′ witness + empty \(\mathcal{M}_{\text{valid}}\).
+
+**Honest limit:** A ≠ Shannon “always delivers”; A = log-proof + whitelist + reroute when valid mirrors/witness exist.
 
 ---
 
@@ -199,7 +203,7 @@ Anonymity set = 𝒟 (P) eller alle E-konsumenter (AEH) — **ikke** ITS-brugera
 
 ---
 
-## Lean manifest (v4 math certificate)
+## Lean manifest (v9 math certificate)
 
 ```
 mathematics/
@@ -223,8 +227,13 @@ mathematics/
 ├── LinkParticipation.lean
 ├── ParticipationTheorem.lean
 ├── PlausibleDeniability.lean
-├── AvailabilityResilience.lean
+├── AvailabilityResilience.lean   # SSS bound (v9 ITS-A component)
 ├── MetadataSymmetry.lean
+├── ForwardProof.lean             # ProofFwd + alternateRoute (v9 ITS-A)
+├── ValidForwardParty.lean        # ValidFwd whitelist + de-whitelist
+├── WitnessConsensus.lean         # k-of-n witness consensus
+├── ForwardReceiveGate.lean       # receiveGate on M_valid
+├── MasterTheoremV6.lean          # networkEcosystemCertificateV9
 ├── ParticipationSymmetry.lean
 ├── ComparativeThreatDoctrine.lean
 ├── CIA_Doctrine.lean
@@ -248,4 +257,4 @@ mathematics/
 ./scripts/verify_math.sh
 ```
 
-**Win-conditions M1–M8:** see [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v3
+**Win-conditions M1–M20:** see [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v9
