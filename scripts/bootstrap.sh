@@ -34,7 +34,21 @@ clone_repo() {
 }
 
 clone_repo "SSS_CHAIN"
-clone_repo "ITS-asymmetric" main
+# GitHub repo is ITS-ASSYMETRIC; checkout dir matches verify_ecosystem layout.
+if [[ -d ITS-asymmetric ]]; then
+  echo "skip ITS-asymmetric (exists)"
+elif git clone --branch main "$ORG/ITS-ASSYMETRIC.git" ITS-asymmetric 2>/dev/null \
+  || git clone --branch main "$ORG/ITS-asymmetric.git" ITS-asymmetric 2>/dev/null \
+  || git clone "$ORG/ITS-ASSYMETRIC.git" ITS-asymmetric 2>/dev/null \
+  || git clone "$ORG/ITS-asymmetric.git" ITS-asymmetric; then
+  (cd ITS-asymmetric && git checkout "$TAG" 2>/dev/null \
+    || git checkout main 2>/dev/null \
+    || git checkout master 2>/dev/null \
+    || true)
+else
+  echo "bootstrap: failed to clone ITS-asymmetric / ITS-ASSYMETRIC" >&2
+  exit 1
+fi
 clone_repo "ITS-OTM_public_attestation" main
 clone_repo "ITS-self_enclosed_timelock"
 clone_repo "ITS-ROUTING"
