@@ -147,6 +147,7 @@ fn run_pool_receive(
     out_path: Option<&PathBuf>,
     timeout_secs: u64,
     continuous: bool,
+    from_epoch: u64,
     mailbox: Option<PoolMailbox>,
 ) {
     let Some(seed) = resolve_pool_ratchet_seed(ratchet_seed_file) else {
@@ -188,7 +189,7 @@ fn run_pool_receive(
     );
     let ticker = EpochLoop::new(config.pool.epoch_interval_ms);
     let mut shares: Vec<SssPackedShare> = Vec::new();
-    let mut next_epoch = 0u64;
+    let mut next_epoch = from_epoch;
     let max_shares = cell_state.fountain_max_shares(config.pool.fountain_enabled);
     let mb = mailbox.unwrap_or_default();
     if mb.strict && mb.namespace != 0 {
@@ -625,6 +626,7 @@ pub fn run_client_receive(
     ratchet_seed_file: PathBuf,
     out_path: Option<PathBuf>,
     timeout_secs: u64,
+    from_epoch: u64,
     mailbox: Option<PoolMailbox>,
 ) {
     let use_pool = pool || config.pool.transport_mode == "pool";
@@ -636,6 +638,7 @@ pub fn run_client_receive(
             out_path.as_ref(),
             timeout_secs,
             continuous,
+            from_epoch,
             mailbox,
         );
         return;

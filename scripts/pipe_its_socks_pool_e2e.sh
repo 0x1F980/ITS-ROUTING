@@ -63,6 +63,7 @@ bob_bridge_once() {
   curl -sf --max-time 5 -D - "http://127.0.0.1:${HTTP_PORT}/" > "$TMP/bob_resp.bin"
 
   "$ITS" encrypt --pk "$TMP/alice/public.key" --in "$TMP/bob_resp.bin" --out "$TMP/bob_out.wire"
+  rm -f "$POOL"/epoch_*.bin
   "$ROUTING" -c "$TMP/pool.toml" client-send --pool -f "$TMP/bob_out.wire" \
     --ratchet-seed-file "$TMP/ratchet.seed"
   touch "$REPLIED_MARKER"

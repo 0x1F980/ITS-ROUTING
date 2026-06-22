@@ -15,7 +15,7 @@ Authoritative math: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_
 | 3 | Send | `its-km send --contact ALIAS --file PATH` |
 | 4 | Receive | `its-km receive --contact ALIAS --out PATH` |
 | 5 | Routing config | `routing.toml` — `[pool]` section selects carrier |
-| 6 | Binaries on PATH | `its-km`, `its-routing`, `its_asymmetric` |
+| 6 | Binaries on PATH | `its-km`, `its-routing`, `its_asymmetric`, `its-pool-proxy` (SOCKS only) |
 | 7 | Key / ratchet OOB | `export-qr` / `import-qr` or manual key + ratchet file |
 
 **QR = identity and transport ratchet only.** Message payload rides the epoch pool (`epoch_*.bin` files or HTTP mirrors) — never QR.
@@ -78,6 +78,25 @@ Alternative without the flag: set `pool_file = "/media/usb/its-pool"` in `routin
 | **Carrier** | HTTP mirror, `epoch_*.bin` folder, USB copy — config + file I/O only |
 
 Operators should **not** call `its-routing` or `its_asymmetric decrypt` directly in production. Use `its-km send` / `receive`.
+
+### Optional: SOCKS app egress (known Bob / hidden-service)
+
+For I2P-style app egress to a **known peer** (not arbitrary clearnet browsing), use the release proxy — not raw `client-send`:
+
+```bash
+cargo build --release -p its_pool_proxy --manifest-path ROUTING/Cargo.toml
+its-pool-proxy \
+  --listen 127.0.0.1:1080 \
+  --config ~/.its/routing.toml \
+  --ratchet-seed-file ~/.its/shared-ratchet.seed \
+  --pk ~/.its/contacts/bob/public.key \
+  --sk ~/.its/keys/alice/secret.key \
+  --own-pk ~/.its/keys/alice/public.key
+```
+
+Bob runs `its-km receive --continuous` or an ingress bridge while Alice points her app at `SOCKS5 127.0.0.1:1080`. Gate: `scripts/pipe_its_socks_pool_e2e.sh` (M19 v2). Full doc: [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md).
+
+Install via `./scripts/its-operator-install.sh` (includes `its-pool-proxy` on PATH).
 
 ---
 

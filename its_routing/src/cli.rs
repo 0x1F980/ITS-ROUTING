@@ -196,6 +196,7 @@ pub fn run() {
             let mut ratchet_seed_file = PathBuf::new();
             let mut out_path: Option<PathBuf> = None;
             let mut timeout_secs = 30u64;
+            let mut from_epoch = 0u64;
             let mut mailbox: Option<PoolMailbox> = None;
 
             let mut s_idx = 1;
@@ -235,6 +236,9 @@ pub fn run() {
                 } else if command_args[s_idx] == "--timeout-secs" && s_idx + 1 < command_args.len() {
                     timeout_secs = command_args[s_idx + 1].parse().unwrap_or(30);
                     s_idx += 2;
+                } else if command_args[s_idx] == "--from-epoch" && s_idx + 1 < command_args.len() {
+                    from_epoch = command_args[s_idx + 1].parse().unwrap_or(0);
+                    s_idx += 2;
                 } else {
                     s_idx += 1;
                 }
@@ -247,6 +251,7 @@ pub fn run() {
                 ratchet_seed_file,
                 out_path,
                 timeout_secs,
+                from_epoch,
                 mailbox,
             );
         }
