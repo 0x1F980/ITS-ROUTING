@@ -62,7 +62,9 @@ its-km receive --contact alice --out received.pdf --pool-dir /media/usb/its-pool
 
 Alternative without the flag: set `pool_file = "/media/usb/its-pool"` in `routing.toml`.
 
-`--pool-dir` writes a temporary `routing.override.toml` in `--work-dir` (copies base config, overrides `pool_file` only). Routing logic is unchanged — same `EpochCourier`, different filesystem path.
+`--pool-dir` writes a temporary `routing.override.toml` in `--work-dir` (copies base config, forces file-only carrier: `pool_file`, clears HTTP mirror URLs, and clears `[aeh].entropy_sources`). Routing logic is unchanged — same `EpochCourier`, different filesystem path.
+
+> **WARNING — unsafe without offline base:** `--pool-dir` **requires** `config.offline.toml` (or equivalent) as the entry's routing base. Using `config.prod.toml` with mirror URLs and then adding `--pool-dir` alone is **UNSAFE**: until the override is applied, prod defaults can still trigger HTTP pool publish and cover-traffic harvest. For air-gap / sneakernet, always set the contact routing config to `ROUTING/config.offline.toml` first, then optionally use `--pool-dir` to point at removable media.
 
 ---
 

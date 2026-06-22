@@ -45,7 +45,7 @@ Register-ArgumentCompleter -Native -CommandName 'its-routing' -ScriptBlock {
             break
         }
         '^its-routing;client-send' {
-            '-m', '--msg', '-f', '--file', '-d', '--dest', '--pool', '--no-pool', '--aeh', '--continuous', '--ratchet-seed-file', '--fingerprint-erasure', '--mailbox-fingerprint' | ForEach-Object {
+            '-m', '--msg', '-f', '--file', '-d', '--dest', '--pool', '--no-pool', '--aeh', '--continuous', '--ratchet-seed-file', '--fingerprint-erasure' | ForEach-Object {
                 [CompletionResult]::new($_, $_, [CompletionResultType]::ParameterName, $_)
             }
             break

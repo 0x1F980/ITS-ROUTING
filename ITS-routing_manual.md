@@ -3,6 +3,8 @@
 ## License: GNU GPLv3 Only
 ## Target: Systems Developers, Incident Responders & Field Engineers
 
+> **Advanced / routing-layer gate only.** Production operators use [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) (`its-km send/receive`). Raw `client-send` / `client-receive` below are for transport debugging, CI pipes, and incident response — not the default onboarding path.
+
 > **Production default (v2.0):** UES Monocell Pool (`transport_mode = "pool"`, 0 hops, 1 epoch). Onion mesh / UDP daemon paths are **dev-only** (`dev-onion-mix` feature) — see [Appendix A](#appendix-a-dev-onion-mix-legacy).
 
 > **Scope:** [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) — subcommand → scope table in §2.

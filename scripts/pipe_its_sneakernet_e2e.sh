@@ -23,7 +23,7 @@ cat > "$TMP/pool.toml" <<EOF
 [pool]
 transport_mode = "pool"
 pool_file = "$POOL"
-cell_size_L = 2048
+cell_size_L = 4096
 sss_k = 2
 sss_n = 3
 EOF

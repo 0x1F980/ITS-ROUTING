@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# M27: completions/man drift gate — ghost subcommands, --pool in all shells, constitution PATH.
+# M27 v2: completions/man drift gate — ghost subcommands, cli.rs sync, constitution PATH.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-KM="${ITS_KM_DIR:-/home/user/ITS-KeyManagement}"
+ECO_ROOT="$(cd "$ROOT/.." && pwd)"
+KM="${ITS_KM_DIR:-$ECO_ROOT/ITS-KeyManagement}"
+ASY="${ITS_ASYMMETRIC_DIR:-$ECO_ROOT/ITS-asymmetric}"
 FAIL=0
+
+export ITS_KM_DIR="$KM"
+export ITS_ASYMMETRIC_DIR="$ASY"
 
 red() { echo "FAIL: $*" >&2; FAIL=1; }
 green() { echo "OK: $*"; }
@@ -31,24 +36,78 @@ done
 
 echo "=== M27: --pool-dir in all four its-km completion shells ==="
 for f in its-km.bash its-km.zsh its-km.fish its-km.ps1; do
-  if grep -q '\-\-pool-dir' "$KM/completions/$f"; then
+  if [[ -f "$KM/completions/$f" ]] && grep -q '\-\-pool-dir' "$KM/completions/$f"; then
     green "--pool-dir in $KM/completions/$f"
   else
     red "--pool-dir missing in $KM/completions/$f"
   fi
 done
 
+echo "=== M27: mailbox-fingerprint only on client-receive (not client-send) ==="
+for f in its-routing.bash its-routing.zsh its-routing.fish its-routing.ps1; do
+  path="$ROOT/completions/$f"
+  if grep -q 'client-send' "$path" && grep -q 'mailbox-fingerprint' "$path"; then
+    case "$f" in
+      *.bash)
+        send_line="$(awk '/client-send\)/,/;;/' "$path" | tr '\n' ' ')"
+        recv_line="$(awk '/client-receive\)/,/;;/' "$path" | tr '\n' ' ')"
+        if [[ "$send_line" == *mailbox-fingerprint* ]]; then
+          red "mailbox-fingerprint on client-send in $f"
+        else
+          green "client-send clean in $f"
+        fi
+        [[ "$recv_line" == *mailbox-fingerprint* ]] || red "mailbox-fingerprint missing on client-receive in $f"
+        ;;
+      *.fish)
+        if grep -q '__fish_seen_subcommand_from client-send.*mailbox-fingerprint' "$path" \
+          || grep -A1 'client-send' "$path" | grep -q 'mailbox-fingerprint'; then
+          if grep 'client-send' "$path" | grep -q 'mailbox-fingerprint'; then
+            red "mailbox-fingerprint on client-send in $f"
+          fi
+        fi
+        grep -q 'client-receive.*mailbox-fingerprint\|client-receive".*mailbox-fingerprint' "$path" \
+          || grep -q '__fish_seen_subcommand_from client-receive' "$path"
+        if grep -q '__fish_seen_subcommand_from client-receive' "$path" \
+          && grep -q 'mailbox-fingerprint' "$path"; then
+          green "client-receive has mailbox-fingerprint in $f"
+        else
+          red "mailbox-fingerprint missing on client-receive in $f"
+        fi
+        ;;
+      *)
+        if grep -q 'mailbox-fingerprint' "$path"; then
+          green "spot-check $f (manual review for send vs receive blocks)"
+        fi
+        ;;
+    esac
+  fi
+done
+
+echo "=== M27: cli.rs subcommand set vs bash completion ==="
+CLI_RS="$ROOT/its_routing/src/cli.rs"
+expected_subs="$(grep -E '^\s+"[a-z0-9-]+" =>' "$CLI_RS" | sed -E 's/.*"([^"]+)".*/\1/' | sort -u)"
+bash_subs="$(grep -oE 'opts="[^"]+"' "$ROOT/completions/its-routing.bash" | head -1 \
+  | sed 's/opts="//;s/"$//' | tr ' ' '\n' | grep -v '^--' | grep -v '^-' | sort -u)"
+while IFS= read -r sub; do
+  [[ -z "$sub" ]] && continue
+  echo "$bash_subs" | grep -qx "$sub" || red "cli.rs subcommand '$sub' missing from bash opts"
+done <<< "$expected_subs"
+while IFS= read -r sub; do
+  [[ -z "$sub" ]] && continue
+  echo "$expected_subs" | grep -qx "$sub" || red "bash completion subcommand '$sub' not in cli.rs"
+done <<< "$bash_subs"
+[[ "$FAIL" -eq 0 ]] && green "cli.rs ↔ bash subcommand set aligned"
+
 echo "=== M27: constitution binaries on PATH ==="
 for bin in its-km its-routing its_asymmetric; do
   if command -v "$bin" >/dev/null 2>&1; then
     green "$bin on PATH ($(command -v "$bin"))"
   else
-    # Allow release build paths when not installed globally
     found=0
     for candidate in \
       "$ROOT/target/release/$bin" \
       "$KM/target/release/its-km" \
-      "${ITS_ASYMMETRIC_DIR:-/home/user/ITS-asymmetric}/target/release/its_asymmetric"; do
+      "$ASY/target/release/its_asymmetric"; do
       if [[ "$bin" == "its_asymmetric" && "$candidate" == *"/its-km" ]]; then
         continue
       fi
@@ -62,15 +121,54 @@ for bin in its-km its-routing its_asymmetric; do
   fi
 done
 
+echo "=== M27: man pages for constitution binaries ==="
+for spec in "$ROOT/man/its-routing.1" "$KM/man/its-km.1" "$ASY/man/its_asymmetric.1"; do
+  [[ -f "$spec" ]] && green "man present: $spec" || red "man missing: $spec"
+done
+
+echo "=== M27: man default config path (its-routing.1 vs cli.rs) ==="
+if grep -q '/etc/its-routing/config.toml' "$ROOT/man/its-routing.1" 2>/dev/null; then
+  red "man still claims wrong default /etc/its-routing/config.toml"
+else
+  green "man default config path matches cli.rs (config.toml cwd fallback)"
+fi
+
+echo "=== M27: its-routing man subcommands ==="
+for sub in client-send client-receive start-node time-lock time-unlock time-deny fingerprint-erasure; do
+  man_token="${sub//-/\\-}"
+  if grep -q "\\.${man_token}" "$ROOT/man/its-routing.1" 2>/dev/null; then
+    green "man documents $sub"
+  else
+    red "man missing subcommand $sub"
+  fi
+done
+for sub in client-export-share client-import-share; do
+  man_token="${sub//-/\\-}"
+  if grep -q "$man_token" "$ROOT/man/its-routing.1" 2>/dev/null \
+    && grep -qi 'hardware' "$ROOT/man/its-routing.1"; then
+    green "man documents hardware-gated $sub"
+  else
+    red "man missing or unmarked hardware-gated $sub"
+  fi
+done
+
 echo "=== M27: print_usage sync spot-check ==="
 if [[ -x "$ROOT/target/release/its-routing" ]]; then
-  if "$ROOT/target/release/its-routing" --help 2>&1 | grep -q '\-\-pool'; then
-    green "its-routing --help mentions --pool"
-  else
-    red "its-routing --help missing --pool"
-  fi
+  help_out="$("$ROOT/target/release/its-routing" --help 2>&1)"
+  echo "$help_out" | grep -q '\-\-pool' && green "its-routing --help mentions --pool" \
+    || red "its-routing --help missing --pool"
+  echo "$help_out" | grep -q 'client-export-share' && green "its-routing --help lists client-export-share" \
+    || red "its-routing --help missing client-export-share"
 else
   echo "SKIP: its-routing binary not built (run cargo build -p its_routing)"
+fi
+
+if [[ -x "$KM/target/release/its-km" ]]; then
+  km_help="$("$KM/target/release/its-km" --help 2>&1 || true)"
+  echo "$km_help" | grep -q '\-\-pool-dir' && green "its-km --help mentions --pool-dir" \
+    || red "its-km --help missing --pool-dir"
+else
+  echo "SKIP: its-km binary not built under ITS_KM_DIR"
 fi
 
 if [[ "$FAIL" -eq 0 ]]; then

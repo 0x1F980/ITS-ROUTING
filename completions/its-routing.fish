@@ -32,7 +32,6 @@ complete -c its-routing -n "__fish_seen_subcommand_from client-send" -l aeh -d "
 complete -c its-routing -n "__fish_seen_subcommand_from client-send" -l continuous -d "Enable continuous background decoy chaffing"
 complete -c its-routing -n "__fish_seen_subcommand_from client-send" -l ratchet-seed-file -r -F -d "32-byte OTP seed from ITS-KeyManagement"
 complete -c its-routing -n "__fish_seen_subcommand_from client-send" -l fingerprint-erasure -d "Optional Gamma CR-NF before send"
-complete -c its-routing -n "__fish_seen_subcommand_from client-send" -l mailbox-fingerprint -r -d "PoolMailbox contact hint"
 
 # client-receive
 complete -c its-routing -n "__fish_seen_subcommand_from client-receive" -l pool -d "UES Monocell Pool harvest"

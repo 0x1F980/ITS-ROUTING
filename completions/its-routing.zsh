@@ -45,8 +45,7 @@ _its_net() {
                         '--aeh[Manual AEH last-resort]' \
                         '--continuous[Enable continuous background decoy chaffing]' \
                         '--ratchet-seed-file[32-byte OTP seed from ITS-KeyManagement]:file:_files' \
-                        '--fingerprint-erasure[Optional Gamma CR-NF before send]' \
-                        '--mailbox-fingerprint[PoolMailbox contact hint]:hex:'
+                        '--fingerprint-erasure[Optional Gamma CR-NF before send]'
                     ;;
                 client-receive)
                     _arguments \

@@ -4,6 +4,9 @@ set -euo pipefail
 
 ECO_ROOT="${1:-/home/user}"
 ROUTING="$ECO_ROOT/ROUTING"
+export ITS_KM_DIR="${ITS_KM_DIR:-$ECO_ROOT/ITS-KeyManagement}"
+export ITS_ASYMMETRIC_DIR="${ITS_ASYMMETRIC_DIR:-$ECO_ROOT/ITS-asymmetric}"
+export ITS_ECO_ROOT="$ECO_ROOT"
 FAIL=0
 
 red() { echo "FAIL: $*"; FAIL=1; }
@@ -520,16 +523,35 @@ done
 
 echo "=== M27: CLI completions drift gate ==="
 if [[ -x "$ROUTING/scripts/verify_cli_completions.sh" ]]; then
-  "$ROUTING/scripts/verify_cli_completions.sh" >/dev/null 2>&1 && green "M27: verify_cli_completions.sh" || red "M27: verify_cli_completions.sh failed"
+  if "$ROUTING/scripts/verify_cli_completions.sh"; then
+    green "M27: verify_cli_completions.sh"
+  else
+    red "M27: verify_cli_completions.sh failed"
+  fi
 else
   red "M27: verify_cli_completions.sh missing"
 fi
 
 echo "=== M28: constitution KM sneakernet pipe ==="
 if [[ -x "$ROUTING/scripts/pipe_its_km_sneakernet_e2e.sh" ]]; then
-  "$ROUTING/scripts/pipe_its_km_sneakernet_e2e.sh" >/dev/null 2>&1 && green "M28: pipe_its_km_sneakernet_e2e.sh" || red "M28: pipe_its_km_sneakernet_e2e.sh failed"
+  if "$ROUTING/scripts/pipe_its_km_sneakernet_e2e.sh"; then
+    green "M28: pipe_its_km_sneakernet_e2e.sh"
+  else
+    red "M28: pipe_its_km_sneakernet_e2e.sh failed"
+  fi
 else
   red "M28: pipe_its_km_sneakernet_e2e.sh missing"
+fi
+
+echo "=== M28b: prod config + --pool-dir hazard (file-only, no HTTP) ==="
+if [[ -x "$ROUTING/scripts/pipe_its_km_pooldir_prod_hazard.sh" ]]; then
+  if "$ROUTING/scripts/pipe_its_km_pooldir_prod_hazard.sh"; then
+    green "M28b: pipe_its_km_pooldir_prod_hazard.sh"
+  else
+    red "M28b: pipe_its_km_pooldir_prod_hazard.sh failed"
+  fi
+else
+  red "M28b: pipe_its_km_pooldir_prod_hazard.sh missing"
 fi
 
 if [[ "${VERIFY_MATH_V10:-0}" == "1" ]]; then

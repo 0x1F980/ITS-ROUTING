@@ -2,6 +2,8 @@
 
 ## License: GNU GPLv3 Only
 
+> **Scope:** This guide covers **messaging and censorship-recovery paths** via `its-km` and pool carrier config. Raw `its_asymmetric encrypt` / `decrypt` remain valid for **non-messaging** static broadcast and file workflows — not as a drop-in replacement for constitution send/receive.
+
 **When ITS wins** vs **when to keep RSA/PQC/Tor/I2P/Nym**.
 
 Product replacement matrix: [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md)  

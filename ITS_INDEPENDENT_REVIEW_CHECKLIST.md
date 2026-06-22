@@ -119,8 +119,9 @@ Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (mul
 - [x] [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) — authoritative seven essentials; linked from QUICKSTART + ECOSYSTEM
 - [x] [config.offline.toml](config.offline.toml) + QUICKSTART offline §3 (`its-km` only, no raw decrypt chain)
 - [x] `its-km send/receive --pool-dir` — temporary `routing.override.toml` in work-dir
-- [x] **M27** — `verify_cli_completions.sh` (ghost check, `--pool` in 4 shells, constitution PATH)
+- [x] **M27** — `verify_cli_completions.sh` (ghost check, `--pool` in 4 shells, cli.rs sync, constitution PATH)
 - [x] **M28** — `pipe_its_km_sneakernet_e2e.sh` (KM constitution sneakernet smoke)
+- [x] **M28b** — `pipe_its_km_pooldir_prod_hazard.sh` (prod base + `--pool-dir` file-only, no HTTP)
 - [x] CENSORSHIP_RECOVERY + MIGRATION_GUIDES use constitution flow (not raw `its-routing` + `its_asymmetric decrypt`)
 - [ ] Operator checkbox: production messaging without calling `its-routing` directly — constitution path only
 
@@ -128,27 +129,27 @@ Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (mul
 
 ## Sprint 7 — v10 implementation certificate (M23–M26)
 
-**Math gate** — `./scripts/verify_math.sh` M23–M26:
+**Math gate** — `./scripts/verify_math.sh` M23–M26 (aligned with [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) — automated green 2026-06-22):
 
-- [ ] **M23** — `lake build routing-math-refinement` (all v10 roots: ValidFwd, witness, receive gate, client pool, SSS stub)
-- [ ] **M24** — smoke `Refinement/ValidForwardRefinement.lean`
-- [ ] **M25** — smoke `Refinement/WitnessConsensusRefinement.lean` + `Refinement/ForwardReceiveGateRefinement.lean`
-- [ ] **M26** — smoke `networkImplementationCertificateV10` in `MasterTheoremV6.lean`; PROOF_MANIFEST v10 grep
+- [x] **M23** — `lake build routing-math-refinement` (all v10 roots: ValidFwd, witness, receive gate, client pool, SSS stub)
+- [x] **M24** — smoke `Refinement/ValidForwardRefinement.lean`
+- [x] **M25** — smoke `Refinement/WitnessConsensusRefinement.lean` + `Refinement/ForwardReceiveGateRefinement.lean`
+- [x] **M26** — smoke `networkImplementationCertificateV10` in `MasterTheoremV6.lean`; PROOF_MANIFEST v10 grep
 
 **Refinement review:**
 
-- [ ] 0 `sorry` in `mathematics/Refinement/*.lean`
-- [ ] 0 `Prop := True` stubs in refinement modules
-- [ ] `validForwardRefinementClosed`, `witnessConsensusRefinementClosed`, `forwardReceiveGateRefinementClosed`, `clientPoolRefinementClosed` proved
-- [ ] `cargo test -p its_routing --lib valid_forward consensus` green
-- [ ] REFINEMENT_MANIFEST.md truth table: Proved / smoke / Outside — no grey zone
-- [ ] M21–M22 E2E pipes labeled smoke only in manifests
+- [x] 0 `sorry` in `mathematics/Refinement/*.lean` (verify_math.sh M23 gate)
+- [x] 0 `Prop := True` stubs in refinement modules (REFINEMENT_MANIFEST truth table)
+- [x] `validForwardRefinementClosed`, `witnessConsensusRefinementClosed`, `forwardReceiveGateRefinementClosed`, `clientPoolRefinementClosed` proved
+- [x] `cargo test -p its_routing --lib valid_forward consensus` green (verify_ecosystem.sh)
+- [x] REFINEMENT_MANIFEST.md truth table: Proved / smoke / Outside — no grey zone
+- [x] M21–M22 E2E pipes labeled smoke only in manifests
 
 **v10 sign-off:**
 
 - [ ] Independent reviewer confirms `networkImplementationCertificateV10` bundle
-- [ ] RNG byte draw documented as Outside (option B) in REFINEMENT_MANIFEST
-- [ ] v10.1 sibling tracks (asymmetric, OTM, timelock, SSS) tracked as planned
+- [x] RNG byte draw documented as Outside (option B) in REFINEMENT_MANIFEST
+- [x] v10.1 sibling tracks (asymmetric, OTM, timelock, SSS) tracked as planned
 
 ---
 
@@ -156,8 +157,9 @@ Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (mul
 
 **Operator law:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) — 7 essentials; `its-km` only for prod messaging.
 
-- [ ] **M27** — `scripts/verify_cli_completions.sh` green (no ghost subcommands; `--pool` in ROUTING completions; `--pool-dir` in KM)
-- [ ] **M28** — `scripts/pipe_its_km_sneakernet_e2e.sh` green (KM send/receive + `--pool-dir`, Eve deletes one epoch)
-- [ ] `config.offline.toml` + QUICKSTART offline § documented
-- [ ] Operator does **not** need direct `its-routing client-send/receive` for constitution flow
-- [ ] CENSORSHIP_RECOVERY step 3 uses `its-km` + `--pool-dir` (not raw decrypt chain)
+- [x] **M27** — `scripts/verify_cli_completions.sh` v2 green (ghost check, cli.rs subcommand sync, `--pool` / `--pool-dir`, man pages)
+- [x] **M28** — `scripts/pipe_its_km_sneakernet_e2e.sh` green (KM send/receive + `--pool-dir`, Eve deletes one epoch)
+- [x] **M28b** — `scripts/pipe_its_km_pooldir_prod_hazard.sh` green (prod-like base neutralized — no HTTP)
+- [x] `config.offline.toml` + QUICKSTART offline § documented
+- [x] Operator does **not** need direct `its-routing client-send/receive` for constitution flow (QUICKSTART + KM README)
+- [x] CENSORSHIP_RECOVERY step 3 uses `its-km` + `--pool-dir` (not raw decrypt chain)

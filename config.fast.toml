@@ -1,0 +1,23 @@
+# Fast profile — low latency lab / LAN mirror tests
+# Copy to ~/.its/routing.toml for development; NOT for production witness quorum.
+
+[pool]
+transport_mode = "pool"
+pool_file = ".its-pool"
+pool_url = ""
+multi_pool_urls = []
+witness_pool_urls = []
+cell_size_L = 4096
+epoch_interval_ms = 50
+sss_k = 2
+sss_n = 3
+fountain_enabled = false
+consensus_k = 1
+valid_fwd_window = 32
+
+[aeh]
+entropy_sources = []
+
+[crypto]
+threshold_k = 2
+total_shares_n = 3

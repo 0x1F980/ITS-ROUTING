@@ -1,0 +1,33 @@
+# Robust profile — production ITS-A + censorship recovery defaults
+# Mirrors + witnesses + longer ValidFwd window. See QUICKSTART §2.
+
+[pool]
+transport_mode = "pool"
+pool_file = ".its-pool"
+pool_url = ""
+# Set your public mirrors (see deploy/pool-mirror/)
+multi_pool_urls = [
+  "http://mirror1.example:8787",
+  "http://mirror2.example:8787",
+]
+witness_pool_urls = [
+  "http://witness1.example:8787",
+  "http://witness2.example:8787",
+  "http://witness3.example:8787",
+]
+cell_size_L = 4096
+epoch_interval_ms = 100
+sss_k = 2
+sss_n = 3
+fountain_enabled = true
+consensus_k = 2
+valid_fwd_window = 64
+
+[aeh]
+entropy_sources = [
+  "http://api.blockcypher.com/v1/btc/main"
+]
+
+[crypto]
+threshold_k = 2
+total_shares_n = 3

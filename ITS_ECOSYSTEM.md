@@ -28,6 +28,8 @@
 
 Wire confidentiality, SSS backward ambiguity, WC-MAC attestation, and timelock deniability are **different faces of ITS** on different layers — not alternate definitions of the acronym.
 
+**Constitution vs Advanced:** Default operators follow [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md). Optional ridges (OTM, timelock, ledger, FE, hardware) are documented in [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) — not part of the seven essentials.
+
 ---
 
 ## Four ITS channels (C1–C4)
@@ -357,11 +359,12 @@ Ecosystem verify uses `--features full` when testing the complete routing binary
 
 ## Build & verify
 
-**Pre-build doctrine (run before UES v1.5):** [ITS-routing_PREBUILD_DOCTRINE.md](ITS-routing_PREBUILD_DOCTRINE.md)
+**Pre-build doctrine v2.0:** [ITS-routing_PREBUILD_DOCTRINE.md](ITS-routing_PREBUILD_DOCTRINE.md) · Docker: [deploy/docker/docker-compose.yml](deploy/docker/docker-compose.yml) · Nix: [flake.nix](flake.nix) · Firecracker: [deploy/firecracker/README.md](deploy/firecracker/README.md)
 
 ```bash
 ./scripts/bootstrap.sh      # clone 0x1F980 ecosystem (tags)
-./scripts/verify_ecosystem.sh
+./scripts/verify_ecosystem.sh /home/user
+./scripts/install_completions.sh --all   # constitution + optional ridges
 ```
 
 **Product docs (Sprint 5):** [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)

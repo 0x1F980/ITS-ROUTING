@@ -18,7 +18,9 @@ See [ITS_CONSTITUTION_CLI.md] for the seven operator essentials.
 .SH OPTIONS
 .TP
 .BI \-c ", " \-\-config " config_file"
-Path to routing.toml (pool, AEH, crypto sections). Defaults to /etc/its-routing/config.toml if present.
+Path to routing.toml (pool, AEH, crypto sections). Defaults to
+.BR config.toml
+in the current working directory; if missing, built-in defaults apply.
 .TP
 .B \-h ", " \-\-help
 Show usage and exit.
@@ -91,6 +93,18 @@ Decrypt to a decoy message of equal length (deniability). Accepts
 .TP
 .B fingerprint\-erasure
 Standalone offline Gamma provenance erasure.
+.TP
+.B client\-export\-share
+.B Hardware-gated build only.
+Serialize Shamir shares into physical character strings (analog export).
+Requires
+.BR \-\-features " hardware " .
+.TP
+.B client\-import\-share
+.B Hardware-gated build only.
+Reconstruct Shamir secret from physical character strings (analog import).
+Requires
+.BR \-\-features " hardware " .
 .SH OPERATOR IDENTITY
 Vault, contacts, QR, and send/receive orchestration: use
 .BR its-km (1).

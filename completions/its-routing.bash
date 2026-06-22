@@ -17,7 +17,7 @@ _its_routing_completions() {
             return 0
             ;;
         client-send)
-            COMPREPLY=( $(compgen -W "-m --msg -f --file -d --dest --pool --no-pool --aeh --continuous --ratchet-seed-file --fingerprint-erasure --fe-strict --fe-permissive --mailbox-fingerprint" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-m --msg -f --file -d --dest --pool --no-pool --aeh --continuous --ratchet-seed-file --fingerprint-erasure --fe-strict --fe-permissive" -- "$cur") )
             return 0
             ;;
         client-receive)

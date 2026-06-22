@@ -1,0 +1,42 @@
+# ITS ecosystem — local Docker compose (skeleton)
+#
+# Build images first: ./deploy/docker/docker_build_all.sh
+# Then: docker compose -f deploy/docker/docker-compose.yml up
+
+services:
+  its-routing:
+    image: its-routing:local
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    volumes:
+      - its-pool-data:/its-pool
+    environment:
+      - ITS_PROD_GATE=0
+    command: ["--help"]
+
+  its-km:
+    image: its-km:local
+    build:
+      context: ../../../ITS-KeyManagement
+      dockerfile: Dockerfile
+    depends_on:
+      - its-routing
+    volumes:
+      - km-vault:/vault
+    command: ["--help"]
+
+  pool-mirror:
+    image: python:3.12-alpine
+    working_dir: /app
+    volumes:
+      - ../../deploy/pool-mirror:/app:ro
+      - mirror-store:/store
+    command: ["python3", "pool_mirror_server.py", "--port", "8787", "--store-dir", "/store"]
+    ports:
+      - "8787:8787"
+
+volumes:
+  its-pool-data:
+  km-vault:
+  mirror-store:

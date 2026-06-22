@@ -145,6 +145,20 @@ python3 ROUTING/tools/its_pool_proxy.py --listen 127.0.0.1:1080 --config ~/.its/
 
 Point apps at `SOCKS5 127.0.0.1:1080` (requires Bob receiver running).
 
+---
+
+## 5. Operator playbook — mirrors, witnesses, offline `--pool-dir`
+
+| Step | Online (ITS-A) | Offline (sneakernet) |
+|------|----------------|----------------------|
+| Base config | `cp ROUTING/config.robust.toml ~/.its/routing.toml` (or `config.prod.toml`) | `cp ROUTING/config.offline.toml` |
+| Pool carrier | Edit `multi_pool_urls` + `witness_pool_urls`; deploy [deploy/pool-mirror/](deploy/pool-mirror/) | `pool_file` or `--pool-dir /media/usb/its-pool` |
+| Witness quorum | `consensus_k = 2` with 3 witnesses (2-of-3) | N/A — redundant USB copies |
+| Latency tuning | `config.fast.toml` for lab (`epoch_interval_ms = 50`) | Same offline template |
+| Safety | Never prod mirrors + `--pool-dir` alone — see [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) WARNING | M28b gate: `pipe_its_km_pooldir_prod_hazard.sh` |
+
+Full ridge scope: [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) · Pipe policy: [ITS_PIPE_STDIO_POLICY.md](ITS_PIPE_STDIO_POLICY.md)
+
 ## Why better than I2P/Nym
 
 See [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md).

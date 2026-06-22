@@ -48,6 +48,21 @@ This document maps each overlay claim to ITS lemma-ID and product gate (W1–W13
 
 ---
 
+## When Tor / I2P / Nym still fits (honest product boundary)
+
+ITS wins on **C/I/logic** under Sybil-majority (P6.3) — not on every operational dimension today:
+
+| Overlay strength | ITS status (v2.0) |
+|------------------|-------------------|
+| Out-of-box browser / router UX | Tor Browser, I2P router, Nym wallet — **still ahead** until Fase 2 infra playbook ships |
+| Million-node volunteer relay scale | ITS public pool mirrors — **roadmap** (`deploy/pool-mirror/`) |
+| Anonymous clearnet browsing to arbitrary sites | **Out of scope** — ITS SOCKS proxy targets known Bob receivers |
+| Long-lived hidden service directory at global scale | Overlays — ITS uses ciphertext-local mailbox hints |
+
+Use ITS when you need Shannon wire + pool carrier + constitution `its-km` flow. Keep Tor/I2P/Nym when you need turnkey overlay UX before your ITS mirror/witness playbook is deployed.
+
+---
+
 ## Verify
 
 ```bash
