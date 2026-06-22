@@ -7,7 +7,116 @@
 **When ITS wins** vs **when to keep RSA/PQC/Tor/I2P/Nym**.
 
 Product replacement matrix: [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md)  
-Overlay comparison (lemma-ID): [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md)
+Overlay comparison (lemma-ID): [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md)  
+Feature → gate one-pager: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md)
+
+---
+
+## Switch from I2P/Nym in one evening
+
+**Time budget:** ~2–3 hours for a technical user who already runs I2P or Nym. **Path:** constitution only — no raw `its-routing client-send`.
+
+### Before you start
+
+| I2P / Nym habit | ITS equivalent |
+|-----------------|----------------|
+| Router / wallet running | `its-km`, `its-routing`, `its_asymmetric` on PATH |
+| Destination / Nym ID | Contact alias + OOB transport ratchet sync |
+| SOCKS proxy | `its_pool_proxy.py` on `:1080` (Bob must `--continuous` receive) |
+| `.i2p` hidden site | Pairwise — [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) |
+| Network / floodfill | `multi_pool_urls` + `witness_pool_urls` in `config.prod.toml` |
+
+Read first: [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) · [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md)
+
+### Step 1 — Bootstrap (30 min)
+
+```bash
+cd /path/to/ecosystem
+./ROUTING/scripts/bootstrap.sh
+cargo build --release -p its_routing -p its_keymgmt --manifest-path ROUTING/Cargo.toml
+cargo build --release --manifest-path ITS-asymmetric/Cargo.toml --bin its_asymmetric --features "bundle,parallel,std,compact-wire"
+cargo build --release --manifest-path ITS-KeyManagement/Cargo.toml --bin its-km
+export PATH="$PWD/ITS-asymmetric/target/release:$PWD/ROUTING/target/release:$PWD/ITS-KeyManagement/target/release:$PATH"
+```
+
+Verify: `ROUTING/scripts/verify_ecosystem.sh /home/user` (or your ecosystem root).
+
+### Step 2 — Vault + contact (20 min)
+
+```bash
+its-km vault init --vault-key-dir ~/.its/km-vault-keys
+mkdir -p ~/.its
+cp ROUTING/config.prod.toml ~/.its/routing.toml
+# Edit multi_pool_urls + witness_pool_urls — or run local mirror from deploy/pool-mirror/
+
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key entry add \
+  --alias bob --public /path/to/bob.public.key --routing-config ~/.its/routing.toml
+
+its-km export-qr --contact bob --layer transport-ratchet
+# Bob imports on his machine:
+its-km import-qr --alias alice --layer transport-ratchet --payload 'its-km:qr:...'
+```
+
+### Step 3 — First message (10 min)
+
+**Alice:**
+
+```bash
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key send --contact bob --file hello.txt
+```
+
+**Bob:**
+
+```bash
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key receive --contact alice --out received.txt
+```
+
+Gate equivalent: `pipe_its_km_pool_e2e.sh` (M27).
+
+### Step 4 — Optional SOCKS (30 min)
+
+If you used I2P SOCKS for apps:
+
+**Bob** (receiver):
+
+```bash
+its-km receive --contact alice --continuous
+```
+
+**Alice** (proxy):
+
+```bash
+python3 ROUTING/tools/its_pool_proxy.py --listen 127.0.0.1:1080 --config ~/.its/routing.toml
+```
+
+Point app at `SOCKS5 127.0.0.1:1080`. Gate: `pipe_its_socks_pool_e2e.sh` (M19).  
+**Not** arbitrary clearnet — known Bob only ([ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md)).
+
+### Step 5 — Optional offline test (15 min)
+
+If you care about air-gap / USB handoff (I2P cannot do this):
+
+```bash
+cp ROUTING/config.offline.toml ~/.its/routing.toml
+its-km send --contact bob --file doc.pdf --pool-dir /media/usb/its-pool
+# hand off USB
+its-km receive --contact alice --out doc.pdf --pool-dir /media/usb/its-pool
+```
+
+Gate: `pipe_its_km_sneakernet_e2e.sh` (M28). See [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) offline killer.
+
+### Step 6 — Hidden service pattern (optional)
+
+Bob nginx + Alice SOCKS or file publish: [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md).
+
+### Done checklist
+
+- [ ] First `send` / `receive` without raw routing CLI  
+- [ ] `verify_ecosystem.sh` green on your machine  
+- [ ] You can explain Sybil vs mixnet in one sentence ([CORE §Va](ITS-routing_MATHEMATICAL_CORE.md))  
+- [ ] You know the honest limit: no arbitrary clearnet browsing  
+
+Pitch for colleagues: [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md)
 
 ---
 
@@ -113,4 +222,4 @@ Wire profile: [docs/ITS_WIRE_PROFILE_DRAFT_v0.2.md](docs/ITS_WIRE_PROFILE_DRAFT_
 ./scripts/verify_ecosystem.sh /home/user
 ```
 
-Cross-links: [ITS-asymmetric_DOMINANCE](../ITS-asymmetric/ITS-asymmetric_DOMINANCE.md) · [ITS_WIRE_PROFILE_DRAFT_v0.1](docs/ITS_WIRE_PROFILE_DRAFT_v0.1.md)
+Cross-links: [ITS-asymmetric_DOMINANCE](../ITS-asymmetric/ITS-asymmetric_DOMINANCE.md) · [ITS_WIRE_PROFILE_DRAFT_v0.1](docs/ITS_WIRE_PROFILE_DRAFT_v0.1.md) · [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md)

@@ -37,6 +37,23 @@ This document maps each overlay claim to ITS lemma-ID and product gate (W1–W13
 
 ---
 
+## Why ITS over I2P/Nym
+
+Same adversary story — Eve owns the network — different security basis. Overlays lean on **computational** anonymity sets, honest-majority relays, and long-lived tunnel state. ITS proves **information-theoretic** C/I on the wire and in pool observation \(O\), with **0 hops** and **1 epoch** per message.
+
+| Why switch | ITS | I2P / Nym (typical) |
+|------------|-----|---------------------|
+| **Latency** | One epoch cell — tune `epoch_interval_ms` (lab 50 ms+); no tunnel build or mix window | Multi-hop tunnels; Nym mix delay budget; I2P leaseSet + tunnel setup (seconds–minutes) |
+| **Sybil / node count** | \(I(M;O)=0\) bits unchanged if Eve owns 99.999%+ nodes — adding \(10^9\) Sybil posters adds 0 C bits ([§Va](ITS-routing_MATHEMATICAL_CORE.md), `SybilDoctrine.lean`) | k-anonymity intuition breaks when Eve Sybils the set — deanonymization risk grows with compromised relays |
+| **Offline** | Same four `its-km` commands; `config.offline.toml` or `--pool-dir` on USB — gate M28 | Router and floodfill require live network; no equivalent sneakernet path |
+| **0-hop transport** | Multiset UES pool forward — path attribution zero in \(O\) (`FlowAttributionZero.lean`) | Each hop adds trust in relay software and timing metadata |
+
+**Operator path:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) only — not raw `client-send`. Feature map: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md). Pitch script: [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md).
+
+**Pairwise hidden services:** No global `.i2p` directory — recipient hints live in ciphertext (W11). See [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md).
+
+---
+
 ## What ITS does not claim
 
 | Limit | Status |
@@ -70,4 +87,4 @@ Use ITS when you need Shannon wire + pool carrier + constitution `its-km` flow. 
 ./scripts/verify_ecosystem.sh     # P8 product gates M18–M22
 ```
 
-Cross-links: [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [PROOF_MANIFEST.md](PROOF_MANIFEST.md)
+Cross-links: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [PROOF_MANIFEST.md](PROOF_MANIFEST.md)

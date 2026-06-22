@@ -161,4 +161,11 @@ Full ridge scope: [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) · Pipe polic
 
 ## Why better than I2P/Nym
 
-See [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md).
+| Doc | Use |
+|-----|-----|
+| [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) | Feature → ITS path → gate (one page) |
+| [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) | Why ITS over I2P/Nym + honest boundaries |
+| [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) | 5-min pitch, Sybil FAQ, offline demo (M28) |
+| [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md) | Switch from I2P/Nym in one evening |
+| [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) | Pairwise hidden service (Bob nginx + Alice SOCKS) |
+| [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md) | W1–W13 win-conditions table |

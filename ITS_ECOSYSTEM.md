@@ -28,7 +28,7 @@
 
 Wire confidentiality, SSS backward ambiguity, WC-MAC attestation, and timelock deniability are **different faces of ITS** on different layers — not alternate definitions of the acronym.
 
-**Constitution vs Advanced:** Default operators follow [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md). Optional ridges (OTM, timelock, ledger, FE, hardware) are documented in [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) — not part of the seven essentials.
+**Constitution vs Advanced:** Default operators follow [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md). I2P/Nym switch map: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md). Optional ridges (OTM, timelock, ledger, FE, hardware) are documented in [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) — not part of the seven essentials.
 
 ---
 
@@ -367,7 +367,7 @@ Ecosystem verify uses `--features full` when testing the complete routing binary
 ./scripts/install_completions.sh --all   # constitution + optional ridges
 ```
 
-**Product docs (Sprint 5):** [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
+**Product docs (Sprint 5):** [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
 
 ---
 

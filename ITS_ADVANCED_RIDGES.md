@@ -51,6 +51,8 @@ Do not mix standalone puzzle paths with KM receive without reading [ITS-KeyManag
 
 ## Links
 
+- [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) — default operator path (seven essentials)  
 - [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md) — layer rules and repo register  
+- [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) — I2P/Nym feature map (constitution gates)  
 - [ITS_PIPE_STDIO_POLICY.md](ITS_PIPE_STDIO_POLICY.md) — which CLIs support `-` stdin/stdout  
 - [ITS-routing_PREBUILD_DOCTRINE.md](ITS-routing_PREBUILD_DOCTRINE.md) — build profiles and gates

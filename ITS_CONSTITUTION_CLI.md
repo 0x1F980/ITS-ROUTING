@@ -94,5 +94,7 @@ Operators should **not** call `its-routing` or `its_asymmetric decrypt` directly
 
 - Quick path: [QUICKSTART.md](QUICKSTART.md)
 - Ecosystem constitution: [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
+- I2P / Nym switch map: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md)
+- Advanced ridges (not onboarding): [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md)
 - Censorship ladder: [ITS-routing_CENSORSHIP_RECOVERY.md](ITS-routing_CENSORSHIP_RECOVERY.md)
 - KM manual: [ITS-KeyManagement/ITS-KeyManagement_manual.md](../ITS-KeyManagement/ITS-KeyManagement_manual.md)

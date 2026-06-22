@@ -2,6 +2,8 @@
 
 ## License: GNU GPLv3 Only
 
+> **Advanced / replacement-matrix gate only.** Production operators start with [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) and [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md). This document is the full C1–C4 migration matrix for architects and independent reviewers — not default onboarding.
+
 **Read with:** [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md) · [ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md)
 
 This document is the **official replacement matrix** for migrating from computational infrastructure (RSA, PQC, TLS record crypto, Argon2 vaults, Tor/Nym mixnets) to **Shannon Information-Theoretic Secrecy (ITS)** across four channels.
