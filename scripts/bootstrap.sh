@@ -19,10 +19,17 @@ clone_repo() {
     echo "skip $name (exists)"
     return
   fi
-  git clone --branch "$branch" "$ORG/$name.git" "$name" 2>/dev/null || \
-    git clone "$ORG/$name.git" "$name"
+  if ! git clone --branch "$branch" "$ORG/$name.git" "$name" 2>/dev/null; then
+    if ! git clone --branch main "$ORG/$name.git" "$name" 2>/dev/null; then
+      git clone "$ORG/$name.git" "$name"
+    fi
+  fi
   if [[ -d "$name/.git" ]]; then
-    (cd "$name" && git checkout "$TAG" 2>/dev/null || git checkout "$branch")
+    (cd "$name" && git checkout "$TAG" 2>/dev/null \
+      || git checkout "$branch" 2>/dev/null \
+      || git checkout main 2>/dev/null \
+      || git checkout master 2>/dev/null \
+      || true)
   fi
 }
 
