@@ -367,7 +367,7 @@ Ecosystem verify uses `--features full` when testing the complete routing binary
 ./scripts/install_completions.sh --all   # constitution + optional ridges
 ```
 
-**Product docs (Sprint 5):** [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
+**Product docs (Sprint 5):** [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [deploy/COMMUNITY_MIRRORS.md](deploy/COMMUNITY_MIRRORS.md) · [RELEASE.md](RELEASE.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
 
 ---
 

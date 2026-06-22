@@ -2,13 +2,19 @@
 
 Manual steps — **no auto-switch P↔AEH** (theorem requirement).
 
-## Step 1: Multi-mirror + fountain
+## Step 1: Multi-mirror + fountain (bridge replacement)
 
-1. Add mirrors to `multi_pool_urls` in `routing.toml`.
-2. Enable `fountain_enabled = true`.
-3. Re-send; receiver uses `--continuous` with longer `--timeout-secs`.
+When a mirror is blocked or omits epochs, ITS **does not** rely on volunteer onion relays — it uses **mirror failover + fountain + witnesses**:
 
-**Gate:** `pipe_its_censorship_recovery_e2e.sh`
+1. Add mirrors to `multi_pool_urls` in `routing.toml` (≥2 for ITS-A).
+2. Enable `fountain_enabled = true` — extra chaff epochs improve harvest under partial omission.
+3. List **independent** witnesses in `witness_pool_urls` with `consensus_k = 2` (2-of-3).
+4. Re-send; receiver uses `--continuous` with longer `--timeout-secs`.
+5. If Eve-A omits epoch 3, ValidFwd de-whitelists her; harvest from Eve-B or Charlie witness quorum.
+
+**Latency profiles:** use [`config.robust.toml`](config.robust.toml) for prod (fountain + witnesses). Lab-only fast path: [`config.fast.toml`](config.fast.toml) — see [QUICKSTART §5](QUICKSTART.md#when-to-use-which-profile).
+
+**Gate:** `pipe_its_censorship_recovery_e2e.sh` (M21)
 
 ## Step 2: AEH last-resort (manual)
 

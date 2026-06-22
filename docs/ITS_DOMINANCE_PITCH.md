@@ -114,7 +114,7 @@ ROUTING/scripts/pipe_its_km_sneakernet_e2e.sh
 
 ## Community mirror list (template)
 
-Document your public fleet in `config.prod.toml` comments or operator wiki:
+Document your public fleet in `config.prod.toml` or [deploy/COMMUNITY_MIRRORS.md](../deploy/COMMUNITY_MIRRORS.md):
 
 | Mirror URL | Operator | Witness? | Notes |
 |------------|----------|----------|-------|

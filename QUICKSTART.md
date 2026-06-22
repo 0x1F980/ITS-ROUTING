@@ -146,7 +146,17 @@ Or set `pool_file = "/media/usb/its-pool"` in `routing.toml` and omit `--pool-di
 
 ```bash
 ROUTING/scripts/verify_ecosystem.sh /home/user
+ROUTING/scripts/pipe_its_socks_pool_e2e.sh   # M19 v2 SOCKS gate (optional)
 ```
+
+**Proof manifests (green badges):**
+
+| Doc | Role |
+|-----|------|
+| [PROOF_MANIFEST.md](PROOF_MANIFEST.md) | Lean + implementation certificate (M1–M26) |
+| [REFINEMENT_MANIFEST.md](REFINEMENT_MANIFEST.md) | v10 refinement closure |
+
+Signed releases: [RELEASE.md](RELEASE.md) · Independent review: [ITS_INDEPENDENT_REVIEW_CHECKLIST.md](ITS_INDEPENDENT_REVIEW_CHECKLIST.md)
 
 ---
 

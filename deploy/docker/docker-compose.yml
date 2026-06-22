@@ -69,6 +69,20 @@ services:
     networks:
       - its-net
 
+  # Fase 4 hidden-service profile: Bob nginx + pool mirror (pairwise egress reference)
+  bob-nginx:
+    profiles: ["hidden-service"]
+    image: nginx:alpine
+    volumes:
+      - ./hidden-service/static:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    networks:
+      - its-net
+    depends_on:
+      pool-mirror:
+        condition: service_healthy
+
 networks:
   its-net:
     driver: bridge

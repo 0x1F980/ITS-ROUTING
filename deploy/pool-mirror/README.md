@@ -144,6 +144,8 @@ ROUTING/scripts/verify_ecosystem.sh /path/to/ecosystem
 
 Document your public mirror URLs in `config.prod.toml` (REPLACE placeholders) before shipping default prod config to operators.
 
+Community fleet registry: [COMMUNITY_MIRRORS.md](../COMMUNITY_MIRRORS.md)
+
 ---
 
 ## BIS / P1–P3 checklist (M18)

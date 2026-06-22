@@ -91,9 +91,16 @@ Reproducible verification badge for adopters.
 
 **Z10 fresh-clone status** (2026-06-22):
 
-- `./scripts/bootstrap.sh /tmp/its-ecosystem-z10-test` — initial attempt failed: remote `SSS_CHAIN` has no `master` branch; `bootstrap.sh` updated with `main` fallback.
-- Re-run after merge: `ECOSYSTEM_TAG=v2.0.0 ./scripts/bootstrap.sh ./its-ecosystem && ./its-ecosystem/ITS-ROUTING/scripts/verify_math.sh && ./its-ecosystem/ITS-ROUTING/scripts/verify_ecosystem.sh ./its-ecosystem`
-- Local monorepo gate is green; Z10 remains **operator action** until bootstrap + verify on isolated tree succeeds.
+| Step | Command | Status |
+|------|---------|--------|
+| Z10.1 | `ECOSYSTEM_TAG=v2.0.0 ./scripts/bootstrap.sh ./its-ecosystem` | operator — rerun after bootstrap `main` fallback merge |
+| Z10.2 | `./its-ecosystem/ITS-ROUTING/scripts/verify_math.sh` | green on local monorepo |
+| Z10.3 | `./its-ecosystem/ITS-ROUTING/scripts/verify_ecosystem.sh ./its-ecosystem` | green on local monorepo (~17 min) |
+| Z10.4 | Isolated clone on tagged checkout (no sibling `path = "../"`) | **pending** — see [RELEASE.md](RELEASE.md) |
+
+Re-run after merge: `ECOSYSTEM_TAG=v2.0.0 ./scripts/bootstrap.sh ./its-ecosystem && ./its-ecosystem/ITS-ROUTING/scripts/verify_math.sh && ./its-ecosystem/ITS-ROUTING/scripts/verify_ecosystem.sh ./its-ecosystem`
+
+Local monorepo gate is green; Z10.4 remains **operator action** until bootstrap + verify on isolated tree succeeds.
 
 **Operator-only** (requires user confirmation — not automated):
 

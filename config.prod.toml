@@ -25,6 +25,7 @@ pool_url = ""
 # ]
 
 # Default until fleet URLs are configured (onboard wizard prompts edit):
+# Document live fleet: deploy/COMMUNITY_MIRRORS.md
 multi_pool_urls = []
 witness_pool_urls = []
 consensus_k = 2
