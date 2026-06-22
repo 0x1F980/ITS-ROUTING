@@ -24,16 +24,20 @@ its-km receive --contact alice --aeh --out received.pdf
 When **no network path** exists (grid down, air-gap, physical exfil only):
 
 ```bash
-# Pattern from pipe_its_sneakernet_e2e.sh — export epoch cells to removable media
-its-routing -c ~/.its/routing.toml client-send --pool --file msg.wire --ratchet-seed-file ratchet.seed
-# Copy pool export / analog shares to USB; physically deliver to Bob
-its-routing -c ~/.its/routing.toml client-receive --pool --file recv.wire --ratchet-seed-file ratchet.seed
-its_asymmetric decrypt --sk bob.secret.key --pk bob.public.key --in recv.wire --out received.txt
+cp ROUTING/config.offline.toml ~/.its/routing.toml
+# Alice — write epoch cells to USB (KM orchestrates encrypt + pool publish)
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key send \
+  --contact bob --file doc.pdf --pool-dir /media/usb/its-pool
+# Physically deliver USB to Bob
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key receive \
+  --contact alice --out received.pdf --pool-dir /media/usb/its-pool
 ```
+
+Same routing logic as online — only `pool_file` / `--pool-dir` changes the carrier. See [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md).
 
 **Why ITS beats I2P here:** I2P requires live overlay — **no delivery when net is down**. ITS keeps **same Shannon wire + OTM** on offline medium; C/I unchanged after secure-endpoint verify.
 
-**Gate:** `pipe_its_sneakernet_e2e.sh`
+**Gate:** `pipe_its_km_sneakernet_e2e.sh` (M28) · routing unit: `pipe_its_sneakernet_e2e.sh`
 
 ## Claims
 

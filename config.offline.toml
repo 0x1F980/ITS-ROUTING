@@ -1,0 +1,19 @@
+[pool]
+transport_mode = "pool"
+pool_file = ".its-pool"
+pool_url = ""
+multi_pool_urls = []
+witness_pool_urls = []
+sss_k = 2
+sss_n = 3
+cell_size_L = 4096
+fountain_enabled = true
+epoch_interval_ms = 100
+valid_fwd_window = 64
+
+[aeh]
+entropy_sources = []
+
+[crypto]
+threshold_k = 2
+total_shares_n = 3

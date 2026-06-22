@@ -112,6 +112,20 @@ Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (mul
 
 ---
 
+## Sprint — Constitution CLI shipped
+
+**Docs + gates** — local run 2026-06-22:
+
+- [x] [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) — authoritative seven essentials; linked from QUICKSTART + ECOSYSTEM
+- [x] [config.offline.toml](config.offline.toml) + QUICKSTART offline §3 (`its-km` only, no raw decrypt chain)
+- [x] `its-km send/receive --pool-dir` — temporary `routing.override.toml` in work-dir
+- [x] **M27** — `verify_cli_completions.sh` (ghost check, `--pool` in 4 shells, constitution PATH)
+- [x] **M28** — `pipe_its_km_sneakernet_e2e.sh` (KM constitution sneakernet smoke)
+- [x] CENSORSHIP_RECOVERY + MIGRATION_GUIDES use constitution flow (not raw `its-routing` + `its_asymmetric decrypt`)
+- [ ] Operator checkbox: production messaging without calling `its-routing` directly — constitution path only
+
+---
+
 ## Sprint 7 — v10 implementation certificate (M23–M26)
 
 **Math gate** — `./scripts/verify_math.sh` M23–M26:
@@ -135,3 +149,15 @@ Manual operator gates: standard-profile `adversary_* --ignored`, 1 MiB pipe (mul
 - [ ] Independent reviewer confirms `networkImplementationCertificateV10` bundle
 - [ ] RNG byte draw documented as Outside (option B) in REFINEMENT_MANIFEST
 - [ ] v10.1 sibling tracks (asymmetric, OTM, timelock, SSS) tracked as planned
+
+---
+
+## Sprint 8 — Constitution CLI + medium-independent routing (M27–M28)
+
+**Operator law:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) — 7 essentials; `its-km` only for prod messaging.
+
+- [ ] **M27** — `scripts/verify_cli_completions.sh` green (no ghost subcommands; `--pool` in ROUTING completions; `--pool-dir` in KM)
+- [ ] **M28** — `scripts/pipe_its_km_sneakernet_e2e.sh` green (KM send/receive + `--pool-dir`, Eve deletes one epoch)
+- [ ] `config.offline.toml` + QUICKSTART offline § documented
+- [ ] Operator does **not** need direct `its-routing client-send/receive` for constitution flow
+- [ ] CENSORSHIP_RECOVERY step 3 uses `its-km` + `--pool-dir` (not raw decrypt chain)

@@ -1,6 +1,8 @@
 # ITS UES — 5-minute QUICKSTART
 
-Send and receive over the UES Monocell Pool with one command per side.
+**Constitution flow:** seven essentials only — see [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md).
+
+Send and receive with `its-km`. Switch online ↔ offline by changing `routing.toml` `[pool]` (or `--pool-dir`), not by learning new commands.
 
 ## Why Eve can't win (math, not trust)
 
@@ -10,9 +12,11 @@ Eve may own 99.999%+ of pool mirrors — that is axiom A0, not a failure mode. U
 |--------|---------------|--------------------------|
 | **C** | 0 bits about message content in \(O\) | Shannon wire + L3 pool — no config needed |
 | **I** | \(\leq 1\) false accept per \(2.147\times10^9\) forgery tries | OTM verify on **your** endpoint keys only |
-| **A** | Cannot stay on \(\mathcal{M}_{\text{valid}}\) if she omits | `multi_pool_urls` + `witness_pool_urls` below |
+| **A** | Cannot stay on \(\mathcal{M}_{\text{valid}}\) if she omits | `multi_pool_urls` + `witness_pool_urls` (online §2) |
 
-**Numeric walkthrough** (epochs 0–5, evil mirror omit, k-of-n witness): [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
+**Numeric walkthrough:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
+
+---
 
 ## 1. Bootstrap
 
@@ -21,11 +25,53 @@ cd /path/to/ecosystem
 ./ROUTING/scripts/bootstrap.sh
 cargo build --release -p its_routing -p its_keymgmt --manifest-path ROUTING/Cargo.toml
 cargo build --release --manifest-path ITS-asymmetric/Cargo.toml --bin its_asymmetric --features "bundle,parallel,std,compact-wire"
+cargo build --release --manifest-path ITS-KeyManagement/Cargo.toml --bin its-km
 ```
 
-Ensure `its-routing`, `its-km`, and `its_asymmetric` are on `PATH`.
+Ensure `its-km`, `its-routing`, and `its_asymmetric` are on `PATH`.
 
-## 2. Routing config
+---
+
+## Constitution steps (all profiles)
+
+### Vault + contact (both peers)
+
+```bash
+its-km vault init --vault-key-dir ~/.its/km-vault-keys
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key entry add \
+  --alias bob --public /path/to/bob.public.key --routing-config ~/.its/routing.toml
+```
+
+`entry add` auto-generates a **per-contact transport_ratchet** (32 bytes in vault). Sync OOB:
+
+```bash
+its-km export-qr --contact bob --layer transport-ratchet
+# peer:
+its-km import-qr --alias bob --layer transport-ratchet --payload 'its-km:qr:...'
+```
+
+If `~/.its/routing.toml` is missing, `entry add` copies `ROUTING/config.prod.toml` automatically.
+
+### Send / receive
+
+**Alice:**
+
+```bash
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key send --contact bob --file doc.pdf
+```
+
+**Bob** (bob's keypair on the alice contact entry):
+
+```bash
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key entry add \
+  --alias alice --public /path/to/bob.public.key --secret /path/to/bob.secret.key \
+  --routing-config ~/.its/routing.toml --transport-ratchet-file /path/to/shared-ratchet.seed
+its-km --true-secret ~/.its/km-vault-keys/true/secret.key receive --contact alice --out received.pdf
+```
+
+---
+
+## 2. Online profile (ITS-A)
 
 ```bash
 mkdir -p ~/.its
@@ -37,63 +83,59 @@ Edit `~/.its/routing.toml` — set `pool_url` or `multi_pool_urls` to your publi
 **ITS-A (availability):** list mirrors + independent witnesses. Eve-only pools cannot satisfy ValidFwd if they omit — they are de-whitelisted automatically.
 
 ```toml
-# Primary mirrors (at least one must be honest forwarder)
 multi_pool_urls = [
   "http://mirror1:8787",
   "http://mirror2:8787",
 ]
-
-# A2′ witness mirrors — k-of-n consensus (Charlie role)
 witness_pool_urls = [
   "http://witness-charlie:8787",
   "http://witness2:8787",
   "http://witness3:8787",
 ]
-consensus_k = 2          # 2-of-3 witnesses must agree on cell c at epoch e
-valid_fwd_window = 64    # ValidFwd history window W (epochs)
+consensus_k = 2
+valid_fwd_window = 64
 ```
 
-With \(k=2, n=3\): two witnesses must harvest the same \(c_e\) for `consensusAtEpoch`. Example: Eve-A omits epoch 3, but Charlie + W3 (both honest) return \(c_3\) → `ProofFwd(3,c_3)`. You need **one** mirror in \(\mathcal{M}_{\text{valid}}\) for harvest — not a majority of \(10^9\) nodes.
+With \(k=2, n=3\): two witnesses must harvest the same \(c_e\) for `consensusAtEpoch`. You need **one** mirror in \(\mathcal{M}_{\text{valid}}\) for harvest — not a majority of \(10^9\) nodes.
 
-## 3. Vault + contacts (both peers)
+Use the constitution send/receive commands above — no raw `its-routing` CLI in production.
+
+---
+
+## 3. Offline profile (sneakernet / air-gap)
 
 ```bash
-its-km vault init --vault-key-dir ~/.its/km-vault-keys
-its-km --true-secret ~/.its/km-vault-keys/true/secret.key entry add \
-  --alias bob --public /path/to/bob.public.key --routing-config ~/.its/routing.toml
+cp ROUTING/config.offline.toml ~/.its/routing.toml
+# or per-contact:
+its-km entry add --alias bob --public bob.public.key \
+  --routing-config ROUTING/config.offline.toml
 ```
 
-`entry add` auto-generates a **per-contact transport_ratchet** (32 bytes in vault). A QR payload is printed on add; peer imports with:
+`pool_file` points at a local directory where `epoch_*.bin` cells are written and read. SSS k-of-n tolerates one missing cell after physical handoff.
+
+**USB / removable media:**
 
 ```bash
-its-km import-qr --alias bob --layer transport-ratchet --payload 'its-km:qr:...'
-# or: its-km export-qr --contact bob --layer transport-ratchet
+# Alice — write directly to USB pool path
+its-km send --contact bob --file doc.pdf --pool-dir /media/usb/its-pool
+
+# Copy USB to Bob; same routing params, same pool path on his mount
+its-km receive --contact alice --out received.pdf --pool-dir /media/usb/its-pool
 ```
 
-If `~/.its/routing.toml` is missing, `entry add` copies `ROUTING/config.prod.toml` automatically.
+Or set `pool_file = "/media/usb/its-pool"` in `routing.toml` and omit `--pool-dir`.
 
-## 4. Send / receive
+**C/I unchanged** on offline medium; ITS-A witness requires network — offline A comes from redundant physical copies. See [ITS-routing_CENSORSHIP_RECOVERY.md](ITS-routing_CENSORSHIP_RECOVERY.md) step 3.
 
-**Alice:**
+---
 
-```bash
-its-km --true-secret ~/.its/km-vault-keys/true/secret.key send --contact bob --file doc.pdf
-```
-
-**Bob** (receive — message was sealed to bob's public key; use bob's keypair on the alice contact entry):
-
-```bash
-its-km --true-secret ~/.its/km-vault-keys/true/secret.key entry add \
-  --alias alice --public /path/to/bob.public.key --secret /path/to/bob.secret.key \
-  --routing-config ~/.its/routing.toml --transport-ratchet-file /path/to/shared-ratchet.seed
-its-km --true-secret ~/.its/km-vault-keys/true/secret.key receive --contact alice --out received.pdf
-```
-
-## 5. Verify
+## 4. Verify
 
 ```bash
 ROUTING/scripts/verify_ecosystem.sh /home/user
 ```
+
+---
 
 ## Optional: SOCKS proxy (v1.8)
 

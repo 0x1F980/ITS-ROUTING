@@ -57,10 +57,10 @@ Overlay comparison (lemma-ID): [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_O
 ## Use case: Censored network
 
 **Replace:** Tor bridges, pluggable transports  
-**With:** Fountain + `multi_pool_urls` → manual AEH → sneakernet  
+**With:** Fountain + `multi_pool_urls` → manual AEH → `its-km send/receive --pool-dir` (sneakernet)  
 **Why:** A (availability) recovery without breaking C/I on secure endpoint  
-**Doc:** [ITS-routing_CENSORSHIP_RECOVERY.md](ITS-routing_CENSORSHIP_RECOVERY.md)  
-**Gate:** `pipe_its_censorship_recovery_e2e.sh`, `pipe_its_sneakernet_e2e.sh`
+**Doc:** [ITS-routing_CENSORSHIP_RECOVERY.md](ITS-routing_CENSORSHIP_RECOVERY.md) · [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md)  
+**Gate:** `pipe_its_censorship_recovery_e2e.sh`, `pipe_its_km_sneakernet_e2e.sh` (M28)
 
 ---
 

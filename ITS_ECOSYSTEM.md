@@ -24,7 +24,7 @@
 |------|---------|
 | **ITS** | **Information-Theoretic Secrecy** — the security property |
 | **`ITS-*` repo names** | Components that implement or compose ITS (wire, OTM, timelock, transport, …) |
-| **This constitution** | How those repos stay layered, pipeable, and proof-aligned |
+| **This constitution** | How those repos stay layered, pipeable, and proof-aligned — **operator CLI law:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) |
 
 Wire confidentiality, SSS backward ambiguity, WC-MAC attestation, and timelock deniability are **different faces of ITS** on different layers — not alternate definitions of the acronym.
 

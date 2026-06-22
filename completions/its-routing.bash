@@ -17,11 +17,11 @@ _its_routing_completions() {
             return 0
             ;;
         client-send)
-            COMPREPLY=( $(compgen -W "-m --msg -f --file -d --dest --aeh --continuous --ratchet-seed-file" -- "$cur") )
+            COMPREPLY=( $(compgen -W "-m --msg -f --file -d --dest --pool --no-pool --aeh --continuous --ratchet-seed-file --fingerprint-erasure --fe-strict --fe-permissive --mailbox-fingerprint" -- "$cur") )
             return 0
             ;;
         client-receive)
-            COMPREPLY=( $(compgen -W "--aeh --continuous --ratchet-seed-file -o --out --timeout-secs" -- "$cur") )
+            COMPREPLY=( $(compgen -W "--pool --no-pool --aeh --continuous --ratchet-seed-file -o --out --timeout-secs --mailbox-fingerprint --mailbox-strict" -- "$cur") )
             return 0
             ;;
         time-lock)

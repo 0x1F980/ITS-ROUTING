@@ -1,4 +1,4 @@
-# PowerShell completion for its-routing — transport daemon CLI
+# PowerShell completion for its-routing — UES Monocell Pool CLI
 # Usage: . ./completions/its-routing.ps1
 
 using namespace System.Management.Automation
@@ -21,15 +21,15 @@ Register-ArgumentCompleter -Native -CommandName 'its-routing' -ScriptBlock {
     $completions = @(switch -Regex ($command) {
         '^its-routing$' {
             @(
-                @('start-node', 'Start routing daemon'),
-                @('client-send', 'Send onion packet'),
-                @('client-receive', 'Receive and reconstruct'),
+                @('client-send', 'Publish wire to UES Monocell Pool'),
+                @('client-receive', 'Harvest pool and reconstruct'),
                 @('time-lock', 'Generate time-lock puzzle'),
                 @('time-unlock', 'Solve time-lock puzzle'),
                 @('time-deny', 'Decoy time-lock unlock'),
+                @('fingerprint-erasure', 'Offline provenance erasure'),
                 @('client-export-share', 'Export SSS share'),
                 @('client-import-share', 'Import SSS share'),
-                @('fingerprint-erasure', 'Offline provenance erasure')
+                @('start-node', 'Dev-only onion daemon')
             ) | ForEach-Object {
                 [CompletionResult]::new($_[0], $_[0], [CompletionResultType]::ParameterValue, $_[1])
             }
@@ -45,13 +45,13 @@ Register-ArgumentCompleter -Native -CommandName 'its-routing' -ScriptBlock {
             break
         }
         '^its-routing;client-send' {
-            '-m', '--msg', '-f', '--file', '-d', '--dest', '--aeh', '--continuous', '--ratchet-seed-file' | ForEach-Object {
+            '-m', '--msg', '-f', '--file', '-d', '--dest', '--pool', '--no-pool', '--aeh', '--continuous', '--ratchet-seed-file', '--fingerprint-erasure', '--mailbox-fingerprint' | ForEach-Object {
                 [CompletionResult]::new($_, $_, [CompletionResultType]::ParameterName, $_)
             }
             break
         }
         '^its-routing;client-receive' {
-            '--aeh', '--continuous', '--ratchet-seed-file', '-o', '--out', '--timeout-secs' | ForEach-Object {
+            '--pool', '--no-pool', '--aeh', '--continuous', '--ratchet-seed-file', '-o', '--out', '--timeout-secs', '--mailbox-fingerprint', '--mailbox-strict' | ForEach-Object {
                 [CompletionResult]::new($_, $_, [CompletionResultType]::ParameterName, $_)
             }
             break

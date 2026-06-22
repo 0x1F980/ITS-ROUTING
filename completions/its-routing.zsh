@@ -13,9 +13,9 @@ _its_net() {
     case $state in
         cmds)
             _values "its-routing command" \
-                'start-node[Start a bare-metal active VPS routing node]' \
-                'client-send[Send an Onion-encrypted, fragmented packet]' \
-                'client-receive[Receive, reconstruct and verify packets]' \
+                'start-node[Dev-only onion routing daemon]' \
+                'client-send[Publish Shannon ITS wire to UES Monocell Pool]' \
+                'client-receive[Harvest pool + reconstruct wire]' \
                 'time-lock[Generate a hybrid deniable time-lock puzzle over a file]' \
                 'time-unlock[Sequentially solve and decrypt a .its puzzle]' \
                 'time-deny[Build an alternative decoy puzzle for deniability]' \
@@ -38,20 +38,28 @@ _its_net() {
                         '--msg[The secret payload string to transmit]:message:' \
                         '-f[File payload to send]:file:_files' \
                         '--file[File payload to send]:file:_files' \
-                        '-d[The destination Node ID in Z_{2^31-1}]:node_id:' \
-                        '--dest[The destination Node ID in Z_{2^31-1}]:node_id:' \
-                        '--aeh[Inject packet into external public entropy stream]' \
+                        '-d[The destination Node ID]:node_id:' \
+                        '--dest[The destination Node ID]:node_id:' \
+                        '--pool[UES Monocell Pool transport]' \
+                        '--no-pool[Disable pool default]' \
+                        '--aeh[Manual AEH last-resort]' \
                         '--continuous[Enable continuous background decoy chaffing]' \
-                        '--ratchet-seed-file[32-byte OTP seed from ITS-KeyManagement]:file:_files'
+                        '--ratchet-seed-file[32-byte OTP seed from ITS-KeyManagement]:file:_files' \
+                        '--fingerprint-erasure[Optional Gamma CR-NF before send]' \
+                        '--mailbox-fingerprint[PoolMailbox contact hint]:hex:'
                     ;;
                 client-receive)
                     _arguments \
-                        '--aeh[Extract message using Ambient Entropy Harvesting]' \
-                        '--continuous[Enable continuous background winnowing]' \
+                        '--pool[UES Monocell Pool harvest]' \
+                        '--no-pool[Disable pool default]' \
+                        '--aeh[Manual AEH scan]' \
+                        '--continuous[Epoch-loop receive until wire found]' \
                         '--ratchet-seed-file[32-byte OTP seed from ITS-KeyManagement]:file:_files' \
                         '-o[Output path for received payload]:file:_files' \
                         '--out[Output path for received payload]:file:_files' \
-                        '--timeout-secs[Receive timeout in seconds]:seconds:'
+                        '--timeout-secs[Receive timeout in seconds]:seconds:' \
+                        '--mailbox-fingerprint[PoolMailbox contact hint]:hex:' \
+                        '--mailbox-strict[Reject reconstructions failing wire/OTM gate]'
                     ;;
                 time-lock)
                     _arguments \

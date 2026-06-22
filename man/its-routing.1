@@ -1,6 +1,6 @@
 .TH ITS-ROUTING 1 "June 2026" "ITS-routing" "User Commands"
 .SH NAME
-its-routing \- Information-Theoretic Secrecy (ITS) Onion Routing & Ambient Entropy Harvesting CLI
+its-routing \- UES Monocell Pool transport CLI (epoch cells, SSS, ValidFwd)
 .SH SYNOPSIS
 .B its-routing
 [\fB\-c \fIconfig_file\fR] [\fB\-h\fR] [\fB\-v\fR]
@@ -8,73 +8,101 @@ its-routing \- Information-Theoretic Secrecy (ITS) Onion Routing & Ambient Entro
 [\fIARGS...\fR]
 .SH DESCRIPTION
 .B its-routing
-is a bare-metal, high-performance, and mathematically impregnable shadow network tool designed for Information-Theoretic Secrecy (ITS) routing.
-Unlike traditional networks (Tor, Nym) which rely on computationally hard problems (RSA, ECC, AES),
-.B its-routing
-guarantees perfect secrecy (unbreakable even with infinite computational power) by utilizing Shamir's Secret Sharing (SSS) chained over a finite field modulus of Z_{2^31-1}.
+implements Information-Theoretic Secrecy (ITS) transport via the UES Monocell Pool.
+Production operators use \fBits-km send/receive\fR — this binary is the pool engine behind KM orchestration.
 .PP
-The application supports Morphic Network Coding (MNC), Homomorphic Path Attestation, Onion-chaff routing, and Ambient Entropy Harvesting (AEH).
+Default carrier is the epoch pool (\fB\-\-pool\fR when \fBtransport_mode = "pool"\fR in routing.toml).
+ITS-A availability (witness mirrors, ValidFwd) is configured in TOML — not on the CLI.
+.PP
+See [ITS_CONSTITUTION_CLI.md] for the seven operator essentials.
 .SH OPTIONS
 .TP
 .BI \-c ", " \-\-config " config_file"
-Specify the path to the TOML configuration file. Defaults to /etc/its-routing/config.toml if present.
+Path to routing.toml (pool, AEH, crypto sections). Defaults to /etc/its-routing/config.toml if present.
 .TP
 .B \-h ", " \-\-help
-Show the standard help menu and exit.
+Show usage and exit.
 .TP
 .B \-v ", " \-\-version
-Print the software version and exit.
+Print version and exit.
 .SH COMMANDS
 .TP
-.B start\-node
-Initialize and run an active, bare-metal VPS routing node. This node processes packets stateless-ly using Morphic Network Coding and outputs continuous constant-rate chaff packets when idle to mitigate traffic-analysis.
-.TP
 .B client\-send
-Fragment, onion-encrypt, and inject a secret payload. Can be routed through active SSS-chained nodes or injected passively into external chaotic telemetry streams.
+Publish a Shannon ITS wire to the UES Monocell Pool.
+.RS
+.TP
+.BR \-\-pool
+UES Monocell Pool transport (default when transport_mode=pool).
+.TP
+.BR \-\-no-pool
+Disable pool default; use dev transport features.
+.TP
+.BR \-\-aeh
+Manual AEH last-resort (no auto-switch from pool).
+.TP
+.BR \-\-ratchet-seed-file " " PATH
+32-byte TransportOtpRatchet OTP seed (from \fBits-km export-ratchet-seed\fR or vault).
+.TP
+.BR \-\-fingerprint-erasure
+Optional Gamma CR-NF before send.
+.RE
 .TP
 .B client\-receive
-Reconstruct and verify messages from received secret shares in constant-time.
+Harvest pool cells and reconstruct the wire.
+.RS
 .TP
-.B status\-audit
-Perform timing diagnostics, cache-flushes, and check for active routing anomalies/honeypots.
+.BR \-\-pool
+UES Monocell Pool harvest (default when transport_mode=pool).
 .TP
-.B verify\-path
-Perform Lagrange interpolation at x=0 on homomorphic probe-shares to algebraically verify the route integrity without decrypting the payload.
+.BR \-\-no-pool
+Disable pool default.
+.TP
+.BR \-\-mailbox-fingerprint " " HEX|FILE
+PoolMailbox contact hint (ciphertext scope).
+.TP
+.BR \-\-mailbox-strict
+Reject reconstructions failing wire/OTM gate.
+.TP
+.BR \-\-continuous
+Epoch-loop receive until wire found.
+.TP
+.BR \-\-timeout-secs " " N
+Receive timeout in seconds.
+.RE
+.TP
+.B start\-node
+.B Dev-only.
+Active onion routing daemon — not the production default. Requires dev-onion-mix feature build.
 .TP
 .B time\-lock
-Generate a local hybrid SSS-Chained Time-Lock puzzle over a document using the standalone
-.BR ITS\-self_enclosed_timelock
-crate. Accepts
+Generate a local hybrid deniable time-lock puzzle. Accepts
 .BR \-f ", " \-\-file ", " \-e ", " \-\-epochs ", " and
 .BR \-o ", " \-\-out .
 .TP
 .B time\-unlock
-Sequentially solve the RSW96 squaring chain and decrypt a
-.B .its
-puzzle file. Accepts
+Solve RSW squaring chain and decrypt a .its puzzle. Accepts
 .BR \-p ", " \-\-puzzle " and "
 .BR \-o ", " \-\-out .
 .TP
 .B time\-deny
-Construct an alternative puzzle that decrypts to a decoy message of equal length, demonstrating perfect deniability. Accepts
+Decrypt to a decoy message of equal length (deniability). Accepts
 .BR \-p ", " \-\-puzzle ", " \-d ", " \-\-decoy ", " and
 .BR \-o ", " \-\-out .
-.SH MATHEMATICAL PROOF OF IMPREGNABILITY
-The system uses Shamir's Secret Sharing over the prime field Z_{2^31-1}.
-A polynomial of degree at most K-1 requires K points (shares) to reconstruct. Any observer (Eve) possessing K-1 or fewer shares has absolute zero-knowledge of the underlying secret.
-Under Claude Shannon's Perfect Secrecy theorem, for any ciphertext C and any candidate message M:
-.PP
-.RS
-.B P(M | C) = P(M)
-.RE
-.PP
-Because the system is algebraically underdetermined (more unknowns than equations), for every possible guess Eve makes, there exists a unique, valid polynomial that mathematically justifies that guess. Thus, infinite computing power does not aid the attacker.
-.SH SIDE-CHANNEL MITIGATIONS
-All modular reduction, division-free Barrett reduction, and Fermat inversion loops are implemented in branchless constant-time. Additionally, active computational jitter is injected into sensitive algebraic loops to distort power and electromagnetic side-channels (DPA/TEMPEST).
+.TP
+.B fingerprint\-erasure
+Standalone offline Gamma provenance erasure.
+.SH OPERATOR IDENTITY
+Vault, contacts, QR, and send/receive orchestration: use
+.BR its-km (1).
+Do not call \fBits-routing\fR or \fBits_asymmetric decrypt\fR directly in production.
 .SH FILES
-.I /etc/its-routing/config.toml
+.I routing.toml
 .RS
-Global daemon configuration file.
+Pool mirrors (\fBmulti_pool_urls\fR, \fBwitness_pool_urls\fR) for online ITS-A;
+\fBpool_file\fR directory for offline/sneakernet (\fBepoch_*.bin\fR cells).
 .RE
-.SH AUTHORS
-Designed and built by 0x1F464.
+.SH SEE ALSO
+.BR its-km (1),
+.BR ITS_CONSTITUTION_CLI.md
+.SH AUTHOR
+0x1F980

@@ -518,6 +518,20 @@ done
 [[ -f "$ROUTING/ITS_MIGRATION_GUIDES.md" ]] && grep -q 'Tor SOCKS' "$ROUTING/ITS_MIGRATION_GUIDES.md" || { red "M22: ITS_MIGRATION_GUIDES Tor/I2P migration missing"; m22_ok=0; }
 [[ "$m22_ok" -eq 1 ]] && green "M22 smoke: PROOF + REFINEMENT manifests aligned"
 
+echo "=== M27: CLI completions drift gate ==="
+if [[ -x "$ROUTING/scripts/verify_cli_completions.sh" ]]; then
+  "$ROUTING/scripts/verify_cli_completions.sh" >/dev/null 2>&1 && green "M27: verify_cli_completions.sh" || red "M27: verify_cli_completions.sh failed"
+else
+  red "M27: verify_cli_completions.sh missing"
+fi
+
+echo "=== M28: constitution KM sneakernet pipe ==="
+if [[ -x "$ROUTING/scripts/pipe_its_km_sneakernet_e2e.sh" ]]; then
+  "$ROUTING/scripts/pipe_its_km_sneakernet_e2e.sh" >/dev/null 2>&1 && green "M28: pipe_its_km_sneakernet_e2e.sh" || red "M28: pipe_its_km_sneakernet_e2e.sh failed"
+else
+  red "M28: pipe_its_km_sneakernet_e2e.sh missing"
+fi
+
 if [[ "${VERIFY_MATH_V10:-0}" == "1" ]]; then
   echo "=== VERIFY_MATH_V10=1: strict M23–M26 (verify_math.sh) ==="
   if [[ -x "$ROUTING/scripts/verify_math.sh" ]]; then
@@ -533,7 +547,7 @@ fi
 
 echo "=== Sprint 5: product docs D1-D30 registry ==="
 d_ok=1
-for doc in ITS-routing_SOCKS_EGRESS.md ITS-routing_DEPLOY_MATH_GATES.md ITS-routing_STANDARD_REPLACEMENT.md ITS-routing_OVERLAY_EXTINCTION.md ITS_MIGRATION_GUIDES.md QUICKSTART.md; do
+for doc in ITS-routing_SOCKS_EGRESS.md ITS-routing_DEPLOY_MATH_GATES.md ITS-routing_STANDARD_REPLACEMENT.md ITS-routing_OVERLAY_EXTINCTION.md ITS_MIGRATION_GUIDES.md QUICKSTART.md ITS_CONSTITUTION_CLI.md; do
   [[ -f "$ROUTING/$doc" ]] || { red "Sprint5 doc missing: $doc"; d_ok=0; }
 done
 [[ "$d_ok" -eq 1 ]] && green "Sprint5: product docs D7-D30 present"
