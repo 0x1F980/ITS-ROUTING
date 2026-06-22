@@ -1,0 +1,13 @@
+# Compose runtime wrapper for its-km:local (scratch image → alpine sidecar with shell).
+# Build after its-km:local: deploy/docker/docker_build_all.sh
+FROM its-km:local AS km
+
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates
+
+COPY --from=km /its-km /usr/local/bin/its-km
+COPY --from=km /its-id /usr/local/bin/its-id
+
+ENTRYPOINT ["its-km"]
+CMD ["--help"]

@@ -6,8 +6,25 @@ sss_k = 2
 sss_n = 3
 fountain_enabled = true
 pool_file = ".its-pool"
-# Production: set pool_url or multi_pool_urls to public mirrors (see deploy/pool-mirror/)
+# Production: set pool_url OR multi_pool_urls to public mirrors (see deploy/pool-mirror/)
 pool_url = ""
+
+# --- Public mirror fleet (REPLACE before prod send) ---
+# Uncomment and replace *.its.example.com with your live mirror hostnames.
+# Minimum ITS-A: ≥2 mirrors + ≥3 independent witnesses, consensus_k = 2.
+#
+# multi_pool_urls = [
+#   "https://mirror1.its.example.com",   # REPLACE: public UES pool mirror
+#   "https://mirror2.its.example.com",   # REPLACE: public UES pool mirror
+#   "https://mirror3.its.example.com",   # REPLACE: optional third mirror
+# ]
+# witness_pool_urls = [
+#   "https://witness1.its.example.com",  # REPLACE: Charlie witness (not operator-owned)
+#   "https://witness2.its.example.com",  # REPLACE: Charlie witness
+#   "https://witness3.its.example.com",  # REPLACE: Charlie witness
+# ]
+
+# Default until fleet URLs are configured (onboard wizard prompts edit):
 multi_pool_urls = []
 witness_pool_urls = []
 consensus_k = 2

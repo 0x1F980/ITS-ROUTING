@@ -10,8 +10,9 @@ ASY="${ITS_ASYMMETRIC_DIR:-$ECO_ROOT/ITS-asymmetric}"
 usage() {
   echo "Usage: $0 [--bash] [--zsh] [--fish] [--ps1] [--all] [--constitution-only]" >&2
   echo "  Default: detect shell and install matching completion." >&2
-  echo "  Constitution: its-routing, its-km, its_asymmetric" >&2
+  echo "  Constitution (M27): its-routing, its-km, its_asymmetric" >&2
   echo "  Optional ridges (when repos present): its_otm, its_timelock, sss_chain, its_fe, its_ledger" >&2
+  echo "  Run verify: ./scripts/verify_cli_completions.sh" >&2
   exit 1
 }
 

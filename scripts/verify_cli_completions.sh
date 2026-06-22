@@ -43,6 +43,33 @@ for f in its-km.bash its-km.zsh its-km.fish its-km.ps1; do
   fi
 done
 
+echo "=== M27: its_asymmetric completions in all four shells ==="
+for f in its_asymmetric.bash its_asymmetric.zsh its_asymmetric.fish its_asymmetric.ps1; do
+  if [[ -f "$ASY/completions/$f" ]]; then
+    if grep -qE 'keygen|encrypt' "$ASY/completions/$f"; then
+      green "constitution commands in $ASY/completions/$f"
+    else
+      red "its_asymmetric completions missing key commands in $f"
+    fi
+  else
+    red "its_asymmetric completion missing: $ASY/completions/$f"
+  fi
+done
+
+echo "=== M27: its_asymmetric bash subcommands vs cli.rs (constitution subset) ==="
+ASY_CLI="$ASY/src/bin/its_asymmetric.rs"
+constitution_asym="bundle-append bundle-open decrypt decrypt-file encrypt encrypt-file fingerprint keygen verify verify-file"
+if [[ -f "$ASY_CLI" && -f "$ASY/completions/its_asymmetric.bash" ]]; then
+  bash_asym="$(grep -oE 'compgen -W "[^"]+"' "$ASY/completions/its_asymmetric.bash" | head -1 \
+    | sed 's/compgen -W "//;s/"$//' | tr ' ' '\n' | grep -v '^help$' | grep -v '^-' | sort -u)"
+  for sub in $constitution_asym; do
+    echo "$bash_asym" | grep -qx "$sub" || red "its_asymmetric bash completion missing constitution command '$sub'"
+  done
+  [[ "$FAIL" -eq 0 ]] && green "its_asymmetric constitution commands present in bash completion"
+else
+  echo "SKIP: its_asymmetric cli or bash completion not found"
+fi
+
 echo "=== M27: mailbox-fingerprint only on client-receive (not client-send) ==="
 for f in its-routing.bash its-routing.zsh its-routing.fish its-routing.ps1; do
   path="$ROOT/completions/$f"
@@ -170,6 +197,25 @@ if [[ -x "$KM/target/release/its-km" ]]; then
 else
   echo "SKIP: its-km binary not built under ITS_KM_DIR"
 fi
+
+if [[ -x "$ASY/target/release/its_asymmetric" ]]; then
+  asym_help="$("$ASY/target/release/its_asymmetric" --help 2>&1 || true)"
+  echo "$asym_help" | grep -q 'keygen' && green "its_asymmetric --help lists keygen" \
+    || red "its_asymmetric --help missing keygen"
+  echo "$asym_help" | grep -q 'encrypt-file' && green "its_asymmetric --help lists encrypt-file" \
+    || red "its_asymmetric --help missing encrypt-file"
+else
+  echo "SKIP: its_asymmetric binary not built under ITS_ASYMMETRIC_DIR"
+fi
+
+echo "=== M27: its_asymmetric man subcommands ==="
+for sub in keygen encrypt decrypt verify fingerprint encrypt-file decrypt-file; do
+  if grep -qF "$sub" "$ASY/man/its_asymmetric.1" 2>/dev/null; then
+    green "man documents its_asymmetric $sub"
+  else
+    red "man missing its_asymmetric subcommand $sub"
+  fi
+done
 
 if [[ "$FAIL" -eq 0 ]]; then
   echo "verify_cli_completions.sh: ALL CHECKS PASSED"

@@ -1,23 +1,20 @@
-# Dockerfile for 100% Hermetic, Reproducible Static Compilation of Morphic Routing Network (ITS/SCPST)
-# Uses rust:1.80-alpine to lock down the toolchain version and guarantee statically linked musl binaries.
+# Hermetic static musl build for its-routing (prebuilds v2).
+# Runtime: alpine for docker compose exec + health/smoke checks.
 
-FROM rust:1.80-alpine as builder
+FROM rust:1.80-alpine AS builder
 
 RUN apk add --no-cache musl-dev
 
 WORKDIR /usr/src/its-routing
-
-# Copy the entire workspace source files
 COPY . .
 
-# Build the workspace for the musl target to guarantee zero dynamic linker dependencies.
-# The result is a 100% statically linked binary that runs on bare metal seL4, alpine, or fedora alike.
-RUN cargo build --release --target x86_64-unknown-linux-musl
+RUN cargo build --release -p its_routing --target x86_64-unknown-linux-musl
 
-# Production stage
-FROM scratch
+FROM alpine:3.20
 
-# Copy only the statically compiled, stripped binaries
-COPY --from=builder /usr/src/its-routing/target/x86_64-unknown-linux-musl/release/its-routing /its-routing
+RUN apk add --no-cache ca-certificates
 
-ENTRYPOINT ["/its-routing"]
+COPY --from=builder /usr/src/its-routing/target/x86_64-unknown-linux-musl/release/its-routing /usr/local/bin/its-routing
+
+ENTRYPOINT ["its-routing"]
+CMD ["--help"]

@@ -1,40 +1,77 @@
-# ITS ecosystem — local Docker compose (skeleton)
+# ITS ecosystem — local Docker compose (prebuilds v2)
 #
-# Build images first: ./deploy/docker/docker_build_all.sh
-# Then: docker compose -f deploy/docker/docker-compose.yml up
+# Build:  ./deploy/docker/docker_build_all.sh
+# Smoke:  docker compose -f deploy/docker/docker-compose.yml up -d
+# CLI:    docker compose -f deploy/docker/docker-compose.yml exec its-routing its-routing --help
+#         docker compose -f deploy/docker/docker-compose.yml exec its-km its-km --help
+#
+# pool-mirror is the always-on HTTP epoch API; routing/km are CLI sidecars for exec.
 
 services:
+  pool-mirror:
+    image: python:3.12-alpine
+    working_dir: /app
+    volumes:
+      - ../pool-mirror:/app:ro
+      - mirror-store:/store
+    environment:
+      - ITS_PROD_GATE=${ITS_PROD_GATE:-0}
+    command: ["python3", "pool_mirror_server.py", "--port", "8787", "--store-dir", "/store"]
+    ports:
+      - "8787:8787"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:8787/pool/cells?from=0"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - its-net
+
   its-routing:
     image: its-routing:local
     build:
       context: ../..
       dockerfile: Dockerfile
+    depends_on:
+      pool-mirror:
+        condition: service_healthy
     volumes:
       - its-pool-data:/its-pool
+      - ../../config.prod.toml:/etc/its/routing.toml:ro
     environment:
-      - ITS_PROD_GATE=0
-    command: ["--help"]
+      - ITS_PROD_GATE=${ITS_PROD_GATE:-0}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        its-routing --help >/dev/null
+        echo "its-routing ready — use: docker compose exec its-routing its-routing ..."
+        exec sleep infinity
+    networks:
+      - its-net
 
   its-km:
-    image: its-km:local
+    image: its-km-compose:local
     build:
-      context: ../../../ITS-KeyManagement
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.its-km-compose
     depends_on:
-      - its-routing
+      pool-mirror:
+        condition: service_healthy
     volumes:
       - km-vault:/vault
-    command: ["--help"]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        its-km --help >/dev/null
+        echo "its-km ready — use: docker compose exec its-km its-km ..."
+        exec sleep infinity
+    networks:
+      - its-net
 
-  pool-mirror:
-    image: python:3.12-alpine
-    working_dir: /app
-    volumes:
-      - ../../deploy/pool-mirror:/app:ro
-      - mirror-store:/store
-    command: ["python3", "pool_mirror_server.py", "--port", "8787", "--store-dir", "/store"]
-    ports:
-      - "8787:8787"
+networks:
+  its-net:
+    driver: bridge
 
 volumes:
   its-pool-data:

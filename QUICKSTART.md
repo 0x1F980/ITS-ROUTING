@@ -20,6 +20,17 @@ Eve may own 99.999%+ of pool mirrors — that is axiom A0, not a failure mode. U
 
 ## 1. Bootstrap
 
+**One-command operator bundle (recommended):**
+
+```bash
+cd /path/to/ecosystem
+./ROUTING/scripts/its-operator-install.sh
+source ~/.its/env.sh
+./ROUTING/scripts/its-onboard.sh
+```
+
+Manual build (same result):
+
 ```bash
 cd /path/to/ecosystem
 ./ROUTING/scripts/bootstrap.sh
@@ -28,7 +39,9 @@ cargo build --release --manifest-path ITS-asymmetric/Cargo.toml --bin its_asymme
 cargo build --release --manifest-path ITS-KeyManagement/Cargo.toml --bin its-km
 ```
 
-Ensure `its-km`, `its-routing`, and `its_asymmetric` are on `PATH`.
+Ensure `its-km`, `its-routing`, and `its_asymmetric` are on `PATH` (or `source ~/.its/env.sh` after operator install).
+
+**Docker prebuilds v2:** `./ROUTING/deploy/docker/docker_build_all.sh` then `docker compose -f ROUTING/deploy/docker/docker-compose.yml up -d`
 
 ---
 
@@ -137,13 +150,20 @@ ROUTING/scripts/verify_ecosystem.sh /home/user
 
 ---
 
-## Optional: SOCKS proxy (v1.8)
+## Optional: SOCKS proxy (production)
 
 ```bash
-python3 ROUTING/tools/its_pool_proxy.py --listen 127.0.0.1:1080 --config ~/.its/routing.toml
+cargo build --release -p its_pool_proxy --manifest-path ROUTING/Cargo.toml
+its-pool-proxy \
+  --listen 127.0.0.1:1080 \
+  --config ~/.its/routing.toml \
+  --ratchet-seed-file ~/.its/shared-ratchet.seed \
+  --pk ~/.its/contacts/bob/public.key \
+  --sk ~/.its/keys/alice/secret.key \
+  --own-pk ~/.its/keys/alice/public.key
 ```
 
-Point apps at `SOCKS5 127.0.0.1:1080` (requires Bob receiver running).
+Point apps at `SOCKS5 127.0.0.1:1080` (requires Bob receiver / ingress bridge). See [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md).
 
 ---
 
@@ -154,8 +174,17 @@ Point apps at `SOCKS5 127.0.0.1:1080` (requires Bob receiver running).
 | Base config | `cp ROUTING/config.robust.toml ~/.its/routing.toml` (or `config.prod.toml`) | `cp ROUTING/config.offline.toml` |
 | Pool carrier | Edit `multi_pool_urls` + `witness_pool_urls`; deploy [deploy/pool-mirror/](deploy/pool-mirror/) | `pool_file` or `--pool-dir /media/usb/its-pool` |
 | Witness quorum | `consensus_k = 2` with 3 witnesses (2-of-3) | N/A — redundant USB copies |
-| Latency tuning | `config.fast.toml` for lab (`epoch_interval_ms = 50`) | Same offline template |
+| Latency tuning | See **When to use which profile** below | Same offline template |
 | Safety | Never prod mirrors + `--pool-dir` alone — see [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) WARNING | M28b gate: `pipe_its_km_pooldir_prod_hazard.sh` |
+
+### When to use which profile
+
+| Template | When | Key settings |
+|----------|------|--------------|
+| [`config.prod.toml`](config.prod.toml) | Default online onboarding; empty URLs until fleet is configured | `consensus_k = 2`, commented mirror/witness placeholders |
+| [`config.robust.toml`](config.robust.toml) | Production ITS-A + censorship recovery | Mirrors + witnesses + `fountain_enabled = true`, `valid_fwd_window = 64` |
+| [`config.fast.toml`](config.fast.toml) | Lab / LAN latency tests only | `epoch_interval_ms = 50`, `consensus_k = 1`, `fountain_enabled = false` — **not** for prod witness quorum |
+| [`config.offline.toml`](config.offline.toml) | Air-gap / USB sneakernet | File pool only; no HTTP mirrors |
 
 Full ridge scope: [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) · Pipe policy: [ITS_PIPE_STDIO_POLICY.md](ITS_PIPE_STDIO_POLICY.md)
 
