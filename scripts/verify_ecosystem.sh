@@ -30,7 +30,7 @@ CARGO_TMPLS=(
   "$ECO_ROOT/ITS-asymmetric/Cargo.toml"
   "$ECO_ROOT/ITS-OTM_public_attestation/Cargo.toml"
   "$ECO_ROOT/ITS-self_enclosed_timelock/Cargo.toml"
-  "$ECO_ROOT/ITS-hardware/Cargo.toml"
+  "$ECO_ROOT/sidechannel_resistant_hardware/Cargo.toml"
   "$ECO_ROOT/ITS-ledger/Cargo.toml"
   "$ECO_ROOT/ITS-fingerprint_erasure/Cargo.toml"
   "$ECO_ROOT/ITS-KeyManagement/Cargo.toml"
@@ -55,7 +55,7 @@ echo "=== source: no retired module names in active trees ==="
 if search 'core_logic|hydra_sss|its_transport::routing|its_transport::ratchet' \
   "$ECO_ROOT/ITS-asymmetric/src" \
   "$ECO_ROOT/ITS-KeyManagement/src" \
-  "$ECO_ROOT/ITS-hardware/src" \
+  "$ECO_ROOT/sidechannel_resistant_hardware/src" \
   "$ECO_ROOT/ITS-ledger/src" \
   "$ECO_ROOT/ROUTING/its_routing/src" \
   "$ECO_ROOT/ROUTING/its_routing/tests" | grep -q .; then
@@ -99,7 +99,7 @@ if [[ -d "$ROUTING" ]]; then
 fi
 
 echo "=== tests: math repos and glue ==="
-for pkg in SSS_CHAIN ITS-OTM_public_attestation ITS-self_enclosed_timelock ITS-hardware ITS-ledger ITS-KeyManagement; do
+for pkg in SSS_CHAIN ITS-OTM_public_attestation ITS-self_enclosed_timelock sidechannel_resistant_hardware ITS-ledger ITS-KeyManagement; do
   if [[ -f "$ECO_ROOT/$pkg/Cargo.toml" ]]; then
     (cd "$ECO_ROOT/$pkg" && cargo test --quiet 2>/dev/null) && green "tests: $pkg" || red "tests: $pkg"
   fi

@@ -2,7 +2,7 @@
 
 //! ITS transport core — epoch cell pool, SSS fragment, transport ratchet.
 //! Dev-only onion/mix modules require `dev-onion-mix` feature.
-//! `no_std` + alloc; consumed by `its-routing` and `ITS-hardware`.
+//! `no_std` + alloc; consumed by `its-routing` and `sidechannel_resistant_hardware`.
 
 extern crate alloc;
 

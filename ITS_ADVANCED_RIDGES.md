@@ -28,7 +28,7 @@ This document describes **optional ridges** — subprocesses or Cargo features t
 | **Fingerprint erasure** | `its_fe` / `--features fingerprint-erasure` | Γ CR-NF before send | Optional on routing send |
 | **SSS analog** | `client-export-share` / `client-import-share` | Physical share strings | Requires `--features hardware` |
 | **Ledger** | `its_ledger` | Endpoint registry + AEH hash feed | **Not** operator vault — see below |
-| **Hardware** | ITS-hardware / `--features hardware` | TRNG, analog export | Optional entropy |
+| **Hardware** | sidechannel_resistant_hardware / `--features hardware` | TRNG, analog export | Optional entropy |
 
 ---
 

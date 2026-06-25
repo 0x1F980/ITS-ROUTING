@@ -59,6 +59,26 @@ fn forward_onion_through_mesh(config: &Config, packet: &its_transport::onion::Mo
 }
 
 #[cfg(feature = "pool")]
+fn max_pool_epoch(pool_dir: &std::path::Path) -> u64 {
+    let Ok(entries) = std::fs::read_dir(pool_dir) else {
+        return 0;
+    };
+    let mut max_epoch = 0u64;
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        if !name.starts_with("epoch_") || !name.ends_with(".bin") {
+            continue;
+        }
+        let num_str = &name[6..name.len() - 4];
+        if let Ok(epoch) = num_str.parse::<u64>() {
+            max_epoch = max_epoch.max(epoch.saturating_add(1));
+        }
+    }
+    max_epoch
+}
+
+#[cfg(feature = "pool")]
 fn run_pool_send(
     config: &Config,
     msg_bytes: &[u8],
@@ -118,6 +138,7 @@ fn run_pool_send(
         config.pool.pool_file
     );
     let interval = Duration::from_millis(config.pool.epoch_interval_ms.max(1));
+    let epoch_offset = max_pool_epoch(std::path::Path::new(&config.pool.pool_file));
     for epoch in 0..total_epochs {
         let (_, cell) = match cell_state.step(&mut rng) {
             Ok(v) => v,
@@ -126,8 +147,11 @@ fn run_pool_send(
                 return;
             }
         };
-        if courier.publish_cell(epoch as u64, &cell).is_err() {
-            println!("Error: failed to publish cell at epoch {epoch}.");
+        if courier
+            .publish_cell(epoch_offset + epoch as u64, &cell)
+            .is_err()
+        {
+            println!("Error: failed to publish cell at epoch {}.", epoch_offset + epoch as u64);
             return;
         }
         if epoch + 1 < total_epochs {
@@ -147,6 +171,7 @@ fn run_pool_receive(
     out_path: Option<&PathBuf>,
     timeout_secs: u64,
     continuous: bool,
+    follow: bool,
     from_epoch: u64,
     mailbox: Option<PoolMailbox>,
 ) {
@@ -260,7 +285,12 @@ fn run_pool_receive(
                                 println!("Reconstructed pool message: {msg_str}");
                             }
                         }
-                        return;
+                        if follow {
+                            println!("ITS_EPOCH_CURSOR={next_epoch}");
+                            shares.clear();
+                        } else {
+                            return;
+                        }
                     }
                 }
                 Err(()) => {
@@ -283,11 +313,12 @@ fn run_pool_receive(
             );
             break;
         }
-        if !continuous && cells_empty && shares.is_empty() {
+        let poll = continuous || follow;
+        if !poll && cells_empty && shares.is_empty() {
             println!("No pool cells found (single pass, use --continuous to poll).");
             break;
         }
-        if !continuous && !cells_empty && shares.len() >= sss_k {
+        if !poll && !cells_empty && shares.len() >= sss_k {
             break;
         }
 
@@ -622,6 +653,7 @@ pub fn run_client_receive(
     config: Config,
     aeh: bool,
     continuous: bool,
+    follow: bool,
     pool: bool,
     ratchet_seed_file: PathBuf,
     out_path: Option<PathBuf>,
@@ -638,6 +670,7 @@ pub fn run_client_receive(
             out_path.as_ref(),
             timeout_secs,
             continuous,
+            follow,
             from_epoch,
             mailbox,
         );

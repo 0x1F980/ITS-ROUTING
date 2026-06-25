@@ -113,10 +113,12 @@ sss_n = 3
             recv_cfg,
             false,
             true,
+            false,
             true,
             recv_ratchet,
             Some(recv_wire),
             15,
+            0,
             None,
         );
     });

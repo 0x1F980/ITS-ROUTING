@@ -7,7 +7,7 @@ REPOS = [
     "ITS-asymmetric",
     "ROUTING",
     "ITS-KeyManagement",
-    "ITS-hardware",
+    "sidechannel_resistant_hardware",
     "ITS-ledger",
     "ITS-OTM_public_attestation",
     "ITS-self_enclosed_timelock",
@@ -41,7 +41,7 @@ REPLACEMENTS = [
         "https://github.com/0x1F464/ITS-self_enclosed_timelock",
         "https://github.com/0x1F980/ITS-self_enclosed_timelock",
     ),
-    ("https://github.com/0x1F464/ITS-hardware", "https://github.com/0x1F980/ITS-hardware"),
+    ("https://github.com/0x1F464/ITS-hardware", "https://github.com/0x1F980/sidechannel_resistant_hardware"),
     ("https://github.com/0x1F464/ITS-ledger", "https://github.com/0x1F980/ITS-ledger"),
     (
         "https://github.com/0x1F464/ITS-FINGERPRINT_ERASURE",

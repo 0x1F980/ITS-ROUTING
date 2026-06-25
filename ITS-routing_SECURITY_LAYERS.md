@@ -27,7 +27,7 @@ ITS-routing **orchestrates** upstream crates. It does not replace their proofs â
 | `time-lock` / `time-unlock` / `time-deny` | ITS-self_enclosed_timelock | [ITS-self_enclosed_timelock_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-self_enclosed_timelock/blob/master/ITS-self_enclosed_timelock_SECURITY_LAYERS.md) |
 | OTM / AEH attestation verify | ITS-OTM_public_attestation | [ITS-OTM_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-OTM_public_attestation/blob/main/ITS-OTM_SECURITY_LAYERS.md) |
 | `--fingerprint-erasure` | ITS-fingerprint_erasure | [ITS-fingerprint_erasure_ITS_SCOPE.md](https://github.com/0x1F980/ITS-FINGERPRINT_ERASURE/blob/master/ITS-fingerprint_erasure_ITS_SCOPE.md) |
-| Hardware entropy hooks | ITS-hardware | [ITS-hardware_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-hardware/blob/master/ITS-hardware_SECURITY_LAYERS.md) |
+| Hardware entropy hooks | sidechannel_resistant_hardware | [ITS-hardware_SECURITY_LAYERS.md](https://github.com/0x1F980/sidechannel_resistant_hardware/blob/master/ITS-hardware_SECURITY_LAYERS.md) |
 | Ledger / vault sync | ITS-ledger | [ITS-ledger_SECURITY_LAYERS.md](https://github.com/0x1F980/ITS-ledger/blob/master/ITS-ledger_SECURITY_LAYERS.md) |
 
 ---

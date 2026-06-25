@@ -52,7 +52,7 @@ fi
 clone_repo "ITS-OTM_public_attestation" main
 clone_repo "ITS-self_enclosed_timelock"
 clone_repo "ITS-ROUTING"
-clone_repo "ITS-hardware"
+clone_repo "sidechannel_resistant_hardware"
 clone_repo "ITS-ledger"
 clone_repo "ITS-FINGERPRINT_ERASURE"
 clone_repo "ITS-KeyManagement" main

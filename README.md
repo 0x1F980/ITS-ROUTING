@@ -33,7 +33,7 @@ ITS-routing is free software: you can redistribute it and/or modify it under the
          ┌──────────────────────────────┼──────────────────────────────┐
          ▼                              ▼                              ▼
 ┌──────────────────┐          ┌──────────────────┐          ┌──────────────────┐
-│  ITS-asymmetric  │          │   ITS-hardware   │          │    ITS-ledger    │
+│  ITS-asymmetric  │          │ sidechannel_resistant_hardware │          │    ITS-ledger    │
 │  wire v6 static  │          │ FFI isolation    │          │ node registries  │
 └──────────────────┘          └──────────────────┘          └──────────────────┘
          │                              │

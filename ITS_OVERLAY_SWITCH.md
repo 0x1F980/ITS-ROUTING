@@ -14,7 +14,8 @@ You are **not** joining a mixnet. You run the constitution CLI (`its-km send/rec
 |------------------------|-------------------------|-------------|
 | **One product / wallet** | `its-km vault init` → `entry add` → `send` / `receive` | `pipe_its_km_pool_e2e.sh` (M27) |
 | **Network exists** | Public `multi_pool_urls` + `witness_pool_urls` in `config.prod.toml` | `pipe_its_http_pool_e2e.sh` (M18) |
-| **Messaging to a contact** | `its-km send --contact ALIAS --file PATH` | `pipe_its_pool_e2e.sh` |
+| **Messaging to a contact** | `its-km send --contact ALIAS --file PATH` | `pipe_its_km_pool_e2e.sh` |
+| **IRC / rooms (broadcast, chat, vote)** | `its-chat room create` → `send` / `listen --follow` | `ITS-CHAT/scripts/pipe_its_chat_room_e2e.sh` (M30) |
 | **Receive loop** | `its-km receive --contact ALIAS --continuous` | `pipe_its_km_pool_e2e.sh` |
 | **SOCKS app egress** | `its-pool-proxy --listen 127.0.0.1:1080` + Bob `--continuous` / ingress bridge | `pipe_its_socks_pool_e2e.sh` (M19 v2) |
 | **Hidden service / site** | Bob: `receive --continuous` → local nginx; Alice: SOCKS or `send --file` | [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · M19 |

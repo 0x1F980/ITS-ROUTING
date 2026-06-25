@@ -163,3 +163,24 @@ ROUTING/scripts/verify_ecosystem.sh /path/to/ecosystem
 ```
 
 Community fleet registry (placeholder): [deploy/COMMUNITY_MIRRORS.md](deploy/COMMUNITY_MIRRORS.md)
+
+---
+
+## ITS-CHAT gates (M30–M33)
+
+| Gate | Script | Covers |
+|------|--------|--------|
+| **M30** | `ITS-CHAT/scripts/pipe_its_chat_room_e2e.sh` | `--follow` ≥2 msgs; distinct `room_wire_pk`; unsigned + `--sign --identity`; broadcast `publish_mac`; mute |
+| **M31** | `ITS-CHAT/scripts/pipe_its_chat_public_room_e2e.sh` | Registry publish / browse / join (broadcast & chat only) |
+| **M32** | `ITS-CHAT/scripts/pipe_its_chat_vote_e2e.sh` | hidden_vote session; pairwise issue/import ballot; cast; tally |
+| **M33** | `ITS-CHAT/scripts/pipe_its_chat_archive_e2e.sh` | Frame journal + SSS `.ssc` archive via `sss_chain` |
+| **M35** | `ITS-CHAT/scripts/pipe_its_chat_timelock_e2e.sh` | Timelock room seal/unlock (optional ridge) |
+
+Prerequisite: ROUTING `client-receive --follow` (emits `ITS_EPOCH_CURSOR=<n>` after each reconstruct).
+
+```bash
+ITS-CHAT/scripts/pipe_its_chat_room_e2e.sh
+ITS-CHAT/scripts/pipe_its_chat_public_room_e2e.sh
+ITS-CHAT/scripts/pipe_its_chat_vote_e2e.sh
+ITS-CHAT/scripts/pipe_its_chat_archive_e2e.sh
+```

@@ -141,7 +141,7 @@ its-km send --contact bob --file doc.txt
 | **Math-klippe** (frozen v1.0.0) | SSS_CHAIN, ITS-asymmetric, ITS-OTM, ITS-timelock | Information-theoretic | SSS_CHAIN only (within math) |
 | **Transport** | ROUTING (`its_transport`, `its_routing`) | Opaque bytes + transport ratchet | math via **OTM re-export** in `its_transport`; ridges at daemon edge |
 | **Glue** | ITS-KeyManagement | Subprocess orchestration | **PATH only** — no sibling Cargo deps |
-| **Operational ridges** | ITS-hardware, ITS-fingerprint_erasure, ITS-ledger | Honest scope per `*_SECURITY_LAYERS.md` | transport and/or math as documented |
+| **Operational ridges** | sidechannel_resistant_hardware, ITS-fingerprint_erasure, ITS-ledger | Honest scope per `*_SECURITY_LAYERS.md` | transport and/or math as documented |
 
 ### Allowed dependency edges (v1)
 
@@ -154,7 +154,7 @@ flowchart LR
   IT["its_transport"]
   IR["its_routing"]
   KM["ITS-KeyManagement"]
-  HW["ITS-hardware"]
+  HW["sidechannel_resistant_hardware"]
   LED["ITS-ledger"]
   FE["ITS-FE"]
 
@@ -221,7 +221,9 @@ flowchart LR
 | [ROUTING/its_transport](its_transport) | `its_transport` | Onion, fragment, transport ratchet, tunnel | Shannon wire |
 | [ROUTING/its_routing](its_routing) | `its_routing` | Daemon, UDP, chaff, pipes | Crypto proofs, vault |
 | [ITS-KeyManagement](../ITS-KeyManagement) | `its_keymgmt` | Vault, contacts, send/receive glue | Shannon implementation |
-| [ITS-hardware](../ITS-hardware) | `its_hardware` | TRNG, seL4, Lorenz HAL, analog shares | Wire proofs |
+| [ITS-CHAT](../ITS-CHAT) | `its_chat` | IRC rooms (broadcast/chat/hidden_vote), frames, mute, vote | Wire math, transport |
+| [ITS-MEMORY](../ITS-MEMORY) | `its_memory` | Neutral wire mirrors (`ITS-MEMORY-PIN/1`), SSS activity head (`ITS-COIN/1` via `sss_chain`) | Frame semantics, decrypt |
+| [sidechannel_resistant_hardware](../sidechannel_resistant_hardware) | `its_hardware` | TRNG, seL4, Lorenz HAL, analog shares | Wire proofs |
 | [ITS-ledger](../ITS-ledger) | `its_ledger` | Endpoint vault, AEH hash fetch | Operator keyring |
 | [ITS-fingerprint_erasure](../ITS-fingerprint_erasure) | `its_fingerprint_erasure` | Γ normalization | Wire ITS |
 
@@ -253,7 +255,7 @@ No HKDF/PBKDF/Argon2 on ITS hot path (vault seal or transport ratchet).
 
 ## Lorenz ownership
 
-**Implementation:** `its_transport::lorenz` (onion mixing-node delay). **HAL API:** ITS-hardware re-exports the same module for TRNG/chaff timing tests. No duplicate `lorenz.rs` in hardware.
+**Implementation:** `its_transport::lorenz` (onion mixing-node delay). **HAL API:** sidechannel_resistant_hardware re-exports the same module for TRNG/chaff timing tests. No duplicate `lorenz.rs` in hardware.
 
 ---
 
@@ -295,7 +297,7 @@ Each repo follows the same pillar layout: **SECURITY_LAYERS** (read first) → v
 | ITS-timelock | README | `ITS-self_enclosed_timelock_manual.md` |
 | ROUTING | [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) · README | `ITS-routing_manual.md` |
 | ITS-KeyManagement | README | `ITS-KeyManagement_manual.md` |
-| ITS-hardware | README | `ITS-hardware_manual.md` |
+| sidechannel_resistant_hardware | README | `ITS-hardware_manual.md` |
 | ITS-ledger | README | `ITS-ledger_manual.md` |
 | ITS-fingerprint_erasure | README | `ITS-fingerprint_erasure_manual.md` |
 
@@ -345,7 +347,7 @@ Default `its_routing` build is **transport only** — ridges are opt-in. This ma
 | Feature | Enables |
 |---------|---------|
 | `full` | All ridges below (convenience bundle) |
-| `hardware` | TRNG via ITS-hardware, analog share export/import |
+| `hardware` | TRNG via sidechannel_resistant_hardware, analog share export/import |
 | `ledger` | Live blockchain hash fetch for AEH |
 | `timelock` | `time-lock`, `time-unlock`, `time-deny` subcommands |
 | `otm` | OTM tag verification on AEH blocks |

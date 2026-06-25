@@ -20,7 +20,7 @@ Default `its_routing` build er **transport only** — ridges er opt-in. Matcher 
 | Feature | Enables |
 |---------|---------|
 | `full` | Alle ridges nedenfor (convenience bundle) |
-| `hardware` | TRNG via ITS-hardware, analog share export/import |
+| `hardware` | TRNG via sidechannel_resistant_hardware, analog share export/import |
 | `ledger` | Live blockchain hash fetch for AEH |
 | `timelock` | `time-lock`, `time-unlock`, `time-deny` subcommands |
 | `otm` | OTM tag verification on AEH blocks |

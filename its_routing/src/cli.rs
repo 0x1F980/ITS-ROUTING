@@ -192,6 +192,7 @@ pub fn run() {
         "client-receive" => {
             let mut aeh = false;
             let mut continuous = false;
+            let mut follow = false;
             let mut pool = false;
             let mut ratchet_seed_file = PathBuf::new();
             let mut out_path: Option<PathBuf> = None;
@@ -206,6 +207,9 @@ pub fn run() {
                     s_idx += 1;
                 } else if command_args[s_idx] == "--continuous" {
                     continuous = true;
+                    s_idx += 1;
+                } else if command_args[s_idx] == "--follow" {
+                    follow = true;
                     s_idx += 1;
                 } else if command_args[s_idx] == "--pool" {
                     pool = true;
@@ -247,6 +251,7 @@ pub fn run() {
                 config,
                 aeh,
                 continuous,
+                follow,
                 pool,
                 ratchet_seed_file,
                 out_path,
@@ -489,7 +494,8 @@ fn print_usage() {
     println!("                  --pool                  UES Monocell Pool harvest (default when transport_mode=pool)");
     println!("                  --no-pool               Disable pool default");
     println!("                  --aeh                   Manual AEH scan (last-resort only)");
-    println!("                  --continuous            Epoch-loop receive until wire found");
+    println!("                  --continuous            Epoch-loop receive until first wire found");
+    println!("                  --follow                IRC listen: continue after each reconstruct; emits ITS_EPOCH_CURSOR");
     println!("                  --ratchet-seed-file <path>  32-byte TransportOtpRatchet OTP seed (from ITS-KeyManagement export)");
     println!("                  --mailbox-fingerprint <hex|file>  PoolMailbox contact hint (ciphertext scope)");
     println!("                  --mailbox-strict                    Reject reconstructions failing wire/OTM gate");
