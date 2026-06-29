@@ -54,16 +54,18 @@ To satisfy strict academic peer-reviews and network-level security audits, the f
 
 0.  **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) (Security Layers & ITS Scope — read first)**
     *   Subcommand → upstream crate scope map; default Γ + OTP + chaff stack; anti-AI FAQ.
-0a. **[ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) (Mathematical Core — read for formal spec)**
-    *   Authoritative axioms, C.I.A. formulas, Sybil/BIS/hops/timelock, Lean module map, v5 closure; prod = 0 hops UES Pool.
+0a. **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Mathematical Specification — reviewer entry)**
+    *   §0.1 worked example (wire + epoch pool), postulates P0–P10, channel theorems $I(M;O)=0$, confirm/reject checklist; prod = 0 hops UES Pool.
+0a′. **[ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) (Mathematical Core — deep proof map)**
+    *   Extended axioms, C.I.A. formulas, Sybil/BIS/hops/timelock, Lean M1–M26 module map, v10 certificate closure.
 0b. **[ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md) (Formal Verification & W6 Composition)**
     *   Lean/Rust proof map for strict-stack send, OTM, timelock, fingerprint erasure; links to upstream ITS certificates.
 0c. **[ITS-routing_PIPE.md](ITS-routing_PIPE.md) (stdin/stdout piping)**
     *   `-` paths for `time-lock`, `time-unlock`, `fingerprint-erasure`; demo `scripts/pipe_timelock.sh`.
 1.  **[ITS-routing_vision.md](ITS-routing_vision.md) (Network-Level Threat Model & Transition Strategy)**
     *   Threat landscape under active Eve; **prod default = UES Pool (Option B)**. Option A onion routing is **dev-only** (`dev-onion-mix`).
-2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Dev-only onion/mix proofs — historical)**
-    *   Morphic mixing rank-nullity and Lorenz jitter — **dev-only** (`dev-onion-mix`). Production math: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md).
+2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Epoch Pool Transport — Mathematical Specification)**
+    *   Primary reviewer spec: §0.1, postulates, $I(M;O)=0$, availability vs Shannon. Deep map: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md). Dev onion/mix: `dev-onion-mix` only (not production cert).
 3.  **[ITS-routing_manual.md](ITS-routing_manual.md) (Command-Line Reference, Configurations & Operations Guide)**
     *   Complete CLI guide for `its-routing` daemon operations, time-lock puzzles, steganographic sending, and configuration file syntax.
 4.  **[ITS-routing_troubleshooting.md](ITS-routing_troubleshooting.md) (Transport Recovery & Operational Procedures)**

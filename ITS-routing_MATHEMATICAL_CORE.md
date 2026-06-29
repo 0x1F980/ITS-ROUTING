@@ -11,8 +11,8 @@
 
 **Related:** [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) · [PROOF_MANIFEST.md](PROOF_MANIFEST.md) · [ITS_ECOSYSTEM.md](ITS_ECOSYSTEM.md)
 
-> **This document is the authoritative mathematical entry for ITS-routing.**  
-> Legacy onion/Lorenz proofs live in [ITS-routing_mathematics.md](ITS-routing_mathematics.md) (dev-only historical).
+> **Reviewer entry:** [ITS-routing_mathematics.md](ITS-routing_mathematics.md) — §0.1 worked example, postulates, confirm/reject checklist (same structure as ITS-asymmetric / SSS_CHAIN).  
+> **This document** is the extended proof map (M1–M26, scenarios, BIS, timelock composition). Dev-only onion/mix proofs: `dev-onion-mix` feature — not production cert path.
 
 ---
 
