@@ -222,7 +222,7 @@ flowchart LR
 | [ROUTING/its_routing](its_routing) | `its_routing` | Daemon, UDP, chaff, pipes | Crypto proofs, vault |
 | [ITS-KeyManagement](../ITS-KeyManagement) | `its_keymgmt` | Vault, contacts, send/receive glue | Shannon implementation |
 | [ITS-CHAT](../ITS-CHAT) | `its_chat` | IRC rooms (broadcast/chat/hidden_vote), frames, mute, vote | Wire math, transport |
-| [ITS-MEMORY](../ITS-MEMORY) | `its_memory` | Neutral wire mirrors (`ITS-MEMORY-PIN/1`), SSS activity head (`ITS-COIN/1` via `sss_chain`) | Frame semantics, decrypt |
+| [ITS-MEMORY](../ITS-MEMORY) | `its_memory` | Neutral wire mirrors (`ITS-MEMORY-PIN/1`), proof-of-hosting directory (`ITS-CHANNEL-COIN/2`, `ITS-GDIR-COIN/1` via `sss_chain`); quiet-discovery browse — [ITS-MEMORY_VISION.md](../ITS-MEMORY/ITS-MEMORY_VISION.md) | Frame semantics, decrypt |
 | [sidechannel_resistant_hardware](../sidechannel_resistant_hardware) | `its_hardware` | TRNG, seL4, Lorenz HAL, analog shares | Wire proofs |
 | [ITS-ledger](../ITS-ledger) | `its_ledger` | Endpoint vault, AEH hash fetch | Operator keyring |
 | [ITS-fingerprint_erasure](../ITS-fingerprint_erasure) | `its_fingerprint_erasure` | Γ normalization | Wire ITS |
