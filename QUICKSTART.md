@@ -10,9 +10,9 @@ Eve may own 99.999%+ of pool mirrors — that is axiom A0, not a failure mode. U
 
 | Pillar | What Eve gets | Your mitigation (config) |
 |--------|---------------|--------------------------|
-| **C** | 0 bits about message content in \(O\) | Shannon wire + L3 pool — no config needed |
-| **I** | \(\leq 1\) false accept per \(2.147\times10^9\) forgery tries | OTM verify on **your** endpoint keys only |
-| **A** | Cannot stay on \(\mathcal{M}_{\text{valid}}\) if she omits | `multi_pool_urls` + `witness_pool_urls` (online §2) |
+| **C** | 0 bits about message content in $O$ | Shannon wire + L3 pool — no config needed |
+| **I** | $\leq 1$ false accept per $2.147\times10^9$ forgery tries | OTM verify on **your** endpoint keys only |
+| **A** | Cannot stay on $\mathcal{M}_{\text{valid}}$ if she omits | `multi_pool_urls` + `witness_pool_urls` (online §2) |
 
 **Numeric walkthrough:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
 
@@ -109,7 +109,7 @@ consensus_k = 2
 valid_fwd_window = 64
 ```
 
-With \(k=2, n=3\): two witnesses must harvest the same \(c_e\) for `consensusAtEpoch`. You need **one** mirror in \(\mathcal{M}_{\text{valid}}\) for harvest — not a majority of \(10^9\) nodes.
+With $k=2, n=3$: two witnesses must harvest the same $c_e$ for `consensusAtEpoch`. You need **one** mirror in $\mathcal{M}_{\text{valid}}$ for harvest — not a majority of $10^9$ nodes.
 
 Use the constitution send/receive commands above — no raw `its-routing` CLI in production.
 
@@ -203,8 +203,8 @@ Full ridge scope: [ITS_ADVANCED_RIDGES.md](ITS_ADVANCED_RIDGES.md) · Pipe polic
 | Doc | Use |
 |-----|-----|
 | [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) | Feature → ITS path → gate (one page) |
-| [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) | Why ITS over I2P/Nym + honest boundaries |
-| [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) | 5-min pitch, Sybil FAQ, offline demo (M28) |
+| [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md) | Overlay lemma mapping |
+| [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md) | W1–W13 criteria table |
 | [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md) | Switch from I2P/Nym in one evening |
 | [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) | Pairwise hidden service (Bob nginx + Alice SOCKS) |
 | [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md) | W1–W13 win-conditions table |

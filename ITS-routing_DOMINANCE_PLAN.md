@@ -1,5 +1,5 @@
-# ITS-routing: Dominance Plan
+# Redirect — dominance plan
 
-> **Historical — superseded (v2.0 shipped).** Pool-first operator narrative lives in [QUICKSTART.md](QUICKSTART.md) and [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md).
+Archived copy: [docs/archive/ITS-routing_DOMINANCE_PLAN.md](docs/archive/ITS-routing_DOMINANCE_PLAN.md)
 
-Full archived copy: [docs/archive/ITS-routing_DOMINANCE_PLAN.md](docs/archive/ITS-routing_DOMINANCE_PLAN.md)
+**Active planning:** execution in `.cursor/plans/` · **Math spec:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md)

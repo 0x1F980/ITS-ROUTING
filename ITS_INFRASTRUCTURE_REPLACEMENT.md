@@ -46,9 +46,9 @@ This document is the **official replacement matrix** for migrating from computat
 
 ---
 
-## UES vs Tor / Nym / I2P (v2.0 superiority)
+## UES vs overlay (lemma-class reference)
 
-Full win-condition matrix (W1–W13): **[ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md)**. Participation symmetry (O⁺): **[ITS-routing_PARTICIPATION_SYMMETRY.md](ITS-routing_PARTICIPATION_SYMMETRY.md)**.
+Criteria table (W1–W13): **[ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md)**. Lemma map: **[ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md)**. Participation symmetry (O⁺): **[ITS-routing_PARTICIPATION_SYMMETRY.md](ITS-routing_PARTICIPATION_SYMMETRY.md)**.
 
 | | Tor/Nym/I2P | **UES v2.0 (pool primary)** |
 |---|-------------|-----------------------------|

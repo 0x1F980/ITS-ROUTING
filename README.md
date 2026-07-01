@@ -48,40 +48,28 @@ ITS-routing is free software: you can redistribute it and/or modify it under the
 
 ---
 
-## 2. High-Assurance Documentation Portal
+## 2. Documentation index
 
-To satisfy strict academic peer-reviews and network-level security audits, the formal documentation suite of this repository is structured into dedicated high-assurance documents in this directory:
+Formal documentation in this repository:
 
-0.  **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md) (Security Layers & ITS Scope — read first)**
-    *   Subcommand → upstream crate scope map; default Γ + OTP + chaff stack; anti-AI FAQ.
-0a. **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Mathematical Specification — reviewer entry)**
-    *   §0.1 worked example (wire + epoch pool), postulates P0–P10, channel theorems $I(M;O)=0$, confirm/reject checklist; prod = 0 hops UES Pool.
-0a′. **[ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) (Mathematical Core — deep proof map)**
-    *   Extended axioms, C.I.A. formulas, Sybil/BIS/hops/timelock, Lean M1–M26 module map, v10 certificate closure.
-0b. **[ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md) (Formal Verification & W6 Composition)**
-    *   Lean/Rust proof map for strict-stack send, OTM, timelock, fingerprint erasure; links to upstream ITS certificates.
-0c. **[ITS-routing_PIPE.md](ITS-routing_PIPE.md) (stdin/stdout piping)**
-    *   `-` paths for `time-lock`, `time-unlock`, `fingerprint-erasure`; demo `scripts/pipe_timelock.sh`.
-1.  **[ITS-routing_vision.md](ITS-routing_vision.md) (Network-Level Threat Model & Transition Strategy)**
-    *   Threat landscape under active Eve; **prod default = UES Pool (Option B)**. Option A onion routing is **dev-only** (`dev-onion-mix`).
-2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md) (Epoch Pool Transport — Mathematical Specification)**
-    *   Primary reviewer spec: §0.1, postulates, $I(M;O)=0$, availability vs Shannon. Deep map: [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md). Dev onion/mix: `dev-onion-mix` only (not production cert).
-3.  **[ITS-routing_manual.md](ITS-routing_manual.md) (Command-Line Reference, Configurations & Operations Guide)**
-    *   Complete CLI guide for `its-routing` daemon operations, time-lock puzzles, steganographic sending, and configuration file syntax.
-4.  **[ITS-routing_troubleshooting.md](ITS-routing_troubleshooting.md) (Transport Recovery & Operational Procedures)**
-    *   Pool mirror failover, fountain recovery, time-lock CLI recovery, and ratchet resync with ITS-KeyManagement. (UDP/onion: dev-only.)
-5.  **[ITS-routing_usecase.md](ITS-routing_usecase.md) (Transport Use-Cases & Integration Guide)**
-    *   Tactical deployment scenarios including air-gapped time-lock custody via `ITS-self_enclosed_timelock`.
-6.  **[ITS-routing_HEADS_UP.md](ITS-routing_HEADS_UP.md) (Tactical Threat Profile & Worst-Case Survival Guide)**
-    *   Physical-layer constraints, offline time-lock workflow; operator duress via **[ITS-KeyManagement](https://github.com/0x1F980/ITS-KeyManagement)**.
-7.  **[ITS-routing_KEEP_BOUNDARY.md](ITS-routing_KEEP_BOUNDARY.md) (Transport vs operator identity boundary)**
-    *   What stays in routing after the ITS-KeyManagement migration.
+0.  **[ITS-routing_SECURITY_LAYERS.md](ITS-routing_SECURITY_LAYERS.md)** — subcommand → upstream scope map
+0a. **[ITS-routing_mathematics.md](ITS-routing_mathematics.md)** — reviewer entry: §0.1 worked example, postulates, $I(M;O)=0$ checklist
+0a′. **[ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md)** — axioms, C·I·A formulas, Lean M1–M26 map, claim classes
+0b. **[ITS-routing_FORMAL_VERIFICATION.md](ITS-routing_FORMAL_VERIFICATION.md)** — Lean/Rust proof map, composition
+0c. **[ITS-routing_PIPE.md](ITS-routing_PIPE.md)** — stdin/stdout piping
+1.  **[ITS-routing_vision.md](ITS-routing_vision.md)** — threat model; prod default = UES Pool
+2.  **[ITS-routing_mathematics.md](ITS-routing_mathematics.md)** — epoch pool spec; dev onion/mix redirect only
+3.  **[ITS-routing_manual.md](ITS-routing_manual.md)** — CLI reference
+4.  **[ITS-routing_troubleshooting.md](ITS-routing_troubleshooting.md)** — recovery procedures
+5.  **[ITS-routing_usecase.md](ITS-routing_usecase.md)** — deployment scenarios
+6.  **[ITS-routing_HEADS_UP.md](ITS-routing_HEADS_UP.md)** — physical-layer constraints
+7.  **[ITS-routing_KEEP_BOUNDARY.md](ITS-routing_KEEP_BOUNDARY.md)** — transport vs KeyManagement boundary
 
 ---
 
 ## 3. Build & Verification Guide
 
-**Primary transport (v2.0):** UES Monocell Pool — see [QUICKSTART.md](QUICKSTART.md) and [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md).
+**Primary transport:** UES Monocell Pool — [QUICKSTART.md](QUICKSTART.md), [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md).
 
 ```bash
 its-km --true-secret ~/.its/km-vault-keys/true/secret.key send --contact bob --file doc.pdf

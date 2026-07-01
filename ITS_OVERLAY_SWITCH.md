@@ -2,9 +2,9 @@
 
 ## License: GNU GPLv3 Only
 
-**Read with:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) (default path) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) (lemma map) · [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) (5-min pitch)
+**Read with:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) · [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md) (lemma map)
 
-You are **not** joining a mixnet. You run the constitution CLI (`its-km send/receive`), point `routing.toml` at UES pool mirrors (online) or a USB folder (offline), and get Shannon C/I under Eve 99.999%+ — with **0 hops, 1 epoch** latency instead of multi-hop tunnel setup.
+Operator path: constitution CLI (`its-km send/receive`), `routing.toml` pool mirrors or offline `--pool-dir`. Claim class: Shannon C/I in $O$ under A0–A3 when A2′ holds — prod default $h=0$, 1 epoch.
 
 ---
 
@@ -37,7 +37,7 @@ You are **not** joining a mixnet. You run the constitution CLI (`its-km send/rec
 | **Offline** | Router dies without network | **USB sneakernet** — same four KM commands, `config.offline.toml` |
 | **Hops** | k-anonymity via relays | **0 hops** UES pool — multiset forward, Shannon wire |
 
-Full positive pitch + honest boundaries: [ITS-routing_OVERLAY_EXTINCTION.md § Why ITS over I2P/Nym](ITS-routing_OVERLAY_EXTINCTION.md#why-its-over-i2pnym).
+Lemma-class comparison: [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md).
 
 ---
 
@@ -53,7 +53,7 @@ ITS SOCKS and hidden-service patterns target **known Bob** — not arbitrary cle
 |------|-----|
 | I2P / Nym evening switch | [ITS_MIGRATION_GUIDES.md § Switch in one evening](ITS_MIGRATION_GUIDES.md#switch-from-i2pnym-in-one-evening) |
 | Tor SOCKS | [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) |
-| Lemma-by-lemma map | [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) |
+| Lemma-by-lemma map | [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md) |
 
 ---
 

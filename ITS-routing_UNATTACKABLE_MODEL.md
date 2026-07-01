@@ -1,4 +1,4 @@
-# ITS-routing: Unattackable Model (v9 — 100% ITS C · I · A)
+# ITS-routing: Formal threat model (v9)
 
 **Formal spec (formulas + Lean map):** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md)
 
@@ -10,7 +10,7 @@
 
 ---
 
-## Uangribeligheds-lov (MathSupremacy)
+## Trust boundary (MathSupremacy)
 
 > **Matematik er den eneste sikkerhedskilde.** Eve ejer 99.999%+ noder og al pool/relay
 > software/hardware (backdoored). Det er **transcript** — ikke sikkerhed.  
@@ -18,12 +18,16 @@
 > Alice **eller** Bob kører math-trusted executor. Eve lærer **0 bits** om hvem der sendte,
 > hvem der modtog, og hvilken vej beskeden tog — i **O** og **IP_obs**.
 
-\[
-\boxed{I(S;\, O_{\text{Eve}}) = 0 \;\wedge\; I(\text{author};\, O) = 0 \;\wedge\; I(\text{recipient};\, O) = 0}
-\]
-\[
-\boxed{I(\text{author};\, \text{IP\_obs}) = 0 \;\wedge\; I(\text{recipient};\, \text{IP\_obs}) = 0 \;\wedge\; I(\text{flow};\, \text{IP\_obs}) = 0}
-\]
+
+$$
+I(S;\, O_{\text{Eve}}) = 0 \;\wedge\; I(\text{author};\, O) = 0 \;\wedge\; I(\text{recipient};\, O) = 0
+$$
+
+
+$$
+I(\text{author};\, IP_{\mathrm{obs}}) = 0 \;\wedge\; I(\text{recipient};\, IP_{\mathrm{obs}}) = 0 \;\wedge\; I(\text{flow};\, IP_{\mathrm{obs}}) = 0
+$$
+
 
 **S** = (M, ratchet, link, label, timing-secret) — hele S, ikke kun M.
 
@@ -78,7 +82,7 @@ SSS multi-IP courier, og BIS — **ikke** via at stole på Eve's nodes.
 | # | Lemma | Mode | Lean module | Math status |
 |---|-------|------|-------------|-------------|
 | L1 | Wire Shannon + cell indistinguishability | begge | `Transport/WireComposition.lean` | **Proved** (asymmetric import) |
-| L2 | OTM WC-MAC, P(forge) ≤ 1/p | begge | `IntegrityAxiom.lean` | **Axiom** |
+| L2 | OTM WC-MAC floor | begge | `IntegrityAxiom.lean` | **Import** (stub) |
 | L3 | C_e ~ 𝒟, altid emit | P | `UnifiedEpochStream.lean` | **Proved (finite-MI)** |
 | L4 | φ ~ 𝒟_benign | AEH | `AEH/StegoIndistinguishability.lean` | **Proved** |
 | L5 | I(S; release) = 0 | begge | `AEH/EpochGate.lean` | **Proved** |
@@ -123,13 +127,13 @@ Begge modes deler **samme** `step` + wire + OTM — kun courier/embed ændres.
 
 ## CIA triaden
 
-| Pille | ITS-rang | Lean |
-|-------|----------|------|
-| **C — Confidentiality** | **100% ITS** — \(I(S;O)=0\), Sybil irrelevant, wire Shannon | `CIA_Doctrine.lean`, C1 via `WireComposition.lean`, `SybilDoctrine.lean` |
-| **I — Integrity** | **100% ITS** — \(P(\text{forge})\le 1/p\); verify on A2′ EP | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` |
-| **A — Availability** | **100% ITS (v9)** — ProofFwd, \(\mathcal{M}_{\text{valid}}\), witness k-of-n, ReceiveGate, SSS | `CIA_Doctrine.availabilityITSForward`, `ForwardProof.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`, `ForwardReceiveGate.lean`, `AvailabilityResilience.lean` |
+| Pille | Klasse | Lean |
+|-------|--------|------|
+| **C — Confidentiality** | **Proved** (Import C1 + finite-MI C3) — $I(S;O)=0$ under A2′ | `WireComposition.lean`, `SybilDoctrine.lean`, `UnifiedEpochStream.lean` |
+| **I — Integrity** | **Import** — Lean stub $1 \le p$; WC-MAC on A2′ EP in Rust | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` |
+| **A — Availability** | **Conditional** (v9) — ProofFwd, $\mathcal{M}_{\text{valid}}$, witness, ReceiveGate | `ForwardProof.lean`, `ValidForwardParty.lean`, `WitnessConsensus.lean`, `ForwardReceiveGate.lean` |
 
-**Outside (explicit):** both EP compromised; side-channels; \(O_{\text{net}}=\emptyset\); no A2′ witness + empty \(\mathcal{M}_{\text{valid}}\).
+**Outside (explicit):** both EP compromised; side-channels; $O_{\text{net}}=\emptyset$; no A2′ witness + empty $\mathcal{M}_{\text{valid}}$.
 
 **Honest limit:** A ≠ Shannon “always delivers”; A = log-proof + whitelist + reroute when valid mirrors/witness exist.
 
@@ -137,21 +141,25 @@ Begge modes deler **samme** `step` + wire + OTM — kun courier/embed ændres.
 
 ### C — logik + tal (Eve 99.999%+)
 
-Eve ejer pool, relays og \(10^9\) Sybil-noder. Hun ser hele \(O\) — men uden `secret.key` er posterior over \(M\) uniform:
+Eve ejer pool, relays og $10^9$ Sybil-noder. Hun ser hele $O$ — men uden `secret.key` er posterior over $M$ uniform:
 
-\[
+
+$$
 I(M;\, O) = 0 \text{ bits} \quad (\text{256-bit besked} \Rightarrow H(M\mid O) = H(M) = 256)
-\]
+$$
 
-Sybil-strategier ændrer intet: \(I(M;\, O_{\mathcal{E}\cup\text{Sybil}}) = 0\) (`SybilDoctrine.lean`, finite-MI). Wire: Shannon ITS-asymmetric over \(\mathbb{F}_p\), \(p = 2147483647\).
+
+Sybil-strategier ændrer intet: $I(M;\, O_{\mathcal{E}\cup\text{Sybil}}) = 0$ (`SybilDoctrine.lean`, finite-MI). Wire: Shannon ITS-asymmetric over $\mathbb{F}_p$, $p = 2147483647$.
 
 ### I — logik + tal
 
-\[
-P(\text{forge}) \leq \frac{1}{p} \approx 4.657 \times 10^{-10}
-\]
 
-Eve forsøger \(10^{12}\) forgeries → forventet accept \(\leq 10^{12}/p \approx 465\). OTM verify kører **kun** på A2′ verify-oracle (Bob/Charlie) — aldrig på Eves 99.999%+ noder.
+$$
+P(\text{forge}) \leq \frac{1}{p} \approx 4.657 \times 10^{-10}
+$$
+
+
+Eve forsøger $10^{12}$ forgeries → forventet accept $\leq 10^{12}/p \approx 465$. OTM verify kører **kun** på A2′ verify-oracle (Bob/Charlie) — aldrig på Eves 99.999%+ noder.
 
 ### A — logik + tal
 
@@ -161,7 +169,7 @@ ITS-A: ValidFwd whitelist + `omit_de_whitelists_mirror` + witness k-of-n. Se sce
 
 ## Eve 99.999%+ scenario walkthrough
 
-**Antagelse (A0):** \(N = 10^9\) noder; Eve kontrollerer \(10^9 - 1\). Én uafhængig mirror (Eve-B) eller A2′ witness (Charlie) forbliver ærlig forwarder.
+**Antagelse (A0):** $N = 10^9$ noder; Eve kontrollerer $10^9 - 1$. Én uafhængig mirror (Eve-B) eller A2′ witness (Charlie) forbliver ærlig forwarder.
 
 **Tidslinje — epochs 0–5, tre mirrors:**
 
@@ -173,15 +181,15 @@ Eve-B:     ✓    ✓    ✓    ✓    ✓    ✓
 Charlie:   ✓    ✓    ✓    ✓    ✓    ✓    (A2′ witness)
 ```
 
-| Fase | \(\mathcal{M}_{\text{valid}}\) | Bob's handling |
+| Fase | $\mathcal{M}_{\text{valid}}$ | Bob's handling |
 |------|-------------------------------|----------------|
 | Før omit | {Eve-A, Eve-B, Charlie} | `receiveGate` — any mirror OK |
-| Efter Eve-A dropper \(c_3\) | {Eve-B, Charlie} | Eve-A de-whitelisted; harvest \(c_3\) fra Eve-B eller Charlie |
-| Witness \(k{=}2, n{=}3\) | W₂+W₃ agree on \(c_3\) | `consensusAtEpoch` ⇒ `ProofFwd(3,c₃)` |
+| Efter Eve-A dropper $c_3$ | {Eve-B, Charlie} | Eve-A de-whitelisted; harvest $c_3$ fra Eve-B eller Charlie |
+| Witness $k{=}2, n{=}3$ | W₂+W₃ agree on $c_3$ | `consensusAtEpoch` ⇒ `ProofFwd(3,c₃)` |
 
-**Hvorfor Eve ikke vinder på C/I:** under hele scenariet forbliver \(I(M;O)=0\) og \(P(\text{forge})\leq 1/p\) — omit påvirker kun **A**, og det mitigeres af whitelist + alternate route.
+**Hvorfor Eve ikke vinder på C/I:** under hele scenariet forbliver $I(M;O)=0$ og $P(\text{forge})\leq 1/p$ — omit påvirker kun **A**, og det mitigeres af whitelist + alternate route.
 
-**Outside:** hvis **alle** mirrors er Eve-only selective omitters og ingen A2′ witness → \(\mathcal{M}_{\text{valid}}=\emptyset\) — da er A **Outside** (sneakernet / offline recovery er produkt-gate, ikke kanal-theorem).
+**Outside:** hvis **alle** mirrors er Eve-only selective omitters og ingen A2′ witness → $\mathcal{M}_{\text{valid}}=\emptyset$ — da er A **Outside** (sneakernet / offline recovery er produkt-gate, ikke kanal-theorem).
 
 **Lean-kæde:** `ValidForwardParty.omit_de_whitelists_mirror` · `WitnessConsensus.selective_omit_consensus_gives_alternate_route` · `ForwardReceiveGate` · `SybilDoctrine` (Sybil forwarders ⇒ 0 ekstra C/I bits).
 
@@ -191,9 +199,11 @@ Charlie:   ✓    ✓    ✓    ✓    ✓    ✓    (A2′ witness)
 
 Eve ejer alle noder undtagen én sikker endpoint. Sybil fake-posters afvises af OTM eller er chaff fra 𝒟.
 
-\[
+
+$$
 I(M;\, O_{\mathcal{A}}) = 0 \quad \text{(Sybil-strategier } \mathcal{A} \text{)}
-\]
+$$
+
 
 **Lean:** `SybilDoctrine.lean` — Sybil irrelevant for C/I; kun A og O⁺. **Sprint 1:** Shannon claim **Proved (finite-MI)** via `FiniteMutualInfo.lean`.
 
@@ -230,7 +240,7 @@ I(M;\, O_{\mathcal{A}}) = 0 \quad \text{(Sybil-strategier } \mathcal{A} \text{)}
 
 ## Offline / sneakernet
 
-Når \(O_{\text{net}} = \emptyset\): I(S; O_net) = 0 trivialt. Security reducerer til wire algebra på offline medium + verify-oracle på Bob.
+Når $O_{\text{net}} = \emptyset$: I(S; O_net) = 0 trivialt. Security reducerer til wire algebra på offline medium + verify-oracle på Bob.
 
 **Lean:** `OfflineChannel.lean`
 
@@ -309,4 +319,4 @@ mathematics/
 ./scripts/verify_math.sh
 ```
 
-**Win-conditions M1–M20:** see [PROOF_MANIFEST.md](PROOF_MANIFEST.md) v9
+**Math gates M1–M26:** see [PROOF_MANIFEST.md](PROOF_MANIFEST.md)

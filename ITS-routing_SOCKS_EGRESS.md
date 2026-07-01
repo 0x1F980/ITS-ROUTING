@@ -53,7 +53,7 @@ Do **not** call `its-routing client-send` directly in production. For messaging,
 
 ### PoolMailbox contact address
 
-Share a contact via vault QR / `export-qr`, or pass `--mailbox-fingerprint` on `its-routing client-receive` when harvesting for a specific peer. See [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) (W11) and migration table in [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md).
+Share a contact via vault QR / `export-qr`, or pass `--mailbox-fingerprint` on `its-routing client-receive` when harvesting for a specific peer. See [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md) (W11) and [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md).
 
 ---
 
@@ -103,5 +103,5 @@ ROUTING/scripts/verify_ecosystem.sh /home/user
 - [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) — Bob ingress + static publish
 - [QUICKSTART.md](QUICKSTART.md) — pool send/receive
 - [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) — Tor/I2P/Nym migration
-- [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) — lemma-ID comparison
+- [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md) — lemma map
 - Lean: `UnifiedEpochStream.lean`, `BroadcastIPDerivation.lean`, `ParticipationSymmetry.lean`

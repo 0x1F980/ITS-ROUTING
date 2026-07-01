@@ -49,19 +49,19 @@ Wire confidentiality, SSS backward ambiguity, WC-MAC attestation, and timelock d
 
 ## CIA mitigations vs Eve 99.999%+ (routing summary)
 
-Under axiom A0, Eve owns ≥ 99.999% of nodes. ROUTING's v9 certificate (`networkEcosystemCertificateV9`) proves **100% ITS** on all three pillars when A2/A2′ holds. **Full worked examples with numbers:** [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va.
+Under axiom A0, Eve owns ≥ 99.999% of nodes. ROUTING v9 certificate (`networkEcosystemCertificateV9`) bundles ideal C/I/A claims per §Expectations in [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md). **Worked numeric examples:** §Va in CORE.
 
 | Pillar | Channel / mechanism | Numeric sketch | Lean |
 |--------|---------------------|----------------|------|
-| **C1 Payload** | Shannon wire + L3 pool | \(I(M;O)=0\) bits; \(10^9\) Sybil ⇒ +0 bits | `WireComposition`, `SybilDoctrine` |
-| **C2 Integritet** | WC-MAC OTM | \(P(\text{forge}) \leq 1/2.147\times10^9\); \(10^{12}\) tries ⇒ ≤465 expected | `IntegrityAxiom` → `Otm.OtmIntegrity` |
-| **C3 Anonymitet** | UES pool, 0 hops | Author/recipient/flow zero in \(O\), \(IP_{obs}\) | `UnifiedEpochStream`, `BroadcastIPSymmetry` |
+| **C1 Payload** | Shannon wire + L3 pool | $I(M;O)=0$ bits; $10^9$ Sybil ⇒ +0 bits | `WireComposition`, `SybilDoctrine` |
+| **C2 Integritet** | WC-MAC OTM | Floor $1/p$ in Lean (**Import**); Rust `verify_tag` | `IntegrityAxiom` → `Otm.OtmIntegrity` |
+| **C3 Anonymitet** | UES pool, 0 hops | Author/recipient/flow zero in $O$, $IP_{\mathrm{obs}}$ | `UnifiedEpochStream`, `BroadcastIPSymmetry` |
 | **C4 Benægtelighed** | Timelock SSS L2 | Coercion underdetermination (no numeric floor) | `Stl.Security.Deniability` |
-| **ITS-A (A)** | ValidFwd + witness k-of-n | 1 mirror in \(\mathcal{M}_{\text{valid}}\) suffices vs \(10^9\) Eve nodes | `ValidForwardParty`, `WitnessConsensus`, `ForwardReceiveGate` |
+| **ITS-A (A)** | ValidFwd + witness k-of-n | 1 mirror in $\mathcal{M}_{\text{valid}}$ suffices vs $10^9$ Eve nodes | `ValidForwardParty`, `WitnessConsensus`, `ForwardReceiveGate` |
 
-**Outside:** both endpoints compromised; \(\mathcal{M}_{\text{valid}}=\emptyset\) without witness; total blackout \(O_{\text{net}}=\emptyset\).
+**Outside:** both endpoints compromised; $\mathcal{M}_{\text{valid}}=\emptyset$ without witness; total blackout $O_{\text{net}}=\emptyset$.
 
-**PA.6 Sybil-whitelist:** evil mirrors that omit leave \(\mathcal{M}_{\text{valid}}\); Sybil forwarders that sync correctly stay whitelisted but add **zero** C/I bits.
+**PA.6 Sybil-whitelist:** evil mirrors that omit leave $\mathcal{M}_{\text{valid}}$; Sybil forwarders that sync correctly stay whitelisted but add **zero** C/I bits.
 
 ---
 
@@ -369,7 +369,7 @@ Ecosystem verify uses `--features full` when testing the complete routing binary
 ./scripts/install_completions.sh --all   # constitution + optional ridges
 ```
 
-**Product docs (Sprint 5):** [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [deploy/COMMUNITY_MIRRORS.md](deploy/COMMUNITY_MIRRORS.md) · [RELEASE.md](RELEASE.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
+**Product docs:** [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md) · [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERVICE.md) · [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS-routing_DEPLOY_MATH_GATES.md](ITS-routing_DEPLOY_MATH_GATES.md) · [deploy/COMMUNITY_MIRRORS.md](deploy/COMMUNITY_MIRRORS.md) · [RELEASE.md](RELEASE.md) · [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md) · [ITS_MIGRATION_GUIDES.md](ITS_MIGRATION_GUIDES.md)
 
 ---
 

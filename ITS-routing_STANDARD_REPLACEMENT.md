@@ -29,7 +29,7 @@
 | Quantum / unbounded compute | PQC migration pressure | **Timeless** — `TimelessSecurity.lean` |
 | User mass today | Large existing base | **Roadmap** — honest limit, not math blocker |
 
-Full lemma map: [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md).
+Full lemma map: [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md).
 
 ---
 

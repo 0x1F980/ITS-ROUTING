@@ -7,7 +7,7 @@
 **When ITS wins** vs **when to keep RSA/PQC/Tor/I2P/Nym**.
 
 Product replacement matrix: [ITS-routing_STANDARD_REPLACEMENT.md](ITS-routing_STANDARD_REPLACEMENT.md)  
-Overlay comparison (lemma-ID): [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md)  
+Overlay comparison (lemma-ID): [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md)  
 Feature → gate one-pager: [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md)
 
 ---
@@ -110,7 +110,7 @@ its-km send --contact bob --file doc.pdf --pool-dir /media/usb/its-pool
 its-km receive --contact alice --out doc.pdf --pool-dir /media/usb/its-pool
 ```
 
-Gate: `pipe_its_km_sneakernet_e2e.sh` (M28). See [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md) offline killer.
+Gate: `pipe_its_km_sneakernet_e2e.sh` (M28). See [QUICKSTART.md](QUICKSTART.md) offline section.
 
 ### Step 6 — Hidden service pattern (optional)
 
@@ -123,7 +123,7 @@ Bob nginx + Alice SOCKS or file publish: [ITS_HIDDEN_SERVICE.md](ITS_HIDDEN_SERV
 - [ ] You can explain Sybil vs mixnet in one sentence ([CORE §Va](ITS-routing_MATHEMATICAL_CORE.md))  
 - [ ] You know the honest limit: no arbitrary clearnet browsing  
 
-Pitch for colleagues: [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md)
+Operator notes: [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md)
 
 ---
 
@@ -147,7 +147,7 @@ Pitch for colleagues: [docs/ITS_DOMINANCE_PITCH.md](docs/ITS_DOMINANCE_PITCH.md)
 
 **Replace:** Tor hidden service, I2P destination, Nym mixnet client  
 **With:** UES Monocell Pool default + `its-km send/receive`  
-**Why:** I(S;O)=0 under Sybil-majority — see P6.3 in [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md)  
+**Reference:** I(S;O)=0 under Sybil-majority — P6.3 in [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md)  
 **Gate:** `pipe_its_pool_e2e.sh`, `pipe_its_km_pool_e2e.sh`
 
 ---

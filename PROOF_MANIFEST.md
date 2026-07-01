@@ -19,11 +19,11 @@
 
 Each pillar is **proved** under A0–A2′. Concrete numeric walkthroughs live in [ITS-routing_MATHEMATICAL_CORE.md](ITS-routing_MATHEMATICAL_CORE.md) §Va and [ITS-routing_UNATTACKABLE_MODEL.md](ITS-routing_UNATTACKABLE_MODEL.md) (Eve scenario).
 
-**C — Confidentiality.** Eve sees all of \(O\) including \(10^9\) Sybil injections; finite-MI + Shannon wire give \(I(M;O)=0\) bits for a 256-bit message (uniform posterior). Sybil adds zero information (`SybilDoctrine.lean`, `FiniteMutualInfo.lean`). *Example:* §Va C-table — 256-bit \(H(M|O)=H(M)\).
+**C — Confidentiality.** Eve sees all of $O$ including $10^9$ Sybil injections; finite-MI + Shannon wire give $I(M;O)=0$ bits for a 256-bit message (uniform posterior). Sybil adds zero information (`SybilDoctrine.lean`, `FiniteMutualInfo.lean`). *Example:* §Va C-table — 256-bit $H(M|O)=H(M)$.
 
-**I — Integrity.** OTM WC-MAC over \(\mathbb{F}_p\), \(p=2147483647\): \(P(\text{forge})\leq 1/p\). Eve's \(10^{12}\) forgery attempts yield \(\leq 465\) expected accepts; verify runs only on A2′ EP (`IntegrityAxiom.lean`). *Example:* §Va I-table — \(N/p\) bound.
+**I — Integrity.** OTM WC-MAC over $\mathbb{F}_p$, $p=2147483647$: $P(\text{forge})\leq 1/p$. Eve's $10^{12}$ forgery attempts yield $\leq 465$ expected accepts; verify runs only on A2′ EP (`IntegrityAxiom.lean`). *Example:* §Va I-table — $N/p$ bound.
 
-**A — Availability (ITS-A v9).** Not Shannon delivery — log-proof + \(\mathcal{M}_{\text{valid}}\) whitelist + de-whitelist on omit + witness k-of-n (\(k=2, n=3\)). One honest forwarder in \(\mathcal{M}_{\text{valid}}\) suffices against \(10^9\) Eve nodes. *Example:* §Va A-table — epochs 0–5, Eve-A omit @3, `omit_de_whitelists_mirror`, `ProofFwd` via Charlie. **Outside:** empty \(\mathcal{M}_{\text{valid}}\), no witness.
+**A — Availability (ITS-A v9).** Not Shannon delivery — log-proof + $\mathcal{M}_{\text{valid}}$ whitelist + de-whitelist on omit + witness k-of-n ($k=2, n=3$). One honest forwarder in $\mathcal{M}_{\text{valid}}$ suffices against $10^9$ Eve nodes. *Example:* §Va A-table — epochs 0–5, Eve-A omit @3, `omit_de_whitelists_mirror`, `ProofFwd` via Charlie. **Outside:** empty $\mathcal{M}_{\text{valid}}$, no witness.
 
 ---
 
@@ -33,7 +33,7 @@ Each pillar is **proved** under A0–A2′. Concrete numeric walkthroughs live i
 |-------|-------------|-------------|--------------|
 | **M7 — unattackable certificate v4** | `UnattackableCertificate.lean` | **Proved** | N/A (certificate shell) |
 | **C4 absolute plausible deniability** | `PlausibleDeniabilityAbsolute.lean` | **Proved** | N/A |
-| C1 wire Shannon \(I(M;O)=0\) | `Transport/WireComposition.lean` → `Asymmetric.fullWireEncShannonIts` | **Proved** (cross-repo) | **Proved** (import) |
+| C1 wire Shannon $I(M;O)=0$ | `Transport/WireComposition.lean` → `Asymmetric.fullWireEncShannonIts` | **Proved** (cross-repo) | **Proved** (import) |
 | C2 integrity P(forge) ≤ 1/p | `IntegrityAxiom.lean` → `Otm.OtmIntegrity` | **Proved** (cross-repo) | **Proved** (import) |
 | C3 stream + Sybil + MathSupremacy | `UnifiedEpochStream.lean`, `SybilDoctrine.lean`, `MathSupremacyDoctrine.lean` | **Theorem** | **Proved** (finite-MI) |
 | I(author; O) = 0 | `AuthorAttributionZero.lean` | **Proved** | **Proved** |

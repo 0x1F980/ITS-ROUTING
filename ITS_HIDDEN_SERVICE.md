@@ -5,7 +5,7 @@
 **Scope:** Known-contact **pairwise** publish/receive — not a global `.i2p`-style directory.  
 **Prerequisite:** [ITS_CONSTITUTION_CLI.md](ITS_CONSTITUTION_CLI.md) · pool config · M19 SOCKS gate green locally.
 
-Cross-links: [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [ITS-routing_OVERLAY_EXTINCTION.md](ITS-routing_OVERLAY_EXTINCTION.md)
+Cross-links: [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS_OVERLAY_SWITCH.md](ITS_OVERLAY_SWITCH.md) · [ITS-routing_OVERLAY_COMPARISON.md](ITS-routing_OVERLAY_COMPARISON.md)
 
 ---
 
@@ -18,7 +18,7 @@ Cross-links: [ITS-routing_SOCKS_EGRESS.md](ITS-routing_SOCKS_EGRESS.md) · [ITS_
 | SOCKS to destination key | SOCKS5 → ITS wire → pool → Bob `--continuous` receive |
 | Directory discoverable (Sybil risk) | Recipient hint **only in ciphertext** — no global registry |
 
-**Why pairwise is a feature:** Under Eve 99.999%+ (A0), a global hidden-service directory is a Sybil surface. ITS keeps addressing local to the pairwise channel — see [CORE §Va](ITS-routing_MATHEMATICAL_CORE.md) and W11 in [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md).
+**Pairwise addressing:** Under A0, a global hidden-service directory is a separate Sybil surface. ITS keeps addressing in the pairwise channel — [CORE §Va](ITS-routing_MATHEMATICAL_CORE.md), W11 in [ITS-routing_SUPERIORITY.md](ITS-routing_SUPERIORITY.md).
 
 ---
 

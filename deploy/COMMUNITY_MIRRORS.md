@@ -72,4 +72,4 @@ Gate: M18 HTTP pool + M21 censorship recovery green against **public** mirror UR
 
 - [config.prod.toml](../config.prod.toml) — default onboarding template
 - [ITS-routing_CENSORSHIP_RECOVERY.md](../ITS-routing_CENSORSHIP_RECOVERY.md) — fountain failover
-- [docs/ITS_DOMINANCE_PITCH.md](../docs/ITS_DOMINANCE_PITCH.md) — community mirror ask (Fase 6)
+- [deploy/COMMUNITY_MIRRORS.md](deploy/COMMUNITY_MIRRORS.md) — mirror operator notes
